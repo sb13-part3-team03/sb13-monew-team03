@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: monew
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/monew}
+    username: ${DB_USERNAME:monew_user}
+    password: ${DB_PASSWORD:monew1234}
+
