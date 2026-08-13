@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "articles")
@@ -28,7 +29,7 @@ public class Article extends BaseEntity {
     private String summary;
 
     @Column(name = "published_at", nullable = false)
-    private Instant publishedAt;
+    private LocalDateTime publishDate;  // API 명세: string($date-time)
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
