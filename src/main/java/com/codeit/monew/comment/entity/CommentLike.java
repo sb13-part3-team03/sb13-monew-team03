@@ -1,0 +1,42 @@
+package com.codeit.monew.comment.entity;
+
+import com.codeit.monew.user.entity.User;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class CommentLike {
+
+    // temp fields
+    // replace after create base entity
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+    @CreatedDate
+    private LocalDateTime createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "comment_id")
+    private Comment comment;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    public CommentLike(
+            Comment comment,
+            User user
+    ){
+        this.comment = comment;
+        this.user = user;
+    }
+}
