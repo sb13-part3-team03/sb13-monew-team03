@@ -29,7 +29,7 @@ public class Article extends BaseEntity {
     private String summary;
 
     @Column(name = "published_at", nullable = false)
-    private LocalDateTime publishDate;  // API 명세: string($date-time)
+    private Instant publishDate;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
