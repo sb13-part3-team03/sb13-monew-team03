@@ -4,10 +4,12 @@ import com.codeit.monew.article.dto.request.ArticleSearchRequest;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Service
 @RequiredArgsConstructor
 public class ArticleQueryServiceImpl implements ArticleQueryService {
 
