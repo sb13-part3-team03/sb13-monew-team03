@@ -1,6 +1,8 @@
 package com.codeit.monew.article.dto.request;
 
 import com.codeit.monew.article.entity.ArticleSource;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -17,6 +19,8 @@ public record ArticleSearchRequest (
         Long after,
         String orderBy,
         String direction,
+        @Min(1)
+        @Max(100)
         Integer limit
 ) {
     public ArticleSearchRequest {
