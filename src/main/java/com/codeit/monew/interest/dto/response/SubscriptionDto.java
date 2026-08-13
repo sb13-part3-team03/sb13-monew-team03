@@ -23,7 +23,7 @@ public record SubscriptionDto(
                 subscription.getId(),
                 interest.getId(),
                 interest.getName(),
-                interest.getKeywords(),
+                List.copyOf(interest.getKeywords()),
                 interestSubscriberCount,
                 subscription.getCreatedAt()
         );

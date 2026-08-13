@@ -17,7 +17,7 @@ public record InterestDto(
         return new InterestDto(
                 interest.getId(),
                 interest.getName(),
-                interest.getKeywords(),
+                List.copyOf(interest.getKeywords()),
                 subscriberCount,
                 subscribedByMe
         );
