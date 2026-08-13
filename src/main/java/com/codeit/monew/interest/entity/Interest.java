@@ -1,24 +1,19 @@
 package com.codeit.monew.interest.entity;
 
+import com.codeit.monew.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "interests")
-public class Interest {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+public class Interest extends BaseEntity {
 
     @Column(nullable = false, length = 50)
     private String name;
@@ -31,22 +26,14 @@ public class Interest {
     @Column(name = "keyword", nullable = false)
     private List<String> keywords = new ArrayList<>();
 
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(nullable = false)
-    private Instant updatedAt;
-
-    public Interest(String name) {
+    public Interest(String name, List<String> keywords) {
         this.name = name;
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
+        this.keywords.addAll(keywords);
     }
 
     public void updateKeywords(List<String> keywords) {
         this.keywords.clear();
         this.keywords.addAll(keywords);
-        this.updatedAt = Instant.now();
     }
 
 }
