@@ -3,7 +3,7 @@ package com.codeit.monew.article.entity;
 import com.codeit.monew.global.entity.BaseEntity;
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -28,9 +28,9 @@ public class Article extends BaseEntity {
     private String summary;
 
     @Column(name = "published_at", nullable = false)
-    private LocalDateTime publishedAt;
+    private Instant publishedAt;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
 }
