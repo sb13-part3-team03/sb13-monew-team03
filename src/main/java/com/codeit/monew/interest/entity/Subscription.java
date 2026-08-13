@@ -1,5 +1,6 @@
 package com.codeit.monew.interest.entity;
 
+import com.codeit.monew.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -26,9 +27,9 @@ public class Subscription {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-//    @JoinColumn(name = "user_id", nullable = false)
-//    private User user;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "interest_id", nullable = false)
@@ -37,9 +38,9 @@ public class Subscription {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-//    public Subscription(User user, Interest interest) {
-//        this.user = user;
-//        this.interest = interest;
-//        this.createdAt = Instant.now();
-//    }
+    public Subscription(User user, Interest interest) {
+        this.user = user;
+        this.interest = interest;
+        this.createdAt = Instant.now();
+    }
 }
