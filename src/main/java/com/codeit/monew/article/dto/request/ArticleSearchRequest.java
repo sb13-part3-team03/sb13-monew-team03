@@ -12,6 +12,22 @@ public record ArticleSearchRequest (
         UUID interestId,
         ArticleSource sourceIn,
         LocalDateTime publishDateFrom,
-        LocalDateTime publishDateTo
+        LocalDateTime publishDateTo,
+        String cursor,
+        Long after,
+        String orderBy,
+        String direction,
+        Integer limit
 ) {
+    public ArticleSearchRequest {
+        if (limit == null) {
+            limit = 50;
+        }
+        if (orderBy == null) {
+            orderBy = "publishDate";
+        }
+        if (direction == null) {
+            direction = "asc";
+        }
+    }
 }
