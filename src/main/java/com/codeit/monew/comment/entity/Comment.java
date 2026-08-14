@@ -2,34 +2,21 @@ package com.codeit.monew.comment.entity;
 
 
 import com.codeit.monew.article.entity.Article;
+import com.codeit.monew.global.entity.BaseEntity;
 import com.codeit.monew.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.time.Instant;
 
 @Entity
 @Getter
 @Setter
+@Table(name = "comments")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Comment {
-
-    // temp fields
-    // replace after create base entity
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-    @CreatedDate
-    private LocalDateTime createdAt;
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
-
+public class Comment extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "article_id", nullable = false)
@@ -42,7 +29,8 @@ public class Comment {
     @Column(length = 500)
     private String content;
 
-    private LocalDateTime deleted_at;
+    @Column
+    private Instant deleted_at;
 
 
     public Comment(
@@ -56,17 +44,15 @@ public class Comment {
     }
 
 
-    public Comment update(
+    public void update(
             String content
     ){
         this.content = content;
-        this.updatedAt = LocalDateTime.now();
-        return this;
     }
 
     // logical delete
     public void delete(){
-        this.deleted_at = LocalDateTime.now();
+        this.deleted_at = Instant.now();
     }
 
 }

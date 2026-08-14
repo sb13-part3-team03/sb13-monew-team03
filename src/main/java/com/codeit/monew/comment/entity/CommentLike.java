@@ -1,5 +1,6 @@
 package com.codeit.monew.comment.entity;
 
+import com.codeit.monew.global.entity.BaseEntity;
 import com.codeit.monew.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -13,16 +14,9 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
+@Table(name = "comment_likes")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CommentLike {
-
-    // temp fields
-    // replace after create base entity
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-    @CreatedDate
-    private LocalDateTime createdAt;
+public class CommentLike extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "comment_id")
