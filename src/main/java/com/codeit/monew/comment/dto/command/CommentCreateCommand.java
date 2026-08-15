@@ -1,4 +1,10 @@
 package com.codeit.monew.comment.dto.command;
 
-public class CommentCreateCommand {
+import java.util.UUID;
+
+public record CommentCreateCommand(
+        UUID articleId,
+        UUID userId,
+        String content
+) {
 }
