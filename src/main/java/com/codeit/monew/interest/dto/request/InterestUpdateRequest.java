@@ -1,10 +1,12 @@
 package com.codeit.monew.interest.dto.request;
 
+import com.codeit.monew.interest.service.command.InterestUpdateCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
+import java.util.UUID;
 
 public record InterestUpdateRequest(
         @NotNull
@@ -12,4 +14,10 @@ public record InterestUpdateRequest(
         List<@NotBlank String> keywords
 
 ) {
+    public InterestUpdateCommand toCommand(UUID interestId) {
+        return new InterestUpdateCommand(
+                interestId,
+                keywords
+        );
+    }
 }
