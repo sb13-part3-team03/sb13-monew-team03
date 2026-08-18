@@ -44,3 +44,6 @@ frontend/dist/
 .codex/
 .claude/
 CLAUDE.md
+
+# test configuration ignored
+src/test/resources/*
