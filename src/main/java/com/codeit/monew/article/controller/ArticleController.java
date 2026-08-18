@@ -2,6 +2,7 @@ package com.codeit.monew.article.controller;
 
 import com.codeit.monew.article.dto.request.ArticleSearchRequest;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
+import com.codeit.monew.article.service.ArticleDeleteService;
 import com.codeit.monew.article.service.ArticleQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class ArticleController {
 
     private final ArticleQueryService articleService;
+    private final ArticleDeleteService articleDeleteService;
 
     // 뉴스 기사 목록 커서페이지네이션 조회 - command 적용 예정
     @GetMapping("")
@@ -26,6 +28,24 @@ public class ArticleController {
         CursorPageResponseArticleDto response = articleService.searchArticles(request, userId);
 
         return ResponseEntity.ok(response);
+    }
+
+    // 논리 삭제
+    @DeleteMapping("/{articleId}")
+    public ResponseEntity<Void> deleteArticle(
+            @PathVariable UUID articleId
+    ) {
+        articleDeleteService.softDelete(articleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 물리 삭제
+    @DeleteMapping("/{articleId}/hard")
+    public ResponseEntity<Void> hardDeleteArticle(
+            @PathVariable UUID articleId
+    ) {
+        articleDeleteService.hardDelete(articleId);
+        return ResponseEntity.noContent().build();
     }
 
 }
