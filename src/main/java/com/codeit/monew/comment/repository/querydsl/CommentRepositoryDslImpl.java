@@ -6,18 +6,34 @@ import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
 import com.codeit.monew.comment.dto.command.CommentQueryCommand;
 import com.codeit.monew.comment.entity.QComment;
 import com.codeit.monew.comment.entity.QCommentLike;
+import com.codeit.monew.comment.exception.CommentException;
+import com.codeit.monew.global.exception.ErrorCode;
 import com.codeit.monew.user.entity.QUser;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.JPQLQuery;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
+@Slf4j
 public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
 
     private final JPAQueryFactory queryFactory;
@@ -84,7 +100,211 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
 
     @Override
     public Slice<CommentDtoCreateCommand> getAllCommentsWithCursor(CommentQueryCommand command){
+        /*  ANSI SQL
+         select
+            c.id,
+            a.id,
+            u.id,
+            u.nickname,
+            c.content,
+            count( cl.id ) as lc,
+            exists(
+                select 1
+                from comment_likes mcl
+                where mcl.user_id = $requestedUserId
+                    and mcl.comment_id = c.id
+            )
+        from comments c
+            join users u
+                on u.id = c.user_id
+            join articles a
+                on a.id = c.article_id
+            left join comment_likes cl
+                on cl.comment_id = c.id
+        where c.article_id = $articleId [or all article = no where command]
+            [and (c.created_at or lc) (> or <) $cursor]
+            [and c.created_at (> or <) $after]
+        group by
+            c.id,
+            a.id,
+            u.id,
+            u.nickname,
+            c.content,
+            c.created_at
+        order by (c.created_at or lc) $direction
+        fetch first $size rows only
+         */
+        int pageSize = command.size().intValue();
 
-        return null;
+        BooleanExpression likeByMe = JPAExpressions
+                .selectOne()
+                .from(commentLike)
+                .where(
+                        commentLike.comment.eq(comment),
+                        commentLike.user.id.eq(command.requestUserId()) // check with current user
+                )
+                .exists();
+
+        // query for select, from
+        JPAQuery<CommentDtoCreateCommand> query = queryFactory
+                .select(
+                        Projections.constructor(
+                                CommentDtoCreateCommand.class,
+                                comment.id,
+                                article.id,
+                                user.id,
+                                user.nickname,
+                                comment.content,
+                                likeCount(),
+                                likeByMe,
+                                comment.createdAt
+                        )
+                )
+                .from(comment)
+                .join(comment.user,user)
+                .join(comment.article,article)
+                .where(setCursorCondition(command))
+                .orderBy()
+                .limit(pageSize + 1);
+
+        // get data from db
+        List<CommentDtoCreateCommand> result = query.fetch();
+
+        // has next set
+        boolean hasNext = result.size() > pageSize;
+        if (hasNext) result.remove(result.size() - 1);
+
+
+        return new SliceImpl<>(result,PageRequest.of(0,pageSize),hasNext);
     }
+
+
+    /*
+    getting JPAQuery Object method.
+     */
+
+    private JPQLQuery<Long> likeCount(){
+        return JPAExpressions
+                .select(commentLike.id.count())
+                .from(commentLike)
+                .where(commentLike.comment.eq(comment));
+    }
+
+    /*
+    "where()" command query builder method.
+     */
+
+    private BooleanBuilder setCursorCondition(
+           CommentQueryCommand command
+    ){
+        BooleanBuilder where = new BooleanBuilder();
+
+        log.info("CommentsQuery - query condition from cursor");
+
+        // set if articleId is not null, add condition.
+        where.and(
+                setArticleIdCondition(
+                        command.articleId()
+                )
+        );
+
+        // set if cursor is not null, add condition cursor query.
+        // if null, set just order.
+        where.and(
+                setCursorCondition(
+                        command.orderBy(),
+                        command.cursor(),
+                        dsc(command.direction())
+                )
+        );
+
+        // set sub cursor (after) condition.
+        where.and(
+                setAfterCondition(
+                        command.after(),
+                        dsc(command.direction())
+                )
+        );
+
+        return where;
+    }
+
+    private BooleanExpression setArticleIdCondition(UUID articleId){
+
+        log.info("CommentsQuery - got article Id = {}", articleId);
+
+        return articleId == null ? null : article.id.eq(articleId);
+    }
+
+
+    private BooleanExpression setCursorCondition(
+            String orderBy,
+            String cursor,
+            boolean dsc
+    ){
+        if (orderBy == null) return null;
+
+        log.info("CommentsQuery - got orderBy = {}, cursor = {}", cursor,orderBy);
+
+        return switch (orderBy) {
+            case "createdAt" -> getConditionFilterWithCreatedAt(dsc, cursor);
+            case "likeCount" -> getConditionFilterWithLikeCount(dsc, cursor);
+            default -> throw new RuntimeException("cursor value Error");
+        };
+    }
+
+
+    private BooleanExpression setAfterCondition(
+            String after,
+            boolean dsc
+    ){
+        if (after == null) return null;
+
+        log.info("CommentsQuery - got after = {}", after);
+
+        return getConditionFilterWithCreatedAt(dsc, after);
+    }
+
+
+    private BooleanExpression getConditionFilterWithCreatedAt(boolean dsc, String cursor){
+        try{
+            Instant createdAt = Instant.parse(cursor);
+            return dsc ? comment.createdAt.lt(createdAt) : comment.createdAt.gt(createdAt);
+        } catch (DateTimeParseException e) {
+
+            log.error("cursor value can not parse as {} - value = {}", Instant.class, cursor,e);
+
+            throw new CommentException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+
+    private BooleanExpression getConditionFilterWithLikeCount(boolean dsc, String cursor){
+        try {
+            Long count = Long.parseLong(cursor);
+
+            NumberExpression<Long> likeCount = Expressions.numberTemplate(
+                    Long.class,
+                    "({0})",
+                    likeCount() // getting likeCount query
+            );
+
+            // set sub cursor for check ctime at same like count.
+            return dsc ? likeCount.lt(count) : likeCount.gt(count);
+        } catch (NumberFormatException e) {
+
+            log.error("cursor value can not parse as {} - value = {}", Long.class, cursor,e);
+
+            throw new CommentException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+    /*
+    sharable basic method
+     */
+
+    private boolean dsc(String direction){
+        return direction.equalsIgnoreCase("desc");
+    }
+
 }

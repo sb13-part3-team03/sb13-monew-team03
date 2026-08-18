@@ -61,6 +61,8 @@ public class CommentServiceImpl implements CommentService {
         // Todo - convert info log to debug after fix logging bug
         log.info("query size - {}",command.size());
 
+
+        // Todo - repository param change? commmand -> comdition and where.
         Slice<CommentDtoCreateCommand> createDtoCommands = commentRepository.getAllCommentsWithCursor(command);
 
         log.info("repository return objects : size - {}",createDtoCommands.getSize());
@@ -69,18 +71,26 @@ public class CommentServiceImpl implements CommentService {
                 getCursorContainerCommand(
                         createDtoCommands.getContent(),
                         createDtoCommands.getSize(),
-                        createDtoCommands.getNumberOfElements(),
+                        getCommentsCountConditionedByArticle(command.articleId()),
                         createDtoCommands.hasNext(),
                         command.orderBy().equals("likeCount")   // order attribute check - change enum to after
                 )
         );
-    };
+    }
+
+    private Long getCommentsCountConditionedByArticle(UUID articleId){
+        // comment count is determined by article id.
+        // therefore, article id is taken required condition.
+        if (articleId == null) return commentRepository.count();
+        return commentRepository.countAllByArticleId(articleId);
+    }
+
 
     // get CreateCursorDtoCommand
     private CursorContainerCreateCommand<CommentDto> getCursorContainerCommand(
             List<CommentDtoCreateCommand> contents,
             int size,
-            int totalElement,
+            Long totalElement,
             Boolean hasNext,
             Boolean orderByLikeCount
     ){
@@ -110,7 +120,7 @@ public class CommentServiceImpl implements CommentService {
                 next,
                 after,
                 (long) size,
-                (long) totalElement,
+                totalElement,
                 hasNext
         );
     }
