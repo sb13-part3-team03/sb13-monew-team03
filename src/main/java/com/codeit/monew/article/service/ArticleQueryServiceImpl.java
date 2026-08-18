@@ -4,6 +4,7 @@ import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleDto;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
+import com.codeit.monew.article.mapper.ArticleMapper;
 import com.codeit.monew.article.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class ArticleQueryServiceImpl implements ArticleQueryService {
 
     private final ArticleRepository articleRepository;
+    private final ArticleMapper articleMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -47,9 +49,7 @@ public class ArticleQueryServiceImpl implements ArticleQueryService {
         // 전체 검색 결과 개수
         long totalElements = articleRepository.countTotalElements(command);
 
-        List<ArticleDto> articleDtos = content.stream()
-                .map(ArticleDto::from)
-                .toList();
+        List<ArticleDto> articleDtos = articleMapper.toDtoList(content);
 
         return new CursorPageResponseArticleDto(
                 articleDtos,

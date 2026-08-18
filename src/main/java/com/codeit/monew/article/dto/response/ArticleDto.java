@@ -17,19 +17,4 @@ public record ArticleDto (
         Integer viewCount,
         Boolean viewedByMe
 ) {
-    public static ArticleDto from(ArticleSearchResult result) {
-        Article article = result.article();
-
-        return new ArticleDto(
-                article.getId(),
-                article.getSource(),
-                article.getSourceUrl(),
-                article.getTitle(),
-                article.getPublishDate(),
-                article.getSummary(),
-                result.commentCount().intValue(),
-                result.viewCount().intValue(),
-                false
-        );
-    }
 }
