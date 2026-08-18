@@ -3,6 +3,8 @@ package com.codeit.monew.notification.entity;
 import com.codeit.monew.global.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,12 +14,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "notifications")
 public class Notification extends BaseEntity {
-  String content;
-  String userId;
-  String resourceType;
 
-  public Notification(String content, String userId, String resourceType, String resourceId,
-      boolean confirmed) {
+  @NotNull String content;
+  @NotNull UUID userId;
+  @NotNull String resourceType;
+  @NotNull UUID resourceId;
+  @NotNull boolean confirmed;
+
+  public Notification(String content, UUID userId, String resourceType, UUID resourceId, boolean confirmed) {
     this.content = content;
     this.userId = userId;
     this.resourceType = resourceType;
@@ -25,6 +29,4 @@ public class Notification extends BaseEntity {
     this.confirmed = confirmed;
   }
 
-  String resourceId;
-  boolean confirmed;
 }
