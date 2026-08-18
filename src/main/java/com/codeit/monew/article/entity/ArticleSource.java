@@ -10,7 +10,7 @@ public enum ArticleSource {
     NAVER("네이버"),
     HANKYUNG("한국경제"),
     CHOSUN("조선일보"),
-    YEONHAP("연합뉴스");
+    YONHAP("연합뉴스");
 
     private final String description;
 
