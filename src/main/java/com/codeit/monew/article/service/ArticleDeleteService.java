@@ -1,6 +1,7 @@
 package com.codeit.monew.article.service;
 
 import com.codeit.monew.article.entity.Article;
+import com.codeit.monew.article.exception.ArticleNotFoundException;
 import com.codeit.monew.article.repository.ArticleInterestRepository;
 import com.codeit.monew.article.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class ArticleDeleteService {
     @Transactional
     public void softDelete(UUID articleId) {
         Article article = articleRepository.findById(articleId)
-                .orElseThrow(() -> new IllegalArgumentException("기사를 찾을 수 없습니다."));
+                .orElseThrow(ArticleNotFoundException::new);
 
         article.delete();
     }
@@ -27,7 +28,7 @@ public class ArticleDeleteService {
     @Transactional
     public void hardDelete(UUID articleId) {
         Article article = articleRepository.findById(articleId)
-                .orElseThrow(() -> new IllegalArgumentException("기사를 찾을 수 없습니다."));
+                .orElseThrow(ArticleNotFoundException::new);
 
         articleInterestRepository.deleteAllByArticle_Id(articleId);
         articleRepository.delete(article);
