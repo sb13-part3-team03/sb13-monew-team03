@@ -113,4 +113,12 @@ public class CommentRepositoryTest {
         assertThat(command.id()).isEqualTo(comments.get(0).getId());
         log.debug("created command info - {}",command);
     }
+
+    @Test
+    @DisplayName("get all comment that matched with condition")
+    @Transactional
+    public void getAllCommentWithConditionTest(){
+        // given
+        // 1. condition - CommentQueryCommand
+    }
 }
