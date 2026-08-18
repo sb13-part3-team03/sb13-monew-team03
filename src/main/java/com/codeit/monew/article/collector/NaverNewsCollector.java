@@ -74,7 +74,7 @@ public class NaverNewsCollector implements NewsCollector {
                         ArticleSource.NAVER,
                         item.originallink(),
                         item.title(),
-                        item.description(),
+                        item.description() == null ? "" : item.description(),
                         parsePublishDate(item.pubDate())
                 ))
                 .toList();
