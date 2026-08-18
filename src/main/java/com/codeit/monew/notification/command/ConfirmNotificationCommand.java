@@ -8,6 +8,11 @@ public record ConfirmNotificationCommand(
 ) {
 
   public ConfirmNotificationCommand {
-
+    if (notificationId == null) {
+      throw new IllegalArgumentException("알림 ID는 필수입니다.");
+    }
+    if (userId == null) {
+      throw new IllegalArgumentException("사용자 ID는 필수입니다.");
+    }
   }
 }
