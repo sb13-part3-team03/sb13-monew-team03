@@ -30,7 +30,6 @@ public record ArticleSearchCommand(
                 request.keyword(),
                 request.interestId(),
                 request.sourceIn(),
-                // api(LocalDateTime) -> 데이터(Instant)로 변경
                 toInstant(request.publishDateFrom()),
                 toInstant(request.publishDateTo()),
                 request.cursor(),
@@ -42,6 +41,7 @@ public record ArticleSearchCommand(
         );
     }
 
+    // API의 LocalDateTime을 내부에서 사용하는 Instant로 변환
     private static Instant toInstant(LocalDateTime dateTime) {
         return dateTime == null
                 ? null
