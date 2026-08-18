@@ -10,8 +10,6 @@ import java.util.UUID;
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, UUID>, ArticleRepositoryCustom {
 
-    boolean existsBySourceUrl(String sourceUrl);
-
     Optional<Article> findBySourceUrl(String sourceUrl);
 
 }

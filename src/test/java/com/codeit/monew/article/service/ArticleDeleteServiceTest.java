@@ -5,6 +5,8 @@ import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.exception.ArticleNotFoundException;
 import com.codeit.monew.article.repository.ArticleInterestRepository;
 import com.codeit.monew.article.repository.ArticleRepository;
+import com.codeit.monew.comment.repository.CommentLikeRepository;
+import com.codeit.monew.comment.repository.CommentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,13 +32,22 @@ class ArticleDeleteServiceTest {
     @Mock
     private ArticleInterestRepository articleInterestRepository;
 
+    @Mock
+    private CommentRepository commentRepository;
+
+    @Mock
+    private CommentLikeRepository commentLikeRepository;
+
     private ArticleDeleteService articleDeleteService;
 
+    // 현재 구현이 안돼서 컴파일에러
     @BeforeEach
     void setUp() {
         articleDeleteService = new ArticleDeleteService(
                 articleRepository,
-                articleInterestRepository
+                articleInterestRepository,
+                commentRepository,
+                commentLikeRepository
         );
     }
 
