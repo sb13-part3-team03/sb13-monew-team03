@@ -1,8 +1,11 @@
 package com.codeit.monew.comment.mapper;
 
 import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
+import com.codeit.monew.comment.dto.command.CursorContainerCreateCommand;
 import com.codeit.monew.comment.dto.response.CommentDto;
+import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import org.springframework.stereotype.Component;
+
 
 @Component
 public class CommentMapper {
@@ -17,6 +20,17 @@ public class CommentMapper {
                 command.likeCount(),
                 command.likeByMe(),
                 command.createdAt()
+        );
+    }
+
+    public CursorContainerDto<CommentDto> toDto (CursorContainerCreateCommand<CommentDto> command){
+        return new CursorContainerDto<>(
+                command.contents(),
+                command.nextCursor(),
+                command.nextAfter(),
+                command.size(),
+                command.totalElement(),
+                command.hasNext()
         );
     }
 

@@ -4,7 +4,10 @@ import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.comment.dto.command.CommentCreateCommand;
 import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
+import com.codeit.monew.comment.dto.command.CommentQueryCommand;
+import com.codeit.monew.comment.dto.command.CursorContainerCreateCommand;
 import com.codeit.monew.comment.dto.response.CommentDto;
+import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.exception.CommentException;
 import com.codeit.monew.comment.mapper.CommentMapper;
@@ -15,9 +18,11 @@ import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,6 +53,66 @@ public class CommentServiceImpl implements CommentService {
         );
 
         return getCommentDtoFromComment(comment);
+    }
+
+    @Override
+    @Transactional
+    public CursorContainerDto<CommentDto> query(CommentQueryCommand command){
+        // Todo - convert info log to debug after fix logging bug
+        log.info("query size - {}",command.size());
+
+        Slice<CommentDtoCreateCommand> createDtoCommands = commentRepository.getAllCommentsWithCursor(command);
+
+        log.info("repository return objects : size - {}",createDtoCommands.getSize());
+
+        return commentMapper.toDto(
+                getCursorContainerCommand(
+                        createDtoCommands.getContent(),
+                        createDtoCommands.getSize(),
+                        createDtoCommands.getNumberOfElements(),
+                        createDtoCommands.hasNext(),
+                        command.orderBy().equals("likeCount")   // order attribute check - change enum to after
+                )
+        );
+    };
+
+    // get CreateCursorDtoCommand
+    private CursorContainerCreateCommand<CommentDto> getCursorContainerCommand(
+            List<CommentDtoCreateCommand> contents,
+            int size,
+            int totalElement,
+            Boolean hasNext,
+            Boolean orderByLikeCount
+    ){
+        // default values fot nextCursor and nextAfter
+        String next = "";
+        String after = "";
+
+        log.info("got contents - {}",contents);
+
+        // cursor and next after
+        List<CommentDto> comments = contents.stream().map(commentMapper::toDto).toList();
+
+        log.info("commentDto list: {}",comments);
+
+        // protect null point exception when comment query is 0.
+        if (!comments.isEmpty()){
+            CommentDto last = comments.get(comments.size() - 1);
+
+            log.info("last comment info is - {}",last);
+
+            next = orderByLikeCount ? last.likeCount().toString() : last.createdAt().toString();
+            after = last.createdAt().toString();
+        }
+
+        return new CursorContainerCreateCommand<>(
+                comments,
+                next,
+                after,
+                (long) size,
+                (long) totalElement,
+                hasNext
+        );
     }
 
     private Article getArticleOrExcept(UUID articleId){
