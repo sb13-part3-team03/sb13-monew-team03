@@ -7,9 +7,8 @@ import java.util.List;
 
 @Component
 public class RssNewsCollector implements NewsCollector {
-
     @Override
-    public List<CollectedArticleDTO> collect() {
+    public List<CollectedArticleDTO> collect(String keyword) {
         return List.of();
     }
 }
