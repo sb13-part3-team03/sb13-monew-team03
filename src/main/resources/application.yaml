@@ -7,3 +7,8 @@ spring:
     username: ${DB_USERNAME:monew_user}
     password: ${DB_PASSWORD:monew1234}
 
+  naver:
+    api:
+      client-id: ${NAVER_CLIENT_ID}
+      client-secret: ${NAVER_CLIENT_SECRET}
+      base-url: https://openapi.naver.com
