@@ -16,7 +16,7 @@ public record ArticleSearchRequest (
         LocalDateTime publishDateFrom,
         LocalDateTime publishDateTo,
         String cursor,
-        Long after,
+        UUID after,
         String orderBy,
         String direction,
         @Min(1)
