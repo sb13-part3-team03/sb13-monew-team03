@@ -1,16 +1,14 @@
 package com.codeit.monew.article.repository;
 
-import com.codeit.monew.article.dto.request.ArticleSearchRequest;
+import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
-import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
-import com.codeit.monew.article.entity.Article;
 
 import java.util.List;
 
 public interface ArticleRepositoryCustom {
 
-    long countTotalElements(ArticleSearchRequest request);
+    long countTotalElements(ArticleSearchCommand command);
 
-    List<ArticleSearchResult> searchArticles(ArticleSearchRequest request);
+    List<ArticleSearchResult> searchArticles(ArticleSearchCommand command);
 
 }

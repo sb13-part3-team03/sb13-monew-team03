@@ -1,6 +1,6 @@
 package com.codeit.monew.article.service;
 
-import com.codeit.monew.article.dto.request.ArticleSearchRequest;
+import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleDto;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
@@ -20,19 +20,16 @@ public class ArticleQueryServiceImpl implements ArticleQueryService {
 
     @Override
     @Transactional(readOnly = true)
-    public CursorPageResponseArticleDto searchArticles(
-            ArticleSearchRequest request,
-            UUID userId
-    ) {
+    public CursorPageResponseArticleDto searchArticles(ArticleSearchCommand command) {
         // limit + 1개 조회
-        List<ArticleSearchResult> results = articleRepository.searchArticles(request);
+        List<ArticleSearchResult> results = articleRepository.searchArticles(command);
 
         // 다음 페이지 존재 여부
-        boolean hasNext = results.size() > request.limit();
+        boolean hasNext = results.size() > command.limit();
 
         // 실제 응답 데이터
         List<ArticleSearchResult> content = hasNext
-                ? results.subList(0, request.limit())
+                ? results.subList(0, command.limit())
                 : results;
 
         // 마지막 데이터
@@ -42,13 +39,13 @@ public class ArticleQueryServiceImpl implements ArticleQueryService {
         UUID nextAfter = null;
 
         if (hasNext && last != null) {
-            nextCursor = createNextCursor(last, request.orderBy());
+            nextCursor = createNextCursor(last, command.orderBy());
 
             nextAfter = last.article().getId();
         }
 
         // 전체 검색 결과 개수
-        long totalElements = articleRepository.countTotalElements(request);
+        long totalElements = articleRepository.countTotalElements(command);
 
         List<ArticleDto> articleDtos = content.stream()
                 .map(ArticleDto::from)
@@ -58,7 +55,7 @@ public class ArticleQueryServiceImpl implements ArticleQueryService {
                 articleDtos,
                 nextCursor,
                 nextAfter,
-                request.limit(),
+                command.limit(),
                 totalElements,
                 hasNext
         );

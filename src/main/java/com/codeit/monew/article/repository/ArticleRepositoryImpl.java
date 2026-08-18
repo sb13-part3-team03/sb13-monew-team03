@@ -5,7 +5,7 @@ import static com.codeit.monew.article.entity. QArticleInterest.articleInterest;
 import static com.codeit.monew.article.entity.QArticleView.articleView;
 import static com.codeit.monew.comment.entity.QComment.comment;
 
-import com.codeit.monew.article.dto.request.ArticleSearchRequest;
+import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
 
 import com.codeit.monew.article.entity.ArticleSource;
@@ -20,8 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -33,17 +31,17 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
 
     @Override
     @Transactional(readOnly = true)
-    public long countTotalElements(ArticleSearchRequest request) {
+    public long countTotalElements(ArticleSearchCommand command) {
 
         Long count = queryFactory
                 .select(article.id.countDistinct())
                 .from(article)
                 .where(
-                        keywordContains(request.keyword()),
-                        interestIdEq(request.interestId()),
-                        sourceEq(request.sourceIn()),
-                        publishedAtGoe(request.publishDateFrom()),
-                        publishedAtLoe(request.publishDateTo())
+                        keywordContains(command.keyword()),
+                        interestIdEq(command.interestId()),
+                        sourceEq(command.sourceIn()),
+                        publishedAtGoe(command.publishDateFrom()),
+                        publishedAtLoe(command.publishDateTo())
                 )
                 .fetchOne();
 
@@ -52,7 +50,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ArticleSearchResult> searchArticles(ArticleSearchRequest request) {
+    public List<ArticleSearchResult> searchArticles(ArticleSearchCommand command) {
 
         return queryFactory
                 .select(Projections.constructor(
@@ -69,50 +67,50 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .leftJoin(articleView)
                 .on(articleView.article.eq(article))
                 .where(
-                        keywordContains(request.keyword()),
-                        interestIdEq(request.interestId()),
-                        sourceEq(request.sourceIn()),
-                        publishedAtGoe(request.publishDateFrom()),
-                        publishedAtLoe(request.publishDateTo()),
+                        keywordContains(command.keyword()),
+                        interestIdEq(command.interestId()),
+                        sourceEq(command.sourceIn()),
+                        publishedAtGoe(command.publishDateFrom()),
+                        publishedAtLoe(command.publishDateTo()),
                         publishedDateCursorCondition(
-                                request.direction(),
-                                request.cursor(),
-                                request.after()
+                                command.direction(),
+                                command.cursor(),
+                                command.after()
                         )
                 )
                 .groupBy(article.id)
                 .having(
                         // comment 및 interest는 집계 함수로 having 절에서 정렬
-                        cursorHavingCondition(request)
+                        cursorHavingCondition(command)
                 )
                 .orderBy(
                         orderSpecifiers(
-                        request.orderBy(),
-                        request.direction()
+                        command.orderBy(),
+                        command.direction()
                     )
                 )
-                .limit(request.limit() + 1)
+                .limit(command.limit() + 1)
                 .fetch();
 
     }
 
     // 댓글 수 / 조회 수 정렬 커서 페이지네이션
-    private BooleanExpression cursorHavingCondition(ArticleSearchRequest request) {
-        if (!StringUtils.hasText(request.cursor())
-                || request.after() == null) {
+    private BooleanExpression cursorHavingCondition(ArticleSearchCommand command) {
+        if (!StringUtils.hasText(command.cursor())
+                || command.after() == null) {
             return null;
         }
 
-        Long cursorCount = Long.parseLong(request.cursor());
+        Long cursorCount = Long.parseLong(command.cursor());
 
         boolean isDesc =
-                "desc".equalsIgnoreCase(request.direction());
+                "desc".equalsIgnoreCase(command.direction());
 
         NumberExpression<Long> countExpression;
 
-        if ("commentCount".equals(request.orderBy())) {
+        if ("commentCount".equals(command.orderBy())) {
             countExpression = comment.id.countDistinct();
-        } else if ("viewCount".equals(request.orderBy())) {
+        } else if ("viewCount".equals(command.orderBy())) {
             countExpression = articleView.id.countDistinct();
         } else {
             return null;
@@ -122,14 +120,14 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             return countExpression.lt(cursorCount)
                     .or(
                             countExpression.eq(cursorCount)
-                                    .and(article.id.lt(request.after()))
+                                    .and(article.id.lt(command.after()))
                     );
         }
 
         return countExpression.gt(cursorCount)
                 .or(
                         countExpression.eq(cursorCount)
-                                .and(article.id.gt(request.after()))
+                                .and(article.id.gt(command.after()))
                 );
     }
 
@@ -237,16 +235,16 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     }
 
     // 시작 날짜 이상
-    private BooleanExpression publishedAtGoe(LocalDateTime startDate) {
+    private BooleanExpression publishedAtGoe(Instant startDate) {
         return startDate != null
-                ? article.publishDate.goe(Instant.from(startDate.atZone(ZoneId.of("Asia/Seoul")).toInstant()))
+                ? article.publishDate.goe(startDate)
                 : null;
     }
 
     // 종료 날짜 이하
-    private BooleanExpression publishedAtLoe(LocalDateTime endDate) {
+    private BooleanExpression publishedAtLoe(Instant endDate) {
         return endDate != null
-                ? article.publishDate.loe(Instant.from(endDate.atZone(ZoneId.of("Asia/Seoul")).toInstant()))
+                ? article.publishDate.loe(endDate)
                 : null;
     }
 
