@@ -37,10 +37,10 @@ public class CommentRepositoryTest {
     @Autowired
     CommentRepository commentRepository;
 
-    private ArrayList<Comment> setup(UUID articleId, UUID... userIds){
+    private ArrayList<Comment> setup(UUID... userIds){
         // 사용될 user, article, comment, commentLike 객체 준비
         try{
-            Article article = getArticleMock(articleId);
+            Article article = getArticleMock();
             ArrayList<Comment> comments = new ArrayList<>();
             int counter = 0;
             for(UUID userid : userIds){
@@ -66,7 +66,7 @@ public class CommentRepositoryTest {
         return comment;
     }
 
-    private Article getArticleMock(UUID id) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private Article getArticleMock() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         // no constructor written at 08-14.
         // use reflection api
 
@@ -101,18 +101,16 @@ public class CommentRepositoryTest {
     @Transactional
     public void getDtoCommentTest(){
         // 매서드가 지정한 커맨트를 잘 받아오는지 테스트.
-
-        UUID articleId = UUID.randomUUID();
         UUID user1Id = UUID.randomUUID();
         UUID user2Id = UUID.randomUUID();
 
-        List<Comment> comments = setup(articleId,user1Id,user2Id);
+        List<Comment> comments = setup(user1Id,user2Id);
 
         CommentDtoCreateCommand command = commentRepository
                 .getDtoCommandById(comments.get(0).getId())
                 .orElseThrow(() -> new RuntimeException("getDtoCommentTest failed. result is null."));
 
         assertThat(command.id()).isEqualTo(comments.get(0).getId());
-        log.debug("created command info - {}",command.toString());
+        log.debug("created command info - {}",command);
     }
 }

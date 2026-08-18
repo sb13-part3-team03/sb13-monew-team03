@@ -3,6 +3,7 @@ package com.codeit.monew.comment.repository.querydsl;
 
 import com.codeit.monew.article.entity.QArticle;
 import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
+import com.codeit.monew.comment.dto.command.CommentQueryCommand;
 import com.codeit.monew.comment.entity.QComment;
 import com.codeit.monew.comment.entity.QCommentLike;
 import com.codeit.monew.user.entity.QUser;
@@ -10,7 +11,9 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Slice;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -79,4 +82,9 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
         return Optional.ofNullable(result);
     }
 
+    @Override
+    public Slice<CommentDtoCreateCommand> getAllCommentsWithCursor(CommentQueryCommand command){
+
+        return null;
+    }
 }

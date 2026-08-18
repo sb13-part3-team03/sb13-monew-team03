@@ -5,6 +5,10 @@ import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.comment.dto.command.CommentCreateCommand;
 import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
+import com.codeit.monew.comment.dto.command.CommentQueryCommand;
+import com.codeit.monew.comment.dto.command.CursorContainerCreateCommand;
+import com.codeit.monew.comment.dto.response.CommentDto;
+import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.mapper.CommentMapper;
 import com.codeit.monew.comment.repository.CommentRepository;
@@ -17,10 +21,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,16 +70,7 @@ public class CommentServiceTest {
     }
 
     private Optional<CommentDtoCreateCommand> getCommentDtoFromUUID(UUID commentId){
-        return Optional.of(new CommentDtoCreateCommand(
-                commentId,
-                null,
-                null,
-                "nickname",
-                "content",
-                0L,
-                false,
-                Instant.now()
-        ));
+        return Optional.of(getDtoCreateCommand(commentId,null,null,false));
     }
 
 
@@ -121,5 +121,183 @@ public class CommentServiceTest {
         assertThat(createdCommand.get().id()).isEqualTo(createdObject.get().getId());
     }
 
+    @Test
+    @DisplayName("comment query with pagination")
+    public void queryTest(){
+        // given
+        // set up comment for test
+        UUID articleId = UUID.randomUUID();
+        UUID user1 = UUID.randomUUID();
+        UUID user2 = UUID.randomUUID();
 
+        // order -> createdAt or likeCount
+        String order = "createdAt";
+        String direction = "DESC";
+        String cursor = "";
+        String after = "";
+        Long size = 2L;
+        UUID requestUser = user1;
+
+        CommentQueryCommand command = getQueryCommand(
+                articleId,
+                order,
+                direction,
+                cursor,
+                after,
+                size,
+                requestUser
+        );
+
+        // comment dto list for return repository.
+        List<CommentDtoCreateCommand> dtoCreateCommands = getCommentDtoCommandList();
+
+        // create checker response object
+        int commandSize = dtoCreateCommands.size();
+        CommentDtoCreateCommand cursorObject = dtoCreateCommands.get(commandSize - 1);
+
+        // convert repository result to service return object
+        CursorContainerDto<CommentDtoCreateCommand> response = getCursorResponse(
+                dtoCreateCommands,
+                cursorObject.createdAt().toString(),    // variable change need
+                cursorObject.createdAt().toString(),
+                (long) commandSize,
+                false
+        );
+
+        log.info("TEST - Repository will return query size - {}",commandSize);
+        log.info("TEST - the Cursor object is - {}", cursorObject);
+
+        // order by date or commentLike(sub when date) <- repository spec
+        // dto transfer test.
+        // cursor on and off test
+
+        // when
+        given(commentRepository.getAllCommentsWithCursor(any(CommentQueryCommand.class)))
+                .willReturn(getSliceFromList(dtoCreateCommands));
+
+        setMapperCommentDtoFromCommand();
+        setMapperCursorContainerFromCommand();
+
+        CursorContainerDto<?> result = commentService.query(command);
+
+        // then
+        log.info("TEST - result check: answerObject - {}, result - {}",response,result);
+        assertThat(response.size()).isEqualTo(result.size());
+        assertThat(response.nextCursor()).isEqualTo(result.nextCursor());
+        assertThat(response.nextAfter()).isEqualTo(result.nextAfter());
+    }
+
+    private void setMapperCursorContainerFromCommand(){
+        given(commentMapper.toDto(any(CursorContainerCreateCommand.class)))
+                .willAnswer( invocation -> {
+                            CursorContainerCreateCommand<?> parameter = invocation.getArgument(0);
+                            return getCursorContainerDtoFromCommand(parameter);
+                        }
+                );
+    }
+
+    private void setMapperCommentDtoFromCommand(){
+        // set covert CommentDtoCommand to CommentDto
+        given(commentMapper.toDto(any(CommentDtoCreateCommand.class)))
+                .willAnswer(
+                        invocation -> {
+                            CommentDtoCreateCommand parameter = invocation.getArgument(0);
+                            return getCommentDtoFromCommand(parameter);
+                        }
+                );
+    }
+
+    private CommentDto getCommentDtoFromCommand(CommentDtoCreateCommand command){
+        return new CommentDto(
+                command.id(),
+                command.articleId(),
+                command.userId(),
+                command.userNickName(),
+                command.content(),
+                command.likeCount(),
+                command.likeByMe(),
+                command.createdAt()
+        );
+    }
+
+    private <T> CursorContainerDto<T> getCursorContainerDtoFromCommand(
+            CursorContainerCreateCommand<T> command
+    ){
+        return new CursorContainerDto<>(
+                command.contents(),
+                command.nextCursor(),
+                command.nextAfter(),
+                command.size(),
+                command.totalElement(),
+                command.hasNext()
+        );
+    }
+
+    private <T> Slice<T> getSliceFromList(List<T> contents){
+        int size = contents.size();
+        Pageable pageable = PageRequest.of(0,size);
+        return new SliceImpl<>(contents,pageable,false);
+    }
+
+    private CursorContainerDto<CommentDtoCreateCommand> getCursorResponse(
+            List<CommentDtoCreateCommand> commandList,
+            String cursor,
+            String after,
+            Long totalElement,
+            Boolean hasNext
+    ){
+        return new CursorContainerDto<CommentDtoCreateCommand>(
+                commandList,
+                cursor,
+                after,
+                (long) commandList.size(),
+                totalElement,
+                hasNext
+        );
+    }
+
+    // get single CommentDtoCreateCommand Object
+    private CommentDtoCreateCommand getDtoCreateCommand(
+            UUID commentId,
+            UUID articleId,
+            UUID userId,
+            Boolean likeByMe
+    ){
+        log.info("TEST - create CommentDto Command : comment - {}, article - {}, user - {}", commentId, articleId, userId);
+        return new CommentDtoCreateCommand(
+                commentId,
+                articleId,
+                userId,
+                "nickname",
+                "content",
+                0L,
+                likeByMe,
+                Instant.now()
+        );
+    }
+
+
+    // get CommentDtoCreateCommand list
+    private List<CommentDtoCreateCommand> getCommentDtoCommandList(){
+        List<CommentDtoCreateCommand> result = List.of(
+                getDtoCreateCommand(UUID.randomUUID(),null,null,false),
+                getDtoCreateCommand(UUID.randomUUID(),null,null,true)
+        );
+        log.info("TEST - getCommentDtoCommandList() : {}",result);
+        return result;
+    }
+
+
+    // get Command for use param service.query()
+    private CommentQueryCommand getQueryCommand(
+            UUID articleId,
+            String orderBy,
+            String direction,
+            String cursor,
+            String after,
+            Long size,
+            UUID requestUserId
+    ){
+        return new CommentQueryCommand(articleId, orderBy, direction, cursor, after, size, requestUserId);
+    }
 }
