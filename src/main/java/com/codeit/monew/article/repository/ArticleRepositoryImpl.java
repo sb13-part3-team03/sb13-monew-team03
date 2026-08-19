@@ -41,7 +41,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .where(
                         keywordContains(command.keyword()),
                         interestIdEq(command.interestId()),
-                        sourceEq(command.sourceIn()),
+                        sourceIn(command.sourceIn()),
                         publishedAtGoe(command.publishDateFrom()),
                         publishedAtLoe(command.publishDateTo())
                 )
@@ -71,7 +71,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .where(
                         keywordContains(command.keyword()),
                         interestIdEq(command.interestId()),
-                        sourceEq(command.sourceIn()),
+                        sourceIn(command.sourceIn()),
                         publishedAtGoe(command.publishDateFrom()),
                         publishedAtLoe(command.publishDateTo()),
                         publishedDateCursorCondition(
@@ -228,12 +228,10 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     }
 
     // 출처 필터
-    private BooleanExpression sourceEq(ArticleSource source) {
-        if (source == null) {
-            return null;
-        }
-
-        return article.source.eq(source);
+    private BooleanExpression sourceIn(List<ArticleSource> sources) {
+        return sources != null && !sources.isEmpty()
+                ? article.source.in(sources)
+                : null;
     }
 
     // 시작 날짜 이상

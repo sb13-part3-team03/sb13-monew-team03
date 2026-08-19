@@ -6,12 +6,13 @@ import com.codeit.monew.article.entity.ArticleSource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.UUID;
 
 public record ArticleSearchCommand(
         String keyword,
         UUID interestId,
-        ArticleSource sourceIn,
+        List<ArticleSource> sourceIn,
         Instant publishDateFrom,
         Instant publishDateTo,
         String cursor,
@@ -52,14 +53,14 @@ public record ArticleSearchCommand(
     private ArticleSearchCommand createSearchCommand (
             String keyword,
             UUID interestId,
-            ArticleSource source,
+            List<ArticleSource> sourceIn,
             Instant publishDateFrom,
             Instant publishDateTo
     ) {
         return new ArticleSearchCommand(
                 keyword,
                 interestId,
-                source,
+                sourceIn,
                 publishDateFrom,
                 publishDateTo,
                 null,

@@ -187,9 +187,9 @@ public class ArticleRepositoryImplTest {
         ArticleSearchCommand command = new ArticleSearchCommand(
                 "Spring",
                 null,
-                ArticleSource.NAVER,
+                List.of(ArticleSource.NAVER, ArticleSource.HANKYUNG),
                 Instant.parse("2026-07-31T00:00:00Z"),
-                Instant.parse("2026-08-02T00:00:00Z"),
+                Instant.parse("2026-08-20T00:00:00Z"),
                 null,
                 null,
                 null,
@@ -202,7 +202,7 @@ public class ArticleRepositoryImplTest {
         long result = articleRepository.countTotalElements(command);
 
         // then
-        assertThat(result).isEqualTo(1);
+        assertThat(result).isEqualTo(2);
     }
 
 }
