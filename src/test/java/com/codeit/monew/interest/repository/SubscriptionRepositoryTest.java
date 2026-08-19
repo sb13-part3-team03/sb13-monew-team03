@@ -1,5 +1,7 @@
 package com.codeit.monew.interest.repository;
 
+import com.codeit.monew.global.config.JpaAuditingConfig;
+import com.codeit.monew.global.config.QuerydslConfig;
 import com.codeit.monew.interest.entity.Interest;
 import com.codeit.monew.interest.entity.Subscription;
 import com.codeit.monew.user.entity.User;
@@ -9,6 +11,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
 import java.util.List;
@@ -18,6 +22,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@ActiveProfiles("test")
+@Import({
+        QuerydslConfig.class,
+        JpaAuditingConfig.class
+})
 class SubscriptionRepositoryTest {
     @Autowired
     private SubscriptionRepository subscriptionRepository;
@@ -44,8 +53,7 @@ class SubscriptionRepositoryTest {
                     new User(
                             "user1@test.com",
                             "user1",
-                            "password",
-                            Instant.now()
+                            "password"
                     )
             );
 
@@ -53,8 +61,7 @@ class SubscriptionRepositoryTest {
                     new User(
                             "user2@test.com",
                             "user2",
-                            "password",
-                            Instant.now()
+                            "password"
                     )
             );
 
@@ -87,8 +94,7 @@ class SubscriptionRepositoryTest {
                     new User(
                             "user@test.com",
                             "user",
-                            "password",
-                            Instant.now()
+                            "password"
                     )
             );
 
@@ -119,8 +125,7 @@ class SubscriptionRepositoryTest {
                     new User(
                             "user@test.com",
                             "user",
-                            "password",
-                            Instant.now()
+                            "password"
                     )
             );
 
@@ -152,8 +157,7 @@ class SubscriptionRepositoryTest {
                     new User(
                             "user@test.com",
                             "user",
-                            "password",
-                            Instant.now()
+                            "password"
                     )
             );
 
@@ -187,8 +191,7 @@ class SubscriptionRepositoryTest {
                     new User(
                             "user@test.com",
                             "user",
-                            "password",
-                            Instant.now()
+                            "password"
                     )
             );
 
@@ -220,8 +223,7 @@ class SubscriptionRepositoryTest {
                     new User(
                             "user1@test.com",
                             "user1",
-                            "password",
-                            Instant.now()
+                            "password"
                     )
             );
 
@@ -229,8 +231,7 @@ class SubscriptionRepositoryTest {
                     new User(
                             "user2@test.com",
                             "user2",
-                            "password",
-                            Instant.now()
+                            "password"
                     )
             );
 

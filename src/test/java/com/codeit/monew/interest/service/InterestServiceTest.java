@@ -100,8 +100,7 @@ class InterestServiceTest {
             User user = new User(
                     "test@test.com",
                     "테스트",
-                    "password",
-                    Instant.now()
+                    "password"
             );
 
             InterestSubscribeCommand command =
@@ -348,8 +347,7 @@ class InterestServiceTest {
             User user = new User(
                     "test@test.com",
                     "테스트",
-                    "password",
-                    Instant.now()
+                    "password"
             );
 
             Interest interest = new Interest(
