@@ -10,11 +10,12 @@ import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.interest.entity.Interest;
 import com.codeit.monew.interest.repository.InterestRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ArticleCollectionService {
@@ -24,7 +25,6 @@ public class ArticleCollectionService {
     private final ArticleInterestRepository articleInterestRepository;
     private final List<NewsCollector> newsCollectors;
 
-    @Transactional
     public void collectAndSave() {
 
         // 1. 등록된 모든 관심사 조회
@@ -39,18 +39,28 @@ public class ArticleCollectionService {
                 // 4. 등록된 뉴스 수집기 실행
                 for (NewsCollector collector : newsCollectors) {
 
-                    List<CollectedArticleDTO> collectedArticles =
-                            collector.collect(keyword);
+                    try {
+                        List<CollectedArticleDTO> collectedArticles =
+                                collector.collect(keyword);
 
-                    // 5. 수집된 기사 저장
-                    for (CollectedArticleDTO dto : collectedArticles) {
+                        // 5. 수집된 기사 저장
+                        for (CollectedArticleDTO dto : collectedArticles) {
 
-                        Article article = articleRepository
-                                .findBySourceUrl(dto.sourceUrl())
-                                .orElseGet(() -> saveArticle(dto));
+                            Article article = articleRepository
+                                    .findBySourceUrl(dto.sourceUrl())
+                                    .orElseGet(() -> saveArticle(dto));
 
-                        // 6. 기사와 관심사 연결
-                        saveArticleInterest(article, interest);
+                            // 6. 기사와 관심사 연결
+                            saveArticleInterest(article, interest);
+                        }
+
+                    } catch (Exception e) {
+                        log.error(
+                                "뉴스 수집 또는 저장 실패. collector={}, keyword={}",
+                                collector.getClass().getSimpleName(),
+                                keyword,
+                                e
+                        );
                     }
                 }
             }
