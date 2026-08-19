@@ -104,6 +104,11 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             return null;
         }
 
+        // publishDate는 WHERE의 publishedDateCursorCondition에서 처리
+        if ("publishDate".equals(command.orderBy())) {
+            return null;
+        }
+
         Long cursorCount = Long.parseLong(command.cursor());
 
         boolean isDesc =
