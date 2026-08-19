@@ -1,6 +1,7 @@
 package com.codeit.monew.notification.dto.response;
 
 import com.codeit.monew.notification.entity.Notification;
+import com.codeit.monew.notification.enums.ResourceType;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -11,7 +12,7 @@ public record NotificationDto(
     boolean confirmed,
     UUID userId,
     String content,
-    String resourceType,
+    ResourceType resourceType,
     UUID resourceId
 ) {
 
@@ -20,7 +21,7 @@ public record NotificationDto(
         notification.getId(),
         notification.getCreatedAt(),
         notification.getUpdatedAt(),
-        notification.isConfirmed(),
+        notification.getConfirmed(),
         notification.getUserId(),
         notification.getContent(),
         notification.getResourceType(),

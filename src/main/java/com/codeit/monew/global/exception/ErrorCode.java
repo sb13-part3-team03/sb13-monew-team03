@@ -32,7 +32,20 @@ public enum ErrorCode {
     LOGIN_FAILED(
             HttpStatus.UNAUTHORIZED,
             "이메일 또는 비밀번호가 일치하지 않습니다."
+    ),
+
+    // notification
+    NOTIFICATION_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "알림을 찾을 수 없습니다."
+    ),
+  
+    // article
+    ARTICLE_NOT_FOUND(
+          HttpStatus.NOT_FOUND,
+          "뉴스 기사 정보를 찾을 수 없습니다."
     );
+  
 
     private final HttpStatus httpStatus;
     private final String message;
@@ -41,4 +54,7 @@ public enum ErrorCode {
         this.httpStatus = httpStatus;
         this.message = message;
     }
+
+
+
 }
