@@ -31,6 +31,12 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
+    /**
+     * 검색 조건에 해당하는 게시글의 전체 개수를 조회합니다.
+     *
+     * @param command 게시글 검색 조건
+     * @return 검색 조건에 해당하는 게시글 수
+     */
     @Override
     @Transactional(readOnly = true)
     public long countTotalElements(ArticleSearchCommand command) {
@@ -52,6 +58,13 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
         return count != null ? count : 0;
     }
 
+    /**
+     * 검색 조건에 따라 게시글을 조회하고 댓글 수와 조회 수를 집계합니다.
+     *
+     * @param command 게시글 검색 조건
+     * @param orderBy 정규화된 정렬 기준
+     * @return 검색 결과 목록
+     */
     @Override
     @Transactional(readOnly = true)
     public List<ArticleSearchResult> searchArticles(ArticleSearchCommand command, String orderBy) {
