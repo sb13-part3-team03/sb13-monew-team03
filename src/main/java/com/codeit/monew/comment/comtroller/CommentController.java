@@ -1,6 +1,7 @@
 package com.codeit.monew.comment.comtroller;
 
 
+import com.codeit.monew.comment.dto.command.CommentCreateCommand;
 import com.codeit.monew.comment.dto.command.CommentQueryCommand;
 import com.codeit.monew.comment.dto.response.CommentDto;
 import com.codeit.monew.comment.dto.response.CursorContainerDto;
@@ -43,5 +44,13 @@ public class CommentController implements CommentControllerDoc{
 
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping
+    public ResponseEntity<CommentDto> createComment(
+            @RequestBody CommentCreateCommand command
+    ){
+        return ResponseEntity.ok(commentService.registry(command));
+    }
+
 
 }
