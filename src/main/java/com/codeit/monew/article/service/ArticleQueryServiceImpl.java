@@ -65,16 +65,15 @@ public class ArticleQueryServiceImpl implements ArticleQueryService {
             ArticleSearchResult result,
             String orderBy
     ) {
-        return switch (orderBy) {
-            case "commentCount" ->
-                    String.valueOf(result.commentCount());
+        if ("commentCount".equals(orderBy)) {
+            return String.valueOf(result.commentCount());
+        }
 
-            case "viewCount" ->
-                    String.valueOf(result.viewCount());
+        if ("viewCount".equals(orderBy)) {
+            return String.valueOf(result.viewCount());
+        }
 
-            default ->
-                    result.article().getPublishDate().toString();
-        };
+        return result.article().getPublishDate().toString();
     }
 
 
