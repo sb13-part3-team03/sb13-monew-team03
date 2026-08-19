@@ -6,13 +6,19 @@ import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.URL;
+import java.net.URLConnection;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 
+@Slf4j
 public abstract class RssNewsCollector implements NewsCollector {
+
+    private static final int CONNECT_TIMEOUT_MS = 3000;
+    private static final int READ_TIMEOUT_MS = 5000;
 
     private final String feedUrl;
 
@@ -27,14 +33,19 @@ public abstract class RssNewsCollector implements NewsCollector {
         try {
             SyndFeedInput input = new SyndFeedInput();
 
-            SyndFeed feed = input.build(
-                    new XmlReader(new URL(feedUrl))
-            );
+            URLConnection connection = new URL(feedUrl).openConnection();
+            connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+            connection.setReadTimeout(READ_TIMEOUT_MS);
 
-            return feed.getEntries().stream()
-                    .filter(entry -> containsKeyword(entry, keyword))
-                    .map(this::toCollectedArticle)
-                    .toList();
+            try (XmlReader reader = new XmlReader(connection)) {
+                SyndFeed feed = input.build(reader);
+
+                return feed.getEntries().stream()
+                        .filter(this::hasPublishedDate)
+                        .filter(entry -> containsKeyword(entry, keyword))
+                        .map(this::toCollectedArticle)
+                        .toList();
+            }
 
         } catch (Exception e) {
             throw new IllegalStateException(
@@ -54,10 +65,8 @@ public abstract class RssNewsCollector implements NewsCollector {
                 ? ""
                 : entry.getTitle().toLowerCase(Locale.ROOT);
 
-        String description = entry.getDescription() == null
-                ? ""
-                : entry.getDescription().getValue()
-                  .toLowerCase(Locale.ROOT);
+        String description = getDescription(entry)
+                .toLowerCase(Locale.ROOT);
 
         return title.contains(lowerKeyword)
                 || description.contains(lowerKeyword);
@@ -66,13 +75,9 @@ public abstract class RssNewsCollector implements NewsCollector {
     private CollectedArticleDTO toCollectedArticle(
             SyndEntry entry
     ) {
-        String description = entry.getDescription() == null
-                ? ""
-                : entry.getDescription().getValue();
+        String description = getDescription(entry);
 
-        Instant publishDate = entry.getPublishedDate() == null
-                ? Instant.now()
-                : entry.getPublishedDate().toInstant();
+        Instant publishDate = entry.getPublishedDate().toInstant();
 
         return new CollectedArticleDTO(
                 getSource(),
@@ -81,5 +86,27 @@ public abstract class RssNewsCollector implements NewsCollector {
                 description,
                 publishDate
         );
+    }
+
+    private String getDescription(SyndEntry entry) {
+        if (entry.getDescription() == null
+                || entry.getDescription().getValue() == null) {
+            return "";
+        }
+
+        return entry.getDescription().getValue();
+    }
+
+    private boolean hasPublishedDate(SyndEntry entry) {
+        if (entry.getPublishedDate() == null) {
+            log.warn(
+                    "RSS 기사 발행일 누락으로 기사를 건너뜁니다. source={}, url={}",
+                    getSource(),
+                    entry.getLink()
+            );
+            return false;
+        }
+
+        return true;
     }
 }
