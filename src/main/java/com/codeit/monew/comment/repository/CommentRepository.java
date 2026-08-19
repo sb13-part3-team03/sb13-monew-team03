@@ -10,6 +10,4 @@ public interface CommentRepository extends JpaRepository<Comment, UUID>, Comment
     long countByDeletedAtIsNull();
     Long countAllByDeletedAtIsNullAndArticleId(UUID id);
     Comment findByIdAndDeletedAtIsNull(UUID id);
-
-
 }

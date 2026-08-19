@@ -72,7 +72,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
                 Projections.constructor(
                         CommentDtoCreateCommand.class,
                         comment.id,
-                        article.id,
+                        comment.article.id,
                         user.id,
                         user.nickname,
                         comment.content,
@@ -219,13 +219,6 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
                 setCursorCondition(
                         command.orderBy(),
                         command.cursor(),
-                        command.direction()
-                )
-        );
-
-        // set sub cursor (after) condition.
-        where.and(
-                setAfterCondition(
                         command.after(),
                         command.direction()
                 )
@@ -245,6 +238,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
     private BooleanExpression setCursorCondition(
             String orderBy,
             String cursor,
+            String after,
             String direction
     ){
 
@@ -252,24 +246,12 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
 
         return switch (orderBy.toUpperCase(Locale.ROOT)) {
             case "CREATEDAT" -> getConditionFilterWithCreatedAt(direction, cursor);
-            case "LIKECOUNT" -> getConditionFilterWithLikeCount(direction, cursor);
+            case "LIKECOUNT" -> getConditionFilterWithLikeCount(direction, cursor, after);
             default -> {
                 log.debug("orderBy value error - {}", orderBy);
                 throw new CommentException(ErrorCode.COMMENT_INVALID_VALUE);
             }
         };
-    }
-
-
-    private BooleanExpression setAfterCondition(
-            String after,
-            String direction
-    ){
-        if (after == null || after.isBlank()) return null;
-
-        log.debug("CommentsQuery - got after = {}", after);
-
-        return getConditionFilterWithCreatedAt(direction, after);
     }
 
 
@@ -290,21 +272,19 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
     }
 
 
-    private BooleanExpression getConditionFilterWithLikeCount(String direction, String cursor){
+    private BooleanExpression getConditionFilterWithLikeCount(String direction, String cursor, String after){
         try {
             // no where define with no  cursor
             if (cursor == null || cursor.isBlank()) return null;
 
             Long count = Long.parseLong(cursor);
 
-            NumberExpression<Long> likeCount = Expressions.numberTemplate(
-                    Long.class,
-                    "({0})",
-                    likeCount() // getting likeCount query
-            );
+            NumberExpression<Long> likeCount = likeCountExpression();
 
             // set sub cursor for check ctime at same like count.
-            return desc(direction) ? likeCount.lt(count) : likeCount.gt(count);
+            return desc(direction)
+                    ? likeCount.lt(count).or(likeCount.eq(count).and(getConditionFilterWithCreatedAt(direction, after)))
+                    : likeCount.gt(count).or(likeCount.eq(count).and(getConditionFilterWithCreatedAt(direction, after)));
         } catch (NumberFormatException e) {
 
             log.error("cursor value can not parse as {} - value = {}", Long.class, cursor,e);
@@ -312,6 +292,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
             throw new CommentException(ErrorCode.COMMENT_INVALID_VALUE);
         }
     }
+
 
     private OrderSpecifier<?> getOrderCondition(String orderBy, String direction){
         return switch (orderBy.toUpperCase()){

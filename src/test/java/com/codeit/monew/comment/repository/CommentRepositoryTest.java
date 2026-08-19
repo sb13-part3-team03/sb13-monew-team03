@@ -47,7 +47,6 @@ public class CommentRepositoryTest {
 
     private List<Comment> setCommentFromCommand(TestCommentCreateCommand... commands){
         List<Comment> commentList = new ArrayList<>();
-        Map<UUID,User> userList = new HashMap<>();
         // set Comment and User first
         for (TestCommentCreateCommand command : commands) {
             // set createAt manually
@@ -347,7 +346,7 @@ public class CommentRepositoryTest {
                     "likeCount",
                     "asc",
                     "2",
-                    commentList.get(2).getCreatedAt().toString(),
+                    commentList.get(0).getCreatedAt().toString(), // comment 1 is cursor
                     2L,
                     userIdList.get(0).getId() // userid1
             );
