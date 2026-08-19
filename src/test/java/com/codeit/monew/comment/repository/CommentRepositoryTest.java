@@ -142,7 +142,7 @@ public class CommentRepositoryTest {
         // set nickname from uuid
         String nickname = id.toString().substring(0,7);
 
-        User user = new User(nickname + "@email.com",nickname,"password",Instant.now());
+        User user = new User(nickname + "@email.com",nickname,"password");
 
         entityManager.persist(user);
 
