@@ -1,12 +1,15 @@
 package com.codeit.monew.notification.repository;
 
-public class NotificationRepository {
+import com.codeit.monew.notification.entity.Notification;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-  //저장
+public interface NotificationRepository
+    extends JpaRepository<Notification, UUID>, NotificationRepositoryCustom {
 
-  //조회
+  //confirm되지 않은 항목 반환
+  List<Notification> findByUserIdAndConfirmedFalse(UUID userId);
 
-  //삭제
-
-
+  long countByUserIdAndConfirmedFalse(UUID userId);
 }

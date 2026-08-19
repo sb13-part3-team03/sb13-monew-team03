@@ -1,25 +1,89 @@
 package com.codeit.monew.notification.service;
 
 import com.codeit.monew.notification.dto.response.CursorPageResponseNotificationDto;
-import com.codeit.monew.notification.command.ConfirmAllNotificationsCommand;
-import com.codeit.monew.notification.command.ConfirmNotificationCommand;
+import com.codeit.monew.notification.dto.response.NotificationDto;
 import com.codeit.monew.notification.condition.NotificationSearchCondition;
+import com.codeit.monew.notification.entity.Notification;
+import com.codeit.monew.notification.enums.ResourceType;
+import com.codeit.monew.notification.repository.NotificationRepository;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
-  public CursorPageResponseNotificationDto findAllNotConfirmed(
-      NotificationSearchCondition condition
-  ) {
-    return null;
+  private final NotificationRepository notificationRepository;
+
+  @Transactional(readOnly = true)
+  public CursorPageResponseNotificationDto findAllNotConfirmed(NotificationSearchCondition condition) {
+    int limit = condition.limit();
+    UUID cursor = condition.cursor() == null
+        ? null
+        : UUID.fromString(condition.cursor());
+
+    List<Notification> notifications = notificationRepository.findAllNotConfirmed(
+        condition.userId(),
+        condition.after(),
+        cursor,
+        limit + 1
+    );
+
+    boolean hasNext = notifications.size() > limit;
+    List<Notification> pageContent = hasNext
+        ? notifications.subList(0, limit)
+        : notifications;
+
+    List<NotificationDto> content = pageContent.stream()
+        .map(NotificationDto::from)
+        .toList();
+
+    String nextCursor = null;
+    Instant nextAfter = null;
+    if (hasNext && !pageContent.isEmpty()) {
+      Notification lastNotification = pageContent.get(pageContent.size() - 1);
+      nextCursor = lastNotification.getId().toString();
+      nextAfter = lastNotification.getCreatedAt();
+    }
+
+    long totalElements =
+        notificationRepository.countByUserIdAndConfirmedFalse(condition.userId());
+
+    return new CursorPageResponseNotificationDto(
+        content,
+        nextCursor,
+        nextAfter,
+        content.size(),
+        totalElements,
+        hasNext
+    );
   }
 
-  public void confirmAll(ConfirmAllNotificationsCommand command) {
+  @Transactional
+  public void create(String content, UUID userId, ResourceType resourceType, UUID resourceId) {
+    Notification notification = new Notification(content, userId, resourceType, resourceId, false);
+    notificationRepository.save(notification);
   }
 
-  public void confirm(ConfirmNotificationCommand command) {
 
+  @Transactional
+  public void confirmAll(UUID userId) {
+    List<Notification> notifications =
+        notificationRepository.findByUserIdAndConfirmedFalse(userId);
+    notifications.forEach(Notification::confirm);
+    notificationRepository.saveAll(notifications);
+  }
+
+  public void confirm(UUID notificationId, UUID userId) {
+    Notification notification = notificationRepository.findById(notificationId).orElseThrow();
+    notification.confirm();
+    notificationRepository.save(notification);
   }
 
 }
