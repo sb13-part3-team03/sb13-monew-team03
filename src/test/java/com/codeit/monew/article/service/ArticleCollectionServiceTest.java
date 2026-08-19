@@ -133,8 +133,8 @@ class ArticleCollectionServiceTest {
     }
 
     @Test
-    @DisplayName("수집된 기사와 관심사를 연결하여 저장한다.")
-    void collectAndSave_savesArticleInterest() {
+    @DisplayName("새로운 기사를 저장하고 관심사와 연결한다.")
+    void collectAndSave_whenNewArticle_savesArticleInterest() {
         // given
         Interest interest = new Interest(
                 "인공지능",
@@ -149,7 +149,51 @@ class ArticleCollectionServiceTest {
                 Instant.parse("2026-08-18T03:00:00Z")
         );
 
-        Article article = Article.create(
+        given(interestRepository.findAll())
+                .willReturn(List.of(interest));
+
+        given(newsCollector.collect("AI"))
+                .willReturn(List.of(collectedArticle));
+
+        given(articleRepository.findBySourceUrl(
+                "https://example.com/article/1"
+        )).willReturn(Optional.empty());
+
+        given(articleRepository.save(any(Article.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        given(articleInterestRepository.existsById(any()))
+                .willReturn(false);
+
+        // when
+        articleCollectionService.collectAndSave();
+
+        // then
+        verify(articleRepository)
+                .save(any(Article.class));
+
+        verify(articleInterestRepository)
+                .save(any(ArticleInterest.class));
+    }
+
+    @Test
+    @DisplayName("기사와 관심사가 이미 연결되어 있으면 중복 저장하지 않는다.")
+    void collectAndSave_whenArticleInterestAlreadyExists_doesNotSaveArticleInterest() {
+        // given
+        Interest interest = new Interest(
+                "인공지능",
+                List.of("AI")
+        );
+
+        CollectedArticleDTO collectedArticle = new CollectedArticleDTO(
+                ArticleSource.NAVER,
+                "https://example.com/article/1",
+                "AI 관련 뉴스",
+                "AI 관련 뉴스 요약",
+                Instant.parse("2026-08-18T03:00:00Z")
+        );
+
+        Article existingArticle = Article.create(
                 collectedArticle.source(),
                 collectedArticle.sourceUrl(),
                 collectedArticle.title(),
@@ -165,13 +209,16 @@ class ArticleCollectionServiceTest {
 
         given(articleRepository.findBySourceUrl(
                 "https://example.com/article/1"
-        )).willReturn(Optional.of(article));
+        )).willReturn(Optional.of(existingArticle));
+
+        given(articleInterestRepository.existsById(any()))
+                .willReturn(true);
 
         // when
         articleCollectionService.collectAndSave();
 
         // then
-        verify(articleInterestRepository)
+        verify(articleInterestRepository, never())
                 .save(any(ArticleInterest.class));
     }
 }
