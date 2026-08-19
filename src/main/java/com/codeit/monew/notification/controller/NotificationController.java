@@ -3,8 +3,6 @@ package com.codeit.monew.notification.controller;
 import com.codeit.monew.notification.dto.response.CursorPageResponseNotificationDto;
 import com.codeit.monew.notification.dto.request.NotificationSearchRequest;
 import com.codeit.monew.notification.service.NotificationService;
-import com.codeit.monew.notification.command.ConfirmAllNotificationsCommand;
-import com.codeit.monew.notification.command.ConfirmNotificationCommand;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +26,7 @@ public class NotificationController {
 
   private final NotificationService notificationService;
 
-
+  // *프론트에서 20개씩 호출함
   @GetMapping
   public ResponseEntity<CursorPageResponseNotificationDto> findAllNotConfirmed(
       @Valid @ModelAttribute NotificationSearchRequest request,
@@ -42,7 +40,7 @@ public class NotificationController {
   public ResponseEntity<Void> confirmAll(
       @RequestHeader(REQUEST_USER_ID_HEADER) UUID userId
   ) {
-    notificationService.confirmAll(new ConfirmAllNotificationsCommand(userId));
+    notificationService.confirmAll(userId);
     return ResponseEntity.ok().build();
   }
 
@@ -51,7 +49,7 @@ public class NotificationController {
       @PathVariable UUID notificationId,
       @RequestHeader(REQUEST_USER_ID_HEADER) UUID userId
   ) {
-    notificationService.confirm(new ConfirmNotificationCommand(notificationId, userId));
+    notificationService.confirm(notificationId, userId);
     return ResponseEntity.ok().build();
   }
 
