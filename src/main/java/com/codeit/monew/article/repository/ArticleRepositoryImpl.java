@@ -191,10 +191,6 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     ) {
         List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
 
-        if (!StringUtils.hasText(orderBy)) {
-            orderBy = "publishDate";
-        }
-
         Order direction = "desc".equalsIgnoreCase(sortDirection)
                 ? Order.DESC
                 : Order.ASC;
