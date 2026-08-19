@@ -53,4 +53,16 @@ public class User {
         this.createdAt = createdAt;
         this.updatedAt = createdAt;
     }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+        this.updatedAt = Instant.now();
+    }
+
+    public void delete() {
+        Instant now = Instant.now();
+
+        this.deletedAt = now;
+        this.updatedAt = now;
+    }
 }
