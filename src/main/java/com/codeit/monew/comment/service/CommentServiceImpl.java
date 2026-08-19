@@ -58,6 +58,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public CursorContainerDto<CommentDto> query(CommentQueryCommand command){
+
         log.debug("query size - {}",command.size());
 
 
