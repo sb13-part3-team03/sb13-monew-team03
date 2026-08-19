@@ -59,16 +59,16 @@ class ArticleQueryServiceTest {
         when(article2.getId()).thenReturn(id2);
 
         ArticleSearchResult result1 =
-                new ArticleSearchResult(article1, 10L, 100L);
+                new ArticleSearchResult(article1, 10L, 100L, false);
 
         ArticleSearchResult result2 =
-                new ArticleSearchResult(article2, 8L, 80L);
+                new ArticleSearchResult(article2, 8L, 80L, false);
 
         ArticleSearchResult result3 =
-                new ArticleSearchResult(article3, 5L, 50L);
+                new ArticleSearchResult(article3, 5L, 50L, false);
 
         // limit = 2이므로 3개를 반환 → hasNext = true
-        when(articleRepository.searchArticles(command))
+        when(articleRepository.searchArticles(command, command.orderBy()))
                 .thenReturn(List.of(result1, result2, result3));
 
         when(articleRepository.countTotalElements(command)).thenReturn(10L);
@@ -94,7 +94,7 @@ class ArticleQueryServiceTest {
 
         assertThat(response.hasNext()).isTrue();
 
-        verify(articleRepository).searchArticles(command);
+        verify(articleRepository).searchArticles(command, command.orderBy());
 
         verify(articleRepository).countTotalElements(command);
 

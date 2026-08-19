@@ -131,7 +131,7 @@ public class ArticleRepositoryImplTest {
 
         // when
         List<ArticleSearchResult> results =
-                articleRepository.searchArticles(command);
+                articleRepository.searchArticles(command, command.orderBy());
 
         // then
         assertThat(results).hasSize(1);
@@ -285,7 +285,7 @@ public class ArticleRepositoryImplTest {
 
         // when
         List<ArticleSearchResult> firstPage =
-                articleRepository.searchArticles(firstPageCommand);
+                articleRepository.searchArticles(firstPageCommand, firstPageCommand.orderBy());
 
         ArticleSearchResult lastArticle = firstPage.get(1);
 
@@ -307,7 +307,7 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> secondPage = articleRepository.searchArticles(secondPageCommand);
+        List<ArticleSearchResult> secondPage = articleRepository.searchArticles(secondPageCommand, secondPageCommand.orderBy());
 
         // then
         assertThat(secondPage).hasSize(1);
@@ -359,7 +359,7 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> firstPage = articleRepository.searchArticles(firstPageCommand);
+        List<ArticleSearchResult> firstPage = articleRepository.searchArticles(firstPageCommand, firstPageCommand.orderBy());
 
         // then
         // 다음 페이지 존재 여부 확인을 위해 limit + 1개 조회
@@ -387,8 +387,7 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> secondPage =
-                articleRepository.searchArticles(secondPageCommand);
+        List<ArticleSearchResult> secondPage = articleRepository.searchArticles(secondPageCommand, secondPageCommand.orderBy());
 
         // then
         assertThat(secondPage).hasSize(1);

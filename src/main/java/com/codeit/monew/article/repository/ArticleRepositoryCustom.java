@@ -9,6 +9,6 @@ public interface ArticleRepositoryCustom {
 
     long countTotalElements(ArticleSearchCommand command);
 
-    List<ArticleSearchResult> searchArticles(ArticleSearchCommand command);
+    List<ArticleSearchResult> searchArticles(ArticleSearchCommand command, String orderBy);
 
 }

@@ -19,7 +19,6 @@ public interface ArticleMapper {
     @Mapping(source = "article.summary", target = "summary")
     @Mapping(source = "commentCount", target = "commentCount")
     @Mapping(source = "viewCount", target = "viewCount")
-    @Mapping(target = "viewedByMe", ignore = true)
     ArticleDto toDto(ArticleSearchResult result);
 
     List<ArticleDto> toDtoList(List<ArticleSearchResult> articles);
