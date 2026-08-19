@@ -333,13 +333,18 @@ public class ArticleRepositoryImplTest {
         Instant now = Instant.parse("2026-08-18T01:00:00Z");
 
         User user = new User("user@test.com", "user", "password", now);
+        User user2 = new User("user2@test.com", "user2", "password", now);
 
         em.persist(user);
+        em.persist(user2);
         em.flush();
 
         // user가 article1만 조회함
         ArticleView articleView = ArticleView.create(article1, user);
+        ArticleView articleView2 = ArticleView.create(article2, user2);
+
         em.persist(articleView);
+        em.persist(articleView2);
 
         em.flush();
         em.clear();
