@@ -1,5 +1,6 @@
 package com.codeit.monew.article.dto.response;
 
+import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleSource;
 
 import java.time.Instant;

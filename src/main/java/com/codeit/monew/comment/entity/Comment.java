@@ -1,6 +1,5 @@
 package com.codeit.monew.comment.entity;
 
-
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.global.entity.BaseEntity;
 import com.codeit.monew.user.entity.User;
