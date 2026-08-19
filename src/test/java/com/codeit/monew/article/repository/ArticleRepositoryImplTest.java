@@ -314,4 +314,87 @@ public class ArticleRepositoryImplTest {
         assertThat(secondPage.get(0).article().getId()).isEqualTo(article1.getId());
     }
 
+    @Test
+    @DisplayName("게시일 정렬 시 두 번째 페이지를 조회한다")
+    void searchArticlesByPublishDateSecondPage() {
+        // given
+        Article article1 = Article.create(
+                ArticleSource.NAVER,
+                "https://example.com/1",
+                "Article 1",
+                "Article 1 summary",
+                Instant.parse("2026-08-01T10:00:00Z")
+        );
+
+        Article article2 = Article.create(
+                ArticleSource.NAVER,
+                "https://example.com/2",
+                "Article 2",
+                "Article 2 summary",
+                Instant.parse("2026-08-02T10:00:00Z")
+        );
+
+        Article article3 = Article.create(
+                ArticleSource.NAVER,
+                "https://example.com/3",
+                "Article 3",
+                "Article 3 summary",
+                Instant.parse("2026-08-03T10:00:00Z")
+        );
+
+        articleRepository.saveAll(List.of(article1, article2, article3));
+
+        ArticleSearchCommand firstPageCommand = new ArticleSearchCommand(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "publishDate",
+                "desc",
+                2,
+                null
+        );
+
+        // when
+        List<ArticleSearchResult> firstPage = articleRepository.searchArticles(firstPageCommand);
+
+        // then
+        // 다음 페이지 존재 여부 확인을 위해 limit + 1개 조회
+        assertThat(firstPage).hasSize(3);
+
+        assertThat(firstPage.get(0).article().getId()).isEqualTo(article3.getId());
+        assertThat(firstPage.get(1).article().getId()).isEqualTo(article2.getId());
+        assertThat(firstPage.get(2).article().getId()).isEqualTo(article1.getId());
+
+        // given - 두 번째 페이지 cursor
+        String cursor = article2.getPublishDate().toString();
+
+        ArticleSearchCommand secondPageCommand = new ArticleSearchCommand(
+                null,
+                null,
+                null,
+                null,
+                null,
+                cursor,
+                article2.getId(),
+                "publishDate",
+                "desc",
+                2,
+                null
+        );
+
+        // when
+        List<ArticleSearchResult> secondPage =
+                articleRepository.searchArticles(secondPageCommand);
+
+        // then
+        assertThat(secondPage).hasSize(1);
+
+        assertThat(secondPage.get(0).article().getId())
+                .isEqualTo(article1.getId());
+    }
+
 }
