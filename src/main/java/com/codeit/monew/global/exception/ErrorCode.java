@@ -38,7 +38,14 @@ public enum ErrorCode {
     NOTIFICATION_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "알림을 찾을 수 없습니다."
+    ),
+  
+    // article
+    ARTICLE_NOT_FOUND(
+          HttpStatus.NOT_FOUND,
+          "뉴스 기사 정보를 찾을 수 없습니다."
     );
+  
 
     private final HttpStatus httpStatus;
     private final String message;
@@ -47,4 +54,7 @@ public enum ErrorCode {
         this.httpStatus = httpStatus;
         this.message = message;
     }
+
+
+
 }

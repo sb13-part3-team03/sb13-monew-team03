@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface NewsCollector {
 
-    List<CollectedArticleDTO> collect();
+    List<CollectedArticleDTO> collect(String keyword);
 }
