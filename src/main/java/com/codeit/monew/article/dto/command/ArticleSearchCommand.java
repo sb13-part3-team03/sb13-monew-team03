@@ -49,27 +49,4 @@ public record ArticleSearchCommand(
                 : dateTime.toInstant(ZoneOffset.UTC);
     }
 
-    // 레포지토리 테스트용 메서드
-    private ArticleSearchCommand createSearchCommand (
-            String keyword,
-            UUID interestId,
-            List<ArticleSource> sourceIn,
-            Instant publishDateFrom,
-            Instant publishDateTo
-    ) {
-        return new ArticleSearchCommand(
-                keyword,
-                interestId,
-                sourceIn,
-                publishDateFrom,
-                publishDateTo,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-    }
-
 }

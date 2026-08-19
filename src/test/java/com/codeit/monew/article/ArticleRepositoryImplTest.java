@@ -8,6 +8,7 @@ import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.entity.ArticleView;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.comment.entity.Comment;
+import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.global.config.QuerydslConfig;
 import com.codeit.monew.interest.entity.Interest;
 import com.codeit.monew.interest.repository.InterestRepository;
@@ -36,6 +37,9 @@ public class ArticleRepositoryImplTest {
 
     @Autowired
     private InterestRepository interestRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Autowired
     private TestEntityManager em;
@@ -203,6 +207,104 @@ public class ArticleRepositoryImplTest {
 
         // then
         assertThat(result).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("댓글 수 정렬 시 두 번째 페이지를 조회한다")
+    void searchArticlesByCommentCountSecondPage() {
+        // given
+        Article article1 = Article.create(
+                ArticleSource.NAVER,
+                "https://example.com/1",
+                "Article 1",
+                "Article 1 summary",
+                Instant.parse("2026-08-01T10:00:00Z")
+        );
+
+        Article article2 = Article.create(
+                ArticleSource.NAVER,
+                "https://example.com/2",
+                "Article 2",
+                "Article 2 summary",
+                Instant.parse("2026-08-02T10:00:00Z")
+        );
+
+        Article article3 = Article.create(
+                ArticleSource.NAVER,
+                "https://example.com/3",
+                "Article 3",
+                "Article 3 summary",
+                Instant.parse("2026-08-03T10:00:00Z")
+        );
+
+        articleRepository.saveAll(List.of(article1, article2, article3));
+
+        // 서로 다른 사용자 3명
+        Instant now = Instant.parse("2026-08-18T01:00:00Z");
+
+        User user1 = new User("user1@test.com", "user1", "password", now);
+        User user2 = new User("user2@test.com", "user2", "password", now);
+        User user3 = new User("user3@test.com", "user3", "password", now);
+
+        em.persist(user1);
+        em.persist(user2);
+        em.persist(user3);
+
+        // article1 → 댓글 1개
+        // article2 → 댓글 2개
+        // article3 → 댓글 3개
+        Comment comment1 = new Comment(article1, user1, "첫 번째 댓글입니다.");
+        Comment comment2 = new Comment(article2, user2, "두 번째 댓글입니다.");
+        Comment comment3 = new Comment(article2, user1, "세 번째 댓글입니다.");
+        Comment comment4 = new Comment(article3, user3, "네 번째 댓글입니다.");
+        Comment comment5 = new Comment(article3, user3, "다섯 번째 댓글입니다.");
+        Comment comment6 = new Comment(article3, user3, "여섯 번째 댓글입니다.");
+
+        commentRepository.saveAll(List.of(comment1, comment2, comment3, comment4, comment5, comment6));
+
+        ArticleSearchCommand firstPageCommand = new ArticleSearchCommand(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "commentCount",
+                "desc",
+                2,
+                user1.getId()
+        );
+
+        // when
+        List<ArticleSearchResult> firstPage =
+                articleRepository.searchArticles(firstPageCommand);
+
+        ArticleSearchResult lastArticle = firstPage.get(1);
+
+        String cursor = "2";
+        UUID after = article2.getId();
+
+        ArticleSearchCommand secondPageCommand = new ArticleSearchCommand(
+                null,
+                null,
+                null,
+                null,
+                null,
+                cursor,
+                after,
+                "commentCount",
+                "desc",
+                2,
+                user1.getId()
+        );
+
+        // when
+        List<ArticleSearchResult> secondPage = articleRepository.searchArticles(secondPageCommand);
+
+        // then
+        assertThat(secondPage).hasSize(1);
+        assertThat(secondPage.get(0).article().getId()).isEqualTo(article1.getId());
     }
 
 }
