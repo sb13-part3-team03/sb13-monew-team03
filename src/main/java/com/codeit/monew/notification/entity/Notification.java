@@ -3,6 +3,8 @@ package com.codeit.monew.notification.entity;
 import com.codeit.monew.global.entity.BaseEntity;
 import com.codeit.monew.notification.enums.ResourceType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
@@ -18,7 +20,9 @@ public class Notification extends BaseEntity {
 
   @NotNull String content;
   @NotNull UUID userId;
-  @NotNull ResourceType resourceType;
+  @NotNull
+  @Enumerated(EnumType.STRING)
+  ResourceType resourceType;
   @NotNull UUID resourceId;
   @NotNull Boolean confirmed;
 
