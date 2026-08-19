@@ -75,6 +75,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                         publishedAtGoe(command.publishDateFrom()),
                         publishedAtLoe(command.publishDateTo()),
                         publishedDateCursorCondition(
+                                command.orderBy(),
                                 command.direction(),
                                 command.cursor(),
                                 command.after()
@@ -135,11 +136,15 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
 
     // 날짜 정렬 커서 페이지네이션
     private BooleanExpression publishedDateCursorCondition(
+            String orderBy,
             String sortDirection,
             String nextCursor,
             UUID nextAfter
     ) {
-        if (!StringUtils.hasText(nextCursor) || nextAfter == null) {
+        // 정렬 기준이 게시일인 경우에만 커서 조건 적용
+        if (!"publishDate".equals(orderBy)
+                || !StringUtils.hasText(nextCursor)
+                || nextAfter == null) {
             return null;
         }
 
