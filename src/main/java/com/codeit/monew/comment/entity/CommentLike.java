@@ -15,11 +15,11 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CommentLike extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "comment_id", nullable = false)
     private Comment comment;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
