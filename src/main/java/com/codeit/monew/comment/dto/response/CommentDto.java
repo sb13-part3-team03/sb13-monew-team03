@@ -1,6 +1,6 @@
 package com.codeit.monew.comment.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public record CommentDto(
@@ -11,6 +11,6 @@ public record CommentDto(
         String content,
         Long likeCount,
         Boolean likeByMe,
-        LocalDateTime createdAt
+        Instant createdAt
         ) {
 }
