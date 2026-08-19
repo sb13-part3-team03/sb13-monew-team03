@@ -5,6 +5,7 @@ import com.codeit.monew.article.entity.Article;
 public record ArticleSearchResult(
         Article article,
         Long commentCount,
-        Long viewCount
+        Long viewCount,
+        Boolean viewedByMe
 ) {
 }

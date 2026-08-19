@@ -9,6 +9,7 @@ import com.codeit.monew.article.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,8 +24,10 @@ public class ArticleQueryServiceImpl implements ArticleQueryService {
     @Override
     @Transactional(readOnly = true)
     public CursorPageResponseArticleDto searchArticles(ArticleSearchCommand command) {
+        String orderBy = normalizeOrderBy(command.orderBy());
+
         // limit + 1개 조회
-        List<ArticleSearchResult> results = articleRepository.searchArticles(command);
+        List<ArticleSearchResult> results = articleRepository.searchArticles(command, orderBy);
 
         // 다음 페이지 존재 여부
         boolean hasNext = results.size() > command.limit();
@@ -41,8 +44,7 @@ public class ArticleQueryServiceImpl implements ArticleQueryService {
         UUID nextAfter = null;
 
         if (hasNext && last != null) {
-            nextCursor = createNextCursor(last, command.orderBy());
-
+            nextCursor = createNextCursor(last, orderBy);
             nextAfter = last.article().getId();
         }
 
@@ -76,5 +78,10 @@ public class ArticleQueryServiceImpl implements ArticleQueryService {
         return result.article().getPublishDate().toString();
     }
 
+    private String normalizeOrderBy(String orderBy) {
+        return StringUtils.hasText(orderBy)
+                ? orderBy
+                : "publishDate";
+    }
 
 }
