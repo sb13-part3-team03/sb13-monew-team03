@@ -75,18 +75,8 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
                         user.id,
                         user.nickname,
                         comment.content,
-                        JPAExpressions
-                                .select(commentLike.id.count())
-                                .from(commentLike)
-                                .where(commentLike.comment.eq(comment)),
-                        JPAExpressions
-                                .selectOne()
-                                .from(commentLike)
-                                .where(
-                                        commentLike.comment.eq(comment),
-                                        commentLike.user.eq(user)
-                                )
-                                .exists(),
+                        likeCount(),
+                        likeByMe(commentLike.user.eq(user)),
                         comment.createdAt
                 ))
                 .from(comment)
@@ -135,15 +125,6 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
          */
         int pageSize = command.size().intValue();
 
-        BooleanExpression likeByMe = JPAExpressions
-                .selectOne()
-                .from(commentLike)
-                .where(
-                        commentLike.comment.eq(comment),
-                        commentLike.user.id.eq(command.requestUserId()) // check with current user
-                )
-                .exists();
-
         // query for select, from
         JPAQuery<CommentDtoCreateCommand> query = queryFactory
                 .select(
@@ -155,7 +136,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
                                 user.nickname,
                                 comment.content,
                                 likeCount(),
-                                likeByMe,
+                                likeByMe(commentLike.user.id.eq(command.requestUserId())),
                                 comment.createdAt
                         )
                 )
@@ -186,6 +167,17 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
     /*
     getting JPAQuery Object method.
      */
+
+    private BooleanExpression likeByMe(BooleanExpression expression){
+        return JPAExpressions
+                .selectOne()
+                .from(commentLike)
+                .where(
+                        commentLike.comment.eq(comment),
+                        expression
+                )
+                .exists();
+    }
 
     private JPQLQuery<Long> likeCount(){
         return JPAExpressions
@@ -262,7 +254,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
             case "likeCount" -> getConditionFilterWithLikeCount(direction, cursor);
             default -> {
                 log.debug("orderBy value error - {}", orderBy);
-                throw new CommentException(ErrorCode.INVALID_INPUT_VALUE);
+                throw new CommentException(ErrorCode.COMMENT_INVALID_VALUE);
             }
         };
     }
@@ -292,7 +284,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
 
             log.error("cursor value can not parse as {} - value = {}", Instant.class, cursor,e);
 
-            throw new CommentException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CommentException(ErrorCode.COMMENT_INVALID_VALUE);
         }
     }
 
@@ -316,7 +308,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
 
             log.error("cursor value can not parse as {} - value = {}", Long.class, cursor,e);
 
-            throw new CommentException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CommentException(ErrorCode.COMMENT_INVALID_VALUE);
         }
     }
 
@@ -328,7 +320,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
 
                 log.error("order value error - {}",orderBy);
 
-                throw new CommentException(ErrorCode.INVALID_INPUT_VALUE);
+                throw new CommentException(ErrorCode.COMMENT_INVALID_VALUE);
             }
         };
     }

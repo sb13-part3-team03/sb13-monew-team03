@@ -9,6 +9,7 @@ import com.codeit.monew.comment.entity.CommentLike;
 import com.codeit.monew.global.config.QueryDslConfig;
 import com.codeit.monew.user.entity.User;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.utility.RandomString;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -116,10 +117,13 @@ public class CommentRepositoryTest {
             articleConstructor.setAccessible(true);
             Article article = articleConstructor.newInstance();
 
+            // string for unique validation field
+            String salt = RandomString.make(10);
+
             ReflectionTestUtils.setField(article,"createdAt", Instant.now());
             ReflectionTestUtils.setField(article,"updatedAt", Instant.now());
             ReflectionTestUtils.setField(article,"source", ArticleSource.NAVER);
-            ReflectionTestUtils.setField(article,"sourceUrl", "https://localhost");
+            ReflectionTestUtils.setField(article,"sourceUrl", "https://localhost/" + salt);
             ReflectionTestUtils.setField(article,"title", "title");
             ReflectionTestUtils.setField(article,"summary", "summary");
             ReflectionTestUtils.setField(article,"publishDate", Instant.now());
