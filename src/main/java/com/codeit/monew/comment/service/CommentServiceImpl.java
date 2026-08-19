@@ -58,14 +58,13 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public CursorContainerDto<CommentDto> query(CommentQueryCommand command){
-        // Todo - convert info log to debug after fix logging bug
-        log.info("query size - {}",command.size());
+        log.debug("query size - {}",command.size());
 
 
         // Todo - repository param change? commmand -> comdition and where.
         Slice<CommentDtoCreateCommand> createDtoCommands = commentRepository.getAllCommentsWithCursor(command);
 
-        log.info("repository return objects : size - {}",createDtoCommands.getSize());
+        log.debug("repository return objects : size - {}",createDtoCommands.getSize());
 
         return commentMapper.toDto(
                 getCursorContainerCommand(
@@ -98,18 +97,18 @@ public class CommentServiceImpl implements CommentService {
         String next = "";
         String after = "";
 
-        log.info("got contents - {}",contents);
+        log.debug("got contents - {}",contents);
 
         // cursor and next after
         List<CommentDto> comments = contents.stream().map(commentMapper::toDto).toList();
 
-        log.info("commentDto list: {}",comments);
+        log.debug("commentDto list: {}",comments);
 
         // protect null point exception when comment query is 0.
         if (!comments.isEmpty()){
             CommentDto last = comments.get(comments.size() - 1);
 
-            log.info("last comment info is - {}",last);
+            log.debug("last comment info is - {}",last);
 
             next = orderByLikeCount ? last.likeCount().toString() : last.createdAt().toString();
             after = last.createdAt().toString();
