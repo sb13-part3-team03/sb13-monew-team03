@@ -36,6 +36,8 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
         Long count = queryFactory
                 .select(article.id.countDistinct())
                 .from(article)
+                .leftJoin(articleInterest)
+                .on(articleInterest.article.eq(article))
                 .where(
                         keywordContains(command.keyword()),
                         interestIdEq(command.interestId()),
