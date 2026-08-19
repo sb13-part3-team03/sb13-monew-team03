@@ -6,7 +6,7 @@ import java.util.UUID;
 public record CursorPageResponseArticleDto (
         List<ArticleDto> content,
         String nextCursor,
-        Long nextAfter,
+        UUID nextAfter,
         Integer size,
         Long totalElements,
         Boolean hasNext
