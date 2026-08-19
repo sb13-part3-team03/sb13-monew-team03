@@ -1,5 +1,7 @@
 package com.codeit.monew.notification.service;
 
+import com.codeit.monew.global.exception.ErrorCode;
+import com.codeit.monew.global.exception.MonewException;
 import com.codeit.monew.notification.dto.response.CursorPageResponseNotificationDto;
 import com.codeit.monew.notification.dto.response.NotificationDto;
 import com.codeit.monew.notification.condition.NotificationSearchCondition;
@@ -81,7 +83,8 @@ public class NotificationService {
   }
 
   public void confirm(UUID notificationId, UUID userId) {
-    Notification notification = notificationRepository.findById(notificationId).orElseThrow();
+    Notification notification = notificationRepository.findByIdAndUserId(notificationId, userId)
+        .orElseThrow(() -> new MonewException(ErrorCode.NOTIFICATION_NOT_FOUND));
     notification.confirm();
     notificationRepository.save(notification);
   }

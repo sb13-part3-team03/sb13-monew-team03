@@ -3,6 +3,7 @@ package com.codeit.monew.notification.repository;
 import com.codeit.monew.notification.entity.Notification;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,8 @@ public interface NotificationRepository
 
   //confirm되지 않은 항목 반환
   List<Notification> findByUserIdAndConfirmedFalse(UUID userId);
+
+  Optional<Notification> findByIdAndUserId(UUID notificationId, UUID userId);
 
   long countByUserIdAndConfirmedFalse(UUID userId);
 
