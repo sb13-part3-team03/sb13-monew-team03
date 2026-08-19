@@ -1,0 +1,412 @@
+package com.codeit.monew.interest.service;
+
+import com.codeit.monew.interest.dto.response.InterestDto;
+import com.codeit.monew.interest.dto.response.SubscriptionDto;
+import com.codeit.monew.interest.entity.Interest;
+import com.codeit.monew.interest.entity.Subscription;
+import com.codeit.monew.interest.exception.AlreadySubscribedException;
+import com.codeit.monew.interest.exception.InterestNotFoundException;
+import com.codeit.monew.interest.exception.SubscriptionNotFoundException;
+import com.codeit.monew.interest.repository.InterestRepository;
+import com.codeit.monew.interest.repository.SubscriptionRepository;
+import com.codeit.monew.interest.service.command.*;
+import com.codeit.monew.user.entity.User;
+import com.codeit.monew.user.repository.UserRepository;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+
+@ExtendWith(MockitoExtension.class)
+class InterestServiceTest {
+    @Mock
+    private InterestRepository interestRepository;
+
+    @Mock
+    private SubscriptionRepository subscriptionRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @InjectMocks
+    private InterestService interestService;
+
+    @Nested
+    @DisplayName("관심사 등록")
+    class CreateInterest {
+
+        @Test
+        @DisplayName("성공")
+        void success() {
+            // given
+            InterestRegisterCommand command = new InterestRegisterCommand(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest savedInterest = new Interest(
+                    command.name(),
+                    command.keywords()
+            );
+
+            given(interestRepository.save(any(Interest.class)))
+                    .willReturn(savedInterest);
+
+            // when
+            InterestDto result = interestService.createInterest(command);
+
+            // then
+            assertThat(result.name()).isEqualTo("스포츠");
+            assertThat(result.keywords()).containsExactly("축구", "야구");
+            assertThat(result.subscriberCount()).isZero();
+            assertThat(result.subscribedByMe()).isFalse();
+
+            then(interestRepository)
+                    .should()
+                    .save(any(Interest.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 구독")
+    class Subscribe {
+
+        @Test
+        @DisplayName("성공")
+        void success() {
+            // given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            Interest interest = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            User user = new User(
+                    "test@test.com",
+                    "테스트",
+                    "password",
+                    Instant.now()
+            );
+
+            InterestSubscribeCommand command =
+                    new InterestSubscribeCommand(
+                            interestId,
+                            userId
+                    );
+
+            given(interestRepository.findById(interestId))
+                    .willReturn(Optional.of(interest));
+
+            given(subscriptionRepository.existsByUserIdAndInterestId(
+                    userId,
+                    interestId
+            )).willReturn(false);
+
+            given(userRepository.findById(userId))
+                    .willReturn(Optional.of(user));
+
+            given(subscriptionRepository.save(any(Subscription.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
+
+            given(subscriptionRepository.countByInterestId(interest.getId()))
+                    .willReturn(1L);
+
+            // when
+            SubscriptionDto result =
+                    interestService.subscribe(command);
+
+            // then
+            assertThat(result.interestName())
+                    .isEqualTo("스포츠");
+
+            assertThat(result.interestKeywords())
+                    .containsExactly("축구", "야구");
+
+            assertThat(result.interestSubscriberCount())
+                    .isEqualTo(1L);
+
+            then(subscriptionRepository)
+                    .should()
+                    .save(any(Subscription.class));
+        }
+
+        @Test
+        @DisplayName("이미 구독 중이면 실패")
+        void fail_whenAlreadySubscribed() {
+            // given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            Interest interest = new Interest(
+                    "스포츠",
+                    List.of("축구")
+            );
+
+            InterestSubscribeCommand command =
+                    new InterestSubscribeCommand(
+                            interestId,
+                            userId
+                    );
+
+            given(interestRepository.findById(interestId))
+                    .willReturn(Optional.of(interest));
+
+            given(subscriptionRepository.existsByUserIdAndInterestId(
+                    userId,
+                    interestId
+            )).willReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> interestService.subscribe(command))
+                    .isInstanceOf(AlreadySubscribedException.class);
+
+            then(userRepository)
+                    .shouldHaveNoInteractions();
+        }
+
+        @Test
+        @DisplayName("관심사가 존재하지 않으면 실패")
+        void fail_whenInterestNotFound() {
+            // given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(interestRepository.findById(interestId))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(
+                    () -> interestService.subscribe(
+                            new InterestSubscribeCommand(
+                                    interestId,
+                                    userId
+                            )
+                    )
+            ).isInstanceOf(InterestNotFoundException.class);
+
+            then(subscriptionRepository)
+                    .shouldHaveNoInteractions();
+
+            then(userRepository)
+                    .shouldHaveNoInteractions();
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 수정")
+    class UpdateInterest {
+
+        @Test
+        @DisplayName("성공")
+        void success() {
+            // given
+            UUID interestId = UUID.randomUUID();
+
+            Interest interest = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            InterestUpdateCommand command = new InterestUpdateCommand(
+                    interestId,
+                    List.of("농구", "배구")
+            );
+
+            given(interestRepository.findById(interestId))
+                    .willReturn(Optional.of(interest));
+
+            given(subscriptionRepository.countByInterestId(interest.getId()))
+                    .willReturn(3L);
+
+            // when
+            InterestDto result = interestService.updateInterest(command);
+
+            // then
+            assertThat(interest.getKeywords())
+                    .containsExactly("농구", "배구");
+
+            assertThat(result.keywords())
+                    .containsExactly("농구", "배구");
+
+            assertThat(result.subscriberCount())
+                    .isEqualTo(3L);
+
+            assertThat(result.subscribedByMe())
+                    .isNull();
+
+            then(interestRepository)
+                    .should()
+                    .findById(interestId);
+        }
+
+        @Test
+        @DisplayName("관심사가 존재하지 않으면 실패")
+        void fail_whenInterestNotFound() {
+            // given
+            UUID interestId = UUID.randomUUID();
+
+            InterestUpdateCommand command = new InterestUpdateCommand(
+                    interestId,
+                    List.of("농구")
+            );
+
+            given(interestRepository.findById(interestId))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> interestService.updateInterest(command))
+                    .isInstanceOf(InterestNotFoundException.class);
+
+            then(subscriptionRepository)
+                    .shouldHaveNoInteractions();
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 삭제")
+    class DeleteInterest {
+
+        @Test
+        @DisplayName("성공")
+        void success() {
+            // given
+            UUID interestId = UUID.randomUUID();
+
+            Interest interest = new Interest(
+                    "스포츠",
+                    List.of("축구")
+            );
+
+            given(interestRepository.findById(interestId))
+                    .willReturn(Optional.of(interest));
+
+            // when
+            interestService.deleteInterest(
+                    new InterestDeleteCommand(interestId)
+            );
+
+            // then
+            then(subscriptionRepository)
+                    .should()
+                    .deleteAllByInterestId(interest.getId());
+
+            then(interestRepository)
+                    .should()
+                    .delete(interest);
+        }
+
+        @Test
+        @DisplayName("관심사가 존재하지 않으면 실패")
+        void fail_whenInterestNotFound() {
+            // given
+            UUID interestId = UUID.randomUUID();
+
+            given(interestRepository.findById(interestId))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(
+                    () -> interestService.deleteInterest(
+                            new InterestDeleteCommand(interestId)
+                    )
+            ).isInstanceOf(InterestNotFoundException.class);
+
+            then(subscriptionRepository)
+                    .shouldHaveNoInteractions();
+        }
+    }
+
+
+
+    @Nested
+    @DisplayName("관심사 구독 취소")
+    class Unsubscribe {
+
+        @Test
+        @DisplayName("성공")
+        void success() {
+            // given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            User user = new User(
+                    "test@test.com",
+                    "테스트",
+                    "password",
+                    Instant.now()
+            );
+
+            Interest interest = new Interest(
+                    "스포츠",
+                    List.of("축구")
+            );
+
+            Subscription subscription =
+                    new Subscription(user, interest);
+
+            given(subscriptionRepository.findByUserIdAndInterestId(
+                    userId,
+                    interestId
+            )).willReturn(Optional.of(subscription));
+
+            // when
+            interestService.unsubscribe(
+                    new InterestUnsubscribeCommand(
+                            interestId,
+                            userId
+                    )
+            );
+
+            // then
+            then(subscriptionRepository)
+                    .should()
+                    .delete(subscription);
+        }
+
+        @Test
+        @DisplayName("구독 정보가 존재하지 않으면 실패")
+        void fail_whenSubscriptionNotFound() {
+            // given
+            UUID interestId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            given(subscriptionRepository.findByUserIdAndInterestId(
+                    userId,
+                    interestId
+            )).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(
+                    () -> interestService.unsubscribe(
+                            new InterestUnsubscribeCommand(
+                                    interestId,
+                                    userId
+                            )
+                    )
+            ).isInstanceOf(SubscriptionNotFoundException.class);
+
+            then(subscriptionRepository)
+                    .should()
+                    .findByUserIdAndInterestId(
+                            userId,
+                            interestId
+                    );
+        }
+    }
+}
