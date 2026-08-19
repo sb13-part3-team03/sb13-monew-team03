@@ -7,16 +7,17 @@ import jakarta.validation.constraints.Min;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record ArticleSearchRequest (
         String keyword,
         UUID interestId,
-        ArticleSource sourceIn,
+        List<ArticleSource> sourceIn,
         LocalDateTime publishDateFrom,
         LocalDateTime publishDateTo,
         String cursor,
-        Long after,
+        UUID after,
         String orderBy,
         String direction,
         @Min(1)

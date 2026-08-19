@@ -5,14 +5,53 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 
 @Entity
-@Table(name = "articles")
+@Table(
+        name = "articles",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_articles_source_url",
+                        columnNames = "source_url"
+                )
+        })
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Article extends BaseEntity {
+
+    private Article(
+            ArticleSource source,
+            String sourceUrl,
+            String title,
+            String summary,
+            Instant publishDate
+    ) {
+        this.source = source;
+        this.sourceUrl = sourceUrl;
+        this.title = title;
+        this.summary = summary;
+        this.publishDate = publishDate;
+    }
+
+    public static Article create(
+            ArticleSource source,
+            String sourceUrl,
+            String title,
+            String summary,
+            Instant publishDate
+    ) {
+        return new Article(
+                source,
+                sourceUrl,
+                title,
+                summary,
+                publishDate
+        );
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -33,4 +72,13 @@ public class Article extends BaseEntity {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    public void delete() {
+        if (deletedAt == null) {
+            this.deletedAt = Instant.now();
+        }
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
 }
