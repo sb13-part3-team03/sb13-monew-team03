@@ -32,7 +32,7 @@ public record ArticleSearchRequest (
             orderBy = "publishDate";
         }
         if (direction == null) {
-            direction = "asc";
+            direction = "desc";
         }
     }
 }
