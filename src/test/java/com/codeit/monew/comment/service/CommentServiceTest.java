@@ -3,10 +3,8 @@ package com.codeit.monew.comment.service;
 
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.repository.ArticleRepository;
-import com.codeit.monew.comment.dto.command.CommentCreateCommand;
-import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
-import com.codeit.monew.comment.dto.command.CommentQueryCommand;
-import com.codeit.monew.comment.dto.command.CursorContainerCreateCommand;
+import com.codeit.monew.comment.dto.command.*;
+import com.codeit.monew.comment.dto.request.CommentUpdateRequest;
 import com.codeit.monew.comment.dto.response.CommentDto;
 import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
@@ -67,6 +65,17 @@ public class CommentServiceTest {
         User user = mock(User.class);
         ReflectionTestUtils.setField(user,"id",userId);
         return Optional.of(user);
+    }
+
+    private Comment getComment(UUID id, Article article, User user, String content){
+        Comment comment = new Comment(
+                article,
+                user,
+                content
+        );
+
+        ReflectionTestUtils.setField(comment,"id",id);
+        return comment;
     }
 
     private Optional<CommentDtoCreateCommand> getCommentDtoFromUUID(UUID commentId){
@@ -189,7 +198,31 @@ public class CommentServiceTest {
 
 
     @Test
-    @DisplayName("")
+    @DisplayName("Comment Update test")
+    public void updateTest(){
+        // comment -> comment id.
+
+        String NEW_CONTENT = "new content";
+
+        UUID commentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        User user = getUserMock(userId).orElseThrow(RuntimeException::new);
+
+        CommentUpdateCommand command = new CommentUpdateCommand(
+                commentId,
+                NEW_CONTENT,
+                commentId
+        );
+
+        // when
+        // get comment when find by id
+        given(commentRepository.findByIdAndDeletedAtIsNull(any(UUID.class)))
+                .willReturn(getComment(commentId,mock(Article.class),user,"old content"));
+
+        CommentDto result = commentService.update(command);
+
+    }
 
 
 

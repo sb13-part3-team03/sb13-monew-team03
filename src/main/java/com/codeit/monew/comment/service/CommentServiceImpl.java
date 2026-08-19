@@ -2,10 +2,7 @@ package com.codeit.monew.comment.service;
 
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.repository.ArticleRepository;
-import com.codeit.monew.comment.dto.command.CommentCreateCommand;
-import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
-import com.codeit.monew.comment.dto.command.CommentQueryCommand;
-import com.codeit.monew.comment.dto.command.CursorContainerCreateCommand;
+import com.codeit.monew.comment.dto.command.*;
 import com.codeit.monew.comment.dto.response.CommentDto;
 import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
@@ -76,6 +73,11 @@ public class CommentServiceImpl implements CommentService {
                         "likeCount".equals(command.orderBy())   // order attribute check - change enum to after
                 )
         );
+    }
+
+    @Override
+    public CommentDto update(CommentUpdateCommand command){
+        return null;
     }
 
     private Long getCommentsCountConditionedByArticle(UUID articleId){
