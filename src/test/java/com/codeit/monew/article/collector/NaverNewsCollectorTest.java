@@ -1,6 +1,5 @@
 package com.codeit.monew.article.collector;
 
-import com.codeit.monew.article.collector.NaverNewsCollector;
 import com.codeit.monew.article.dto.collection.CollectedArticleDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;

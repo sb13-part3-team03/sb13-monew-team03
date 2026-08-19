@@ -6,9 +6,12 @@ import com.codeit.monew.article.entity.ArticleSource;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
+import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,10 +27,20 @@ public class NaverNewsCollector implements NewsCollector {
             @Value("${naver.api.client-id}") String clientId,
             @Value("${naver.api.client-secret}") String clientSecret
     ) {
+        ClientHttpRequestFactorySettings settings =
+                ClientHttpRequestFactorySettings.defaults()
+                        .withTimeouts(
+                                Duration.ofSeconds(3),
+                                Duration.ofSeconds(5)
+                        );
+
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("X-NCP-APIGW-API-KEY-ID", clientId)
                 .defaultHeader("X-NCP-APIGW-API-KEY", clientSecret)
+                .requestFactory(ClientHttpRequestFactoryBuilder.detect()
+                        .build(settings)
+                )
                 .build();
     }
 
@@ -73,8 +86,8 @@ public class NaverNewsCollector implements NewsCollector {
                 .map(item -> new CollectedArticleDTO(
                         ArticleSource.NAVER,
                         item.originallink(),
-                        item.title(),
-                        item.description() == null ? "" : item.description(),
+                        removeHighlightTag(item.title()),
+                        removeHighlightTag(item.description()),
                         parsePublishDate(item.pubDate())
                 ))
                 .toList();
@@ -84,5 +97,14 @@ public class NaverNewsCollector implements NewsCollector {
         return ZonedDateTime
                 .parse(pubDate, DateTimeFormatter.RFC_1123_DATE_TIME)
                 .toInstant();
+    }
+
+    private String removeHighlightTag(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text
+                .replace("<b>", "")
+                .replace("</b>", "");
     }
 }
