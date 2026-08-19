@@ -45,9 +45,7 @@ class ArticleDeleteServiceTest {
     void setUp() {
         articleDeleteService = new ArticleDeleteService(
                 articleRepository,
-                articleInterestRepository,
-                commentRepository,
-                commentLikeRepository
+                articleInterestRepository
         );
     }
 

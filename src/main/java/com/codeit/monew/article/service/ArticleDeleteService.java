@@ -17,6 +17,7 @@ import java.util.UUID;
 public class ArticleDeleteService {
 
     private final ArticleRepository articleRepository;
+    private final ArticleInterestRepository articleInterestRepository;
     // TODO: 연관 데이터 Repository 준비되면 연결
     // private final ArticleViewRepository articleViewRepository;
     // private final CommentRepository commentRepository;
@@ -41,7 +42,7 @@ public class ArticleDeleteService {
         // TODO: 관련 데이터 먼저 삭제 후 Article 삭제
         // commentLikeRepository.deleteAllByComment_Article_Id(articleId);
         // commentRepository.deleteAllByArticle_Id(articleId);
-        // articleInterestRepository.deleteAllByArticle_Id(articleId);
+        articleInterestRepository.deleteAllByArticle_Id(articleId);
         // articleViewRepository.deleteAllByArticle_Id(articleId);
 
         articleRepository.delete(article);

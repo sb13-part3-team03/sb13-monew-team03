@@ -89,6 +89,7 @@ public class NaverNewsCollector implements NewsCollector {
         }
 
         return response.items().stream()
+                .filter(item -> item != null)
                 .map(this::toCollectedArticle)
                 .flatMap(Optional::stream)
                 .toList();
