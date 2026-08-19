@@ -10,7 +10,6 @@ import com.codeit.monew.comment.exception.CommentException;
 import com.codeit.monew.global.exception.ErrorCode;
 import com.codeit.monew.user.entity.QUser;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -163,8 +162,13 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
                 .from(comment)
                 .join(comment.user,user)
                 .join(comment.article,article)
-                .where(setCursorCondition(command))
-                .orderBy()
+                .where(getCursorCondition(command))
+                .orderBy(
+                        getOrderCondition(
+                                command.orderBy(),
+                                command.direction()
+                        )
+                )
                 .limit(pageSize + 1);
 
         // get data from db
@@ -190,16 +194,24 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
                 .where(commentLike.comment.eq(comment));
     }
 
+    private NumberExpression<Long> likeCountExpression(){
+        return Expressions.numberTemplate(
+                Long.class,
+                "({0})",
+                likeCount() // getting likeCount query
+        );
+    }
+
     /*
     "where()" command query builder method.
      */
 
-    private BooleanBuilder setCursorCondition(
+    private BooleanBuilder getCursorCondition(
            CommentQueryCommand command
     ){
         BooleanBuilder where = new BooleanBuilder();
 
-        log.info("CommentsQuery - query condition from cursor");
+        log.debug("CommentsQuery - query condition from cursor");
 
         // set if articleId is not null, add condition.
         where.and(
@@ -214,7 +226,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
                 setCursorCondition(
                         command.orderBy(),
                         command.cursor(),
-                        dsc(command.direction())
+                        command.direction()
                 )
         );
 
@@ -222,7 +234,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
         where.and(
                 setAfterCondition(
                         command.after(),
-                        dsc(command.direction())
+                        command.direction()
                 )
         );
 
@@ -231,7 +243,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
 
     private BooleanExpression setArticleIdCondition(UUID articleId){
 
-        log.info("CommentsQuery - got article Id = {}", articleId);
+        log.debug("CommentsQuery - got article Id = {}", articleId);
 
         return articleId == null ? null : article.id.eq(articleId);
     }
@@ -240,36 +252,42 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
     private BooleanExpression setCursorCondition(
             String orderBy,
             String cursor,
-            boolean dsc
+            String direction
     ){
-        if (orderBy == null) return null;
 
-        log.info("CommentsQuery - got orderBy = {}, cursor = {}", cursor,orderBy);
+        log.debug("CommentsQuery - got orderBy = {}, cursor = {}", orderBy, cursor);
 
         return switch (orderBy) {
-            case "createdAt" -> getConditionFilterWithCreatedAt(dsc, cursor);
-            case "likeCount" -> getConditionFilterWithLikeCount(dsc, cursor);
-            default -> throw new RuntimeException("cursor value Error");
+            case "createdAt" -> getConditionFilterWithCreatedAt(direction, cursor);
+            case "likeCount" -> getConditionFilterWithLikeCount(direction, cursor);
+            default -> {
+                log.debug("orderBy value error - {}", orderBy);
+                throw new CommentException(ErrorCode.INVALID_INPUT_VALUE);
+            }
         };
     }
 
 
     private BooleanExpression setAfterCondition(
             String after,
-            boolean dsc
+            String direction
     ){
         if (after == null) return null;
 
-        log.info("CommentsQuery - got after = {}", after);
+        log.debug("CommentsQuery - got after = {}", after);
 
-        return getConditionFilterWithCreatedAt(dsc, after);
+        return getConditionFilterWithCreatedAt(direction, after);
     }
 
 
-    private BooleanExpression getConditionFilterWithCreatedAt(boolean dsc, String cursor){
+    private BooleanExpression getConditionFilterWithCreatedAt(String direction, String cursor){
         try{
+            // no where define with no  cursor
+            if (cursor == null) return null;
+
             Instant createdAt = Instant.parse(cursor);
-            return dsc ? comment.createdAt.lt(createdAt) : comment.createdAt.gt(createdAt);
+
+            return desc(direction) ? comment.createdAt.lt(createdAt) : comment.createdAt.gt(createdAt);
         } catch (DateTimeParseException e) {
 
             log.error("cursor value can not parse as {} - value = {}", Instant.class, cursor,e);
@@ -279,8 +297,11 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
     }
 
 
-    private BooleanExpression getConditionFilterWithLikeCount(boolean dsc, String cursor){
+    private BooleanExpression getConditionFilterWithLikeCount(String direction, String cursor){
         try {
+            // no where define with no  cursor
+            if (cursor == null) return null;
+
             Long count = Long.parseLong(cursor);
 
             NumberExpression<Long> likeCount = Expressions.numberTemplate(
@@ -290,7 +311,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
             );
 
             // set sub cursor for check ctime at same like count.
-            return dsc ? likeCount.lt(count) : likeCount.gt(count);
+            return desc(direction) ? likeCount.lt(count) : likeCount.gt(count);
         } catch (NumberFormatException e) {
 
             log.error("cursor value can not parse as {} - value = {}", Long.class, cursor,e);
@@ -299,11 +320,32 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
         }
     }
 
+    private OrderSpecifier<?> getOrderCondition(String orderBy, String direction){
+        return switch (orderBy.toUpperCase()){
+            case "CREATEDAT" -> getOrderConditionWithCreatedAt(direction);
+            case "LIKECOUNT" -> getOrderConditionWithLikeCount(direction);
+            default -> {
+
+                log.error("order value error - {}",orderBy);
+
+                throw new CommentException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+        };
+    }
+
+    private OrderSpecifier<Instant> getOrderConditionWithCreatedAt(String direction){
+        return desc(direction) ? comment.createdAt.desc() : comment.createdAt.asc();
+    }
+
+    private OrderSpecifier<?> getOrderConditionWithLikeCount(String direction){
+        return desc(direction) ? likeCountExpression().desc() : likeCountExpression().asc();
+    }
+
     /*
     sharable basic method
      */
 
-    private boolean dsc(String direction){
+    private boolean desc(String direction){
         return direction.equalsIgnoreCase("desc");
     }
 
