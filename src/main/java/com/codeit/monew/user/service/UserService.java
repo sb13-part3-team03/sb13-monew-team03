@@ -8,10 +8,10 @@ import com.codeit.monew.user.dto.response.UserResponse;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -20,6 +20,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UserResponse create(UserCreateRequest request) {
 
@@ -27,13 +28,13 @@ public class UserService {
             throw new DuplicateEmailException();
         }
 
-        Instant now = Instant.now();
+        String encodedPassword =
+                passwordEncoder.encode(request.password());
 
         User user = new User(
                 request.email(),
                 request.nickname(),
-                request.password(),
-                now
+                encodedPassword
         );
 
         User savedUser = userRepository.save(user);
@@ -46,7 +47,10 @@ public class UserService {
         );
     }
 
-    public UserResponse update(UUID userId, UserUpdateRequest request) {
+    public UserResponse update(
+            UUID userId,
+            UserUpdateRequest request
+    ) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
@@ -62,6 +66,7 @@ public class UserService {
     }
 
     public void delete(UUID userId) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 

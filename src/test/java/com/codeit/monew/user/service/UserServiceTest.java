@@ -14,8 +14,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,12 +33,15 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UserService userService;
 
     @Test
-    @DisplayName("회원가입에 성공하면 사용자를 저장한다.")
-    void createUser_whenValidRequest_savesUser() {
+    @DisplayName("회원가입에 성공하면 비밀번호를 해시하여 사용자를 저장한다.")
+    void createUser_whenValidRequest_savesUserWithEncodedPassword() {
 
         // given
         UserCreateRequest request = new UserCreateRequest(
@@ -50,6 +53,9 @@ class UserServiceTest {
         given(userRepository.existsByEmail(request.email()))
                 .willReturn(false);
 
+        given(passwordEncoder.encode(request.password()))
+                .willReturn("encoded-password");
+
         given(userRepository.save(any(User.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
 
@@ -60,7 +66,11 @@ class UserServiceTest {
         ArgumentCaptor<User> captor =
                 ArgumentCaptor.forClass(User.class);
 
-        verify(userRepository).save(captor.capture());
+        verify(passwordEncoder)
+                .encode("password1234");
+
+        verify(userRepository)
+                .save(captor.capture());
 
         User savedUser = captor.getValue();
 
@@ -71,13 +81,10 @@ class UserServiceTest {
                 .isEqualTo("테스트");
 
         assertThat(savedUser.getPassword())
-                .isEqualTo("password1234");
+                .isEqualTo("encoded-password");
 
-        assertThat(savedUser.getCreatedAt())
-                .isNotNull();
-
-        assertThat(savedUser.getUpdatedAt())
-                .isNotNull();
+        assertThat(savedUser.getPassword())
+                .isNotEqualTo("password1234");
     }
 
     @Test
@@ -99,6 +106,9 @@ class UserServiceTest {
                 .isInstanceOf(DuplicateEmailException.class)
                 .hasMessage("이미 사용 중인 이메일입니다.");
 
+        verify(passwordEncoder, never())
+                .encode(any());
+
         verify(userRepository, never())
                 .save(any(User.class));
     }
@@ -113,8 +123,7 @@ class UserServiceTest {
         User user = new User(
                 "test@example.com",
                 "기존닉네임",
-                "password1234",
-                Instant.now()
+                "encoded-password"
         );
 
         UserUpdateRequest request =
@@ -166,8 +175,7 @@ class UserServiceTest {
         User user = new User(
                 "test@example.com",
                 "테스트",
-                "password1234",
-                Instant.now()
+                "encoded-password"
         );
 
         given(userRepository.findById(userId))
@@ -177,7 +185,8 @@ class UserServiceTest {
         userService.delete(userId);
 
         // then
-        assertThat(user.getDeletedAt()).isNotNull();
+        assertThat(user.getDeletedAt())
+                .isNotNull();
     }
 
     @Test

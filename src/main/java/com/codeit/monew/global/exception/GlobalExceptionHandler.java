@@ -6,6 +6,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -47,6 +48,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingServletRequestParameter(
             MissingServletRequestParameterException ex
+    ) {
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
+        ErrorResponse errorResponse = ErrorResponse.from(errorCode);
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex
     ) {
         ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
         ErrorResponse errorResponse = ErrorResponse.from(errorCode);

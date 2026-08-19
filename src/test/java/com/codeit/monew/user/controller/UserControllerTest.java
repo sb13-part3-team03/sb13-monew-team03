@@ -334,6 +334,29 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("사용자 식별 헤더가 올바른 UUID 형식이 아니면 400 응답을 반환한다.")
+    void updateUser_whenRequestUserIdHeaderIsInvalid_returnsBadRequest() throws Exception {
+
+        // given
+        UUID userId = UUID.randomUUID();
+
+        UserUpdateRequest request =
+                new UserUpdateRequest("새닉네임");
+
+        // when & then
+        mockMvc.perform(
+                        patch("/api/users/{userId}", userId)
+                                .header(REQUEST_USER_ID_HEADER, "invalid-uuid")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(userService, never())
+                .update(eq(userId), any(UserUpdateRequest.class));
+    }
+
+    @Test
     @DisplayName("사용자 논리 삭제에 성공하면 204 응답을 반환한다.")
     void deleteUser_whenValidRequest_returnsNoContent() throws Exception {
 
@@ -399,6 +422,23 @@ class UserControllerTest {
         // when & then
         mockMvc.perform(
                         delete("/api/users/{userId}", userId)
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(userService, never()).delete(userId);
+    }
+
+    @Test
+    @DisplayName("사용자 삭제 요청의 식별 헤더가 올바른 UUID 형식이 아니면 400 응답을 반환한다.")
+    void deleteUser_whenRequestUserIdHeaderIsInvalid_returnsBadRequest() throws Exception {
+
+        // given
+        UUID userId = UUID.randomUUID();
+
+        // when & then
+        mockMvc.perform(
+                        delete("/api/users/{userId}", userId)
+                                .header(REQUEST_USER_ID_HEADER, "invalid-uuid")
                 )
                 .andExpect(status().isBadRequest());
 

@@ -6,6 +6,7 @@ import com.codeit.monew.user.dto.response.UserResponse;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,13 +16,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UserResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(LoginFailedException::new);
 
-        if (!user.getPassword().equals(request.password())) {
+        if (!passwordEncoder.matches(
+                request.password(),
+                user.getPassword()
+        )) {
             throw new LoginFailedException();
         }
 

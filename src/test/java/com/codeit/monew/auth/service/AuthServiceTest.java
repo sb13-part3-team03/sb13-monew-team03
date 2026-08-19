@@ -10,13 +10,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService 단위 테스트")
@@ -24,6 +27,9 @@ class AuthServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private AuthService authService;
@@ -41,12 +47,16 @@ class AuthServiceTest {
         User user = new User(
                 "test@example.com",
                 "테스트",
-                "password1234",
-                Instant.now()
+                "encoded-password"
         );
 
         given(userRepository.findByEmail(request.email()))
                 .willReturn(Optional.of(user));
+
+        given(passwordEncoder.matches(
+                request.password(),
+                user.getPassword()
+        )).willReturn(true);
 
         // when
         var response = authService.login(request);
@@ -57,6 +67,9 @@ class AuthServiceTest {
 
         assertThat(response.nickname())
                 .isEqualTo("테스트");
+
+        verify(passwordEncoder)
+                .matches("password1234", "encoded-password");
     }
 
     @Test
@@ -76,6 +89,9 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(LoginFailedException.class)
                 .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");
+
+        verify(passwordEncoder, never())
+                .matches(anyString(), anyString());
     }
 
     @Test
@@ -91,16 +107,23 @@ class AuthServiceTest {
         User user = new User(
                 "test@example.com",
                 "테스트",
-                "password1234",
-                Instant.now()
+                "encoded-password"
         );
 
         given(userRepository.findByEmail(request.email()))
                 .willReturn(Optional.of(user));
 
+        given(passwordEncoder.matches(
+                request.password(),
+                user.getPassword()
+        )).willReturn(false);
+
         // when & then
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(LoginFailedException.class)
                 .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");
+
+        verify(passwordEncoder)
+                .matches("wrong-password", "encoded-password");
     }
 }
