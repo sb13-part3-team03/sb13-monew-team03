@@ -1,9 +1,13 @@
 package com.codeit.monew.notification.repository;
 
 import com.codeit.monew.notification.entity.Notification;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface NotificationRepository
     extends JpaRepository<Notification, UUID>, NotificationRepositoryCustom {
@@ -12,4 +16,12 @@ public interface NotificationRepository
   List<Notification> findByUserIdAndConfirmedFalse(UUID userId);
 
   long countByUserIdAndConfirmedFalse(UUID userId);
+
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query("""
+      delete from Notification n
+      where n.confirmed = true
+        and n.updatedAt < :threshold
+      """)
+  int deleteConfirmedBefore(@Param("threshold") Instant threshold);
 }
