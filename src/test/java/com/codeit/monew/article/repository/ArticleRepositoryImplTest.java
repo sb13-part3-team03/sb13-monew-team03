@@ -55,9 +55,9 @@ public class ArticleRepositoryImplTest {
                 "2026-08-18T01:00:00Z"
         );
 
-        User user = new User("user1@test.com", "user1", "password", now);
-        User user2 = new User("user2@test.com", "user2", "password", now);
-        User user3 = new User("user3@test.com", "user3", "password", now);
+        User user = new User("user1@test.com", "user1", "password");
+        User user2 = new User("user2@test.com", "user2", "password");
+        User user3 = new User("user3@test.com", "user3", "password");
 
         em.persist(article);
         em.persist(user);
@@ -192,9 +192,9 @@ public class ArticleRepositoryImplTest {
         // 서로 다른 사용자 3명
         Instant now = Instant.parse("2026-08-18T01:00:00Z");
 
-        User user1 = new User("user1@test.com", "user1", "password", now);
-        User user2 = new User("user2@test.com", "user2", "password", now);
-        User user3 = new User("user3@test.com", "user3", "password", now);
+        User user1 = new User("user1@test.com", "user1", "password");
+        User user2 = new User("user2@test.com", "user2", "password");
+        User user3 = new User("user3@test.com", "user3", "password");
 
         em.persist(user1);
         em.persist(user2);
@@ -332,8 +332,8 @@ public class ArticleRepositoryImplTest {
 
         Instant now = Instant.parse("2026-08-18T01:00:00Z");
 
-        User user = new User("user@test.com", "user", "password", now);
-        User user2 = new User("user2@test.com", "user2", "password", now);
+        User user = new User("user@test.com", "user", "password");
+        User user2 = new User("user2@test.com", "user2", "password");
 
         em.persist(user);
         em.persist(user2);
