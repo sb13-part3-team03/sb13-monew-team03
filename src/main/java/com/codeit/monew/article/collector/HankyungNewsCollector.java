@@ -10,6 +10,10 @@ public class HankyungNewsCollector extends RssNewsCollector {
         super("https://www.hankyung.com/feed/all-news");
     }
 
+    HankyungNewsCollector(String feedUrl) {
+        super(feedUrl);
+    }
+
     @Override
     protected ArticleSource getSource() {
         return ArticleSource.HANKYUNG;

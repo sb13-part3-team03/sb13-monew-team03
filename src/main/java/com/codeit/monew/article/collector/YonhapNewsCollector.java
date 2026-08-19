@@ -10,6 +10,10 @@ public class YonhapNewsCollector extends RssNewsCollector {
         super("https://www.yna.co.kr/rss/news.xml");
     }
 
+    YonhapNewsCollector(String feedUrl) {
+        super(feedUrl);
+    }
+
     @Override
     protected ArticleSource getSource() {
         return ArticleSource.YONHAP;
