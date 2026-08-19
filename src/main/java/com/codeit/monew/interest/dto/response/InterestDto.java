@@ -10,10 +10,10 @@ public record InterestDto(
         String name,
         List<String> keywords,
         long subscriberCount,
-        boolean subscribedByMe
+        Boolean subscribedByMe
 
 ) {
-    public static InterestDto from(Interest interest, long subscriberCount, boolean subscribedByMe) {
+    public static InterestDto from(Interest interest, long subscriberCount, Boolean subscribedByMe) {
         return new InterestDto(
                 interest.getId(),
                 interest.getName(),
