@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public interface CommentRepository extends JpaRepository<Comment, UUID>, CommentRepositoryDsl {
 
-    long count();
+    long countByDeletedAtIsNull();
 
-    Long countAllByArticleId(UUID id);
+    Long countAllByDeletedAtIsNullAndArticleId(UUID id);
 }

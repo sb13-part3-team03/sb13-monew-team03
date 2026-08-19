@@ -73,7 +73,7 @@ public class CommentServiceImpl implements CommentService {
                         createDtoCommands.getSize(),
                         getCommentsCountConditionedByArticle(command.articleId()),
                         createDtoCommands.hasNext(),
-                        command.orderBy().equals("likeCount")   // order attribute check - change enum to after
+                        "likeCount".equals(command.orderBy())   // order attribute check - change enum to after
                 )
         );
     }
@@ -81,8 +81,8 @@ public class CommentServiceImpl implements CommentService {
     private Long getCommentsCountConditionedByArticle(UUID articleId){
         // comment count is determined by article id.
         // therefore, article id is taken required condition.
-        if (articleId == null) return commentRepository.count();
-        return commentRepository.countAllByArticleId(articleId);
+        if (articleId == null) return commentRepository.countByDeletedAtIsNull();
+        return commentRepository.countAllByDeletedAtIsNullAndArticleId(articleId);
     }
 
 
@@ -111,7 +111,10 @@ public class CommentServiceImpl implements CommentService {
 
             log.debug("last comment info is - {}",last);
 
-            next = orderByLikeCount ? last.likeCount().toString() : last.createdAt().toString();
+            next = orderByLikeCount
+                    ? last.likeCount().toString()
+                    : last.createdAt().toString();
+
             after = last.createdAt().toString();
         }
 

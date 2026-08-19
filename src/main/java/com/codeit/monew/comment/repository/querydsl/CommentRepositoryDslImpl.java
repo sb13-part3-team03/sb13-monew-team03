@@ -28,6 +28,7 @@ import org.springframework.data.domain.SliceImpl;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -249,9 +250,9 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
 
         log.debug("CommentsQuery - got orderBy = {}, cursor = {}", orderBy, cursor);
 
-        return switch (orderBy) {
-            case "createdAt" -> getConditionFilterWithCreatedAt(direction, cursor);
-            case "likeCount" -> getConditionFilterWithLikeCount(direction, cursor);
+        return switch (orderBy.toUpperCase(Locale.ROOT)) {
+            case "CREATEDAT" -> getConditionFilterWithCreatedAt(direction, cursor);
+            case "LIKECOUNT" -> getConditionFilterWithLikeCount(direction, cursor);
             default -> {
                 log.debug("orderBy value error - {}", orderBy);
                 throw new CommentException(ErrorCode.COMMENT_INVALID_VALUE);
@@ -264,7 +265,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
             String after,
             String direction
     ){
-        if (after == null) return null;
+        if (after == null || after.isBlank()) return null;
 
         log.debug("CommentsQuery - got after = {}", after);
 
@@ -275,7 +276,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
     private BooleanExpression getConditionFilterWithCreatedAt(String direction, String cursor){
         try{
             // no where define with no  cursor
-            if (cursor == null) return null;
+            if (cursor == null || cursor.isBlank()) return null;
 
             Instant createdAt = Instant.parse(cursor);
 
@@ -292,7 +293,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
     private BooleanExpression getConditionFilterWithLikeCount(String direction, String cursor){
         try {
             // no where define with no  cursor
-            if (cursor == null) return null;
+            if (cursor == null || cursor.isBlank()) return null;
 
             Long count = Long.parseLong(cursor);
 

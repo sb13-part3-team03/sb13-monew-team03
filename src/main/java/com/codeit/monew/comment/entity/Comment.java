@@ -29,7 +29,7 @@ public class Comment extends BaseEntity {
     private String content;
 
     @Column
-    private Instant deleted_at;
+    private Instant deletedAt;
 
 
     public Comment(
@@ -51,7 +51,7 @@ public class Comment extends BaseEntity {
 
     // logical delete
     public void delete(){
-        this.deleted_at = Instant.now();
+        this.deletedAt = Instant.now();
     }
 
 }

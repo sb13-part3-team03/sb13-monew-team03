@@ -6,7 +6,7 @@ import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
 import com.codeit.monew.comment.dto.command.CommentQueryCommand;
 import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.entity.CommentLike;
-import com.codeit.monew.global.config.QueryDslConfig;
+import com.codeit.monew.global.config.QuerydslConfig;
 import com.codeit.monew.user.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.utility.RandomString;
@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.*;
 @DataJpaTest
 @DisplayName("comment repository test")
 @ActiveProfiles("test")
-@Import(QueryDslConfig.class)
+@Import(QuerydslConfig.class)
 @Slf4j
 public class CommentRepositoryTest {
     @Autowired
@@ -237,12 +237,12 @@ public class CommentRepositoryTest {
             Slice<CommentDtoCreateCommand> result = commentRepository.getAllCommentsWithCursor(command);
 
             // query comment count
-            // the number of comment will get count() or countAllByArticleId() method
-            Long allElementCount = commentRepository.countAllByArticleId(articleList.get(0).getId());
+            // the number of comment will get countByDeletedAtIsEmpty() or countAllByArticleId() method
+            Long allElementCount = commentRepository.countAllByDeletedAtIsNullAndArticleId(articleList.get(0).getId());
 
             log.debug("result - {}", result);
 
-            assertThat(result.getSize()).isEqualTo(2);
+            assertThat(result.getNumberOfElements()).isEqualTo(2);
             assertThat(allElementCount).isEqualTo(3);      // article 1 is contained 3 comments
 
             // returned first comment equal to comment 1
@@ -276,12 +276,12 @@ public class CommentRepositoryTest {
             Slice<CommentDtoCreateCommand> result = commentRepository.getAllCommentsWithCursor(command);
 
             // query comment count
-            // the number of comment will get count() or countAllByArticleId() method
-            Long allElementCount = commentRepository.count();
+            // the number of comment will get countByDeletedAtIsEmpty() or countAllByDeletedAtIsNullAndArticleId()() method
+            Long allElementCount = commentRepository.countByDeletedAtIsNull();
 
             log.debug("Query result - get element count : {}, query result : {}", allElementCount, result.getContent());
 
-            assertThat(result.getSize()).isEqualTo(2);
+            assertThat(result.getNumberOfElements()).isEqualTo(2);
             assertThat(allElementCount).isEqualTo(4);      // all article has contained 3 comments
 
             // returned oldest comment equal to comment 3
@@ -315,8 +315,8 @@ public class CommentRepositoryTest {
             Slice<CommentDtoCreateCommand> result = commentRepository.getAllCommentsWithCursor(command);
 
             // query comment count
-            // the number of comment will get count() or countAllByArticleId() method
-            Long allElementCount = commentRepository.countAllByArticleId(articleList.get(0).getId());
+            // the number of comment will get countByDeletedAtIsEmpty() or countAllByDeletedAtIsNullAndArticleId()() method
+            Long allElementCount = commentRepository.countAllByDeletedAtIsNullAndArticleId(articleList.get(0).getId());
 
             log.debug("Query result - get element count : {}, query result : {}", allElementCount, result.getContent());
 
@@ -356,8 +356,8 @@ public class CommentRepositoryTest {
             Slice<CommentDtoCreateCommand> result = commentRepository.getAllCommentsWithCursor(command);
 
             // query comment count
-            // the number of comment will get count() or countAllByArticleId() method
-            Long allElementCount = commentRepository.countAllByArticleId(articleList.get(0).getId());
+            // the number of comment will get countByDeletedAtIsEmpty() or countAllByArticleId() method
+            Long allElementCount = commentRepository.countAllByDeletedAtIsNullAndArticleId(articleList.get(0).getId());
 
             log.debug("Query result - get element count : {}, query result : {}", allElementCount, result.getContent());
 
