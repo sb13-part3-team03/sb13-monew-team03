@@ -1,4 +1,4 @@
-package com.codeit.monew.article;
+package com.codeit.monew.article.repository;
 
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
@@ -6,7 +6,6 @@ import com.codeit.monew.article.dto.response.ArticleSearchResult;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.entity.ArticleView;
-import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.global.config.QuerydslConfig;
@@ -166,8 +165,8 @@ public class ArticleRepositoryImplTest {
         Article article2 = Article.create(
                 ArticleSource.NAVER,
                 "https://example.com/article-2",
-                "JPA 성능 최적화",
-                "JPA를 활용한 데이터베이스 성능 최적화 방법을 소개합니다.",
+                "Spring JPA 활용",
+                "Spring JPA 관련 기사입니다.",
                 Instant.parse("2026-08-05T10:00:00Z")
         );
 
@@ -175,11 +174,19 @@ public class ArticleRepositoryImplTest {
                 ArticleSource.HANKYUNG,
                 "https://example.com/article-3",
                 "Spring Data JPA 활용법",
-                "Spring Data JPA의 다양한 활용 방법을 소개합니다.",
+                "Spring Data JPA 관련 기사입니다.",
                 Instant.parse("2026-08-10T10:00:00Z")
         );
 
-        articleRepository.saveAll(List.of(article1, article2, article3));
+        Article article4 = Article.create(
+                ArticleSource.NAVER,
+                "https://example.com/article-4",
+                "Spring 오래된 기사",
+                "Spring 관련 기사입니다.",
+                Instant.parse("2026-07-01T10:00:00Z")
+        );
+
+        articleRepository.saveAll(List.of(article1, article2, article3, article4));
 
         Interest interest = new Interest(
                 "개발",
@@ -191,9 +198,9 @@ public class ArticleRepositoryImplTest {
         ArticleSearchCommand command = new ArticleSearchCommand(
                 "Spring",
                 null,
-                List.of(ArticleSource.NAVER, ArticleSource.HANKYUNG),
+                List.of(ArticleSource.NAVER),
                 Instant.parse("2026-07-31T00:00:00Z"),
-                Instant.parse("2026-08-20T00:00:00Z"),
+                Instant.parse("2026-08-06T00:00:00Z"),
                 null,
                 null,
                 null,
@@ -215,26 +222,26 @@ public class ArticleRepositoryImplTest {
         // given
         Article article1 = Article.create(
                 ArticleSource.NAVER,
-                "https://example.com/1",
-                "Article 1",
-                "Article 1 summary",
+                "https://example.com/article-1",
+                "Spring Boot 새로운 기능",
+                "Spring Boot 관련 새로운 기능을 소개하는 기사입니다.",
                 Instant.parse("2026-08-01T10:00:00Z")
         );
 
         Article article2 = Article.create(
                 ArticleSource.NAVER,
-                "https://example.com/2",
-                "Article 2",
-                "Article 2 summary",
-                Instant.parse("2026-08-02T10:00:00Z")
+                "https://example.com/article-2",
+                "Spring JPA 활용",
+                "Spring JPA 관련 기사입니다.",
+                Instant.parse("2026-08-05T10:00:00Z")
         );
 
         Article article3 = Article.create(
-                ArticleSource.NAVER,
-                "https://example.com/3",
-                "Article 3",
-                "Article 3 summary",
-                Instant.parse("2026-08-03T10:00:00Z")
+                ArticleSource.HANKYUNG,
+                "https://example.com/article-3",
+                "Spring Data JPA 활용법",
+                "Spring Data JPA 관련 기사입니다.",
+                Instant.parse("2026-08-10T10:00:00Z")
         );
 
         articleRepository.saveAll(List.of(article1, article2, article3));
