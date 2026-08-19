@@ -102,7 +102,7 @@ public class ArticleQueryServiceImpl implements ArticleQueryService {
 
     // 정렬 유효성 검증
     private void validateDirection(String direction) {
-        if (!Set.of("asc", "desc").contains(direction.toLowerCase())) {
+        if (direction == null || !Set.of("asc", "desc").contains(direction.toLowerCase())) {
             throw new MonewException(ErrorCode.INVALID_INPUT_VALUE);
         }
     }
