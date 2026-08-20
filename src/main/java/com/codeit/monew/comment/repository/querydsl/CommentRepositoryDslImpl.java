@@ -3,7 +3,7 @@ package com.codeit.monew.comment.repository.querydsl;
 
 import com.codeit.monew.article.entity.QArticle;
 import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
-import com.codeit.monew.comment.dto.command.CommentQueryCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentQueryCommand;
 import com.codeit.monew.comment.entity.QComment;
 import com.codeit.monew.comment.entity.QCommentLike;
 import com.codeit.monew.comment.exception.CommentException;

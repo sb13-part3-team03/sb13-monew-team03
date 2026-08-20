@@ -48,3 +48,4 @@ CLAUDE.md
 
 # test configuration ignored
 src/test/resources/*
+!src/test/resources/application-test.yaml
