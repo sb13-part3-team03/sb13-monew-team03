@@ -1,4 +1,4 @@
-package com.codeit.monew.comment.dto.command;
+package com.codeit.monew.comment.dto.command.comment;
 
 import java.util.UUID;
 

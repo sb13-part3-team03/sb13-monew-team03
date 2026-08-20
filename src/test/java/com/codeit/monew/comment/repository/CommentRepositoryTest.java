@@ -3,7 +3,7 @@ package com.codeit.monew.comment.repository;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
-import com.codeit.monew.comment.dto.command.CommentQueryCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentQueryCommand;
 import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.entity.CommentLike;
 import com.codeit.monew.global.config.QuerydslConfig;
@@ -143,6 +143,9 @@ public class CommentRepositoryTest {
         String nickname = id.toString().substring(0,7);
 
         User user = new User(nickname + "@email.com",nickname,"password");
+
+        ReflectionTestUtils.setField(user,"createdAt",Instant.now());
+        ReflectionTestUtils.setField(user,"updatedAt",Instant.now());
 
         entityManager.persist(user);
 
