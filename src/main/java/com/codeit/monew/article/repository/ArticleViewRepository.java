@@ -8,9 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface ArticleViewRepository extends JpaRepository<UUID, ArticleView> {
-
-    ArticleView save(ArticleView articleView);
+public interface ArticleViewRepository extends JpaRepository<ArticleView, UUID> {
 
     // 기록 존재 여부 확인
     Optional<ArticleView> findByArticleIdAndUserId(
