@@ -82,7 +82,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                         sourceIn(command.sourceIn()),
                         publishedAtGoe(command.publishDateFrom()),
                         publishedAtLoe(command.publishDateTo()),
-                        publishedDateCursorCondition(
+                        publishDateCursorCondition(
                                 orderBy,
                                 command.direction(),
                                 command.cursor(),
@@ -233,7 +233,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     }
 
     // 날짜 정렬 커서 페이지네이션
-    private BooleanExpression publishedDateCursorCondition(
+    private BooleanExpression publishDateCursorCondition(
             String orderBy,
             String sortDirection,
             String nextCursor,
