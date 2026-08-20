@@ -92,10 +92,10 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = getCommentById(command.commentId());
 
-        if (command.content() != null) comment.update(command.content());
+        // value checked request dto
+        comment.update(command.content());
 
         comment = commentRepository.save(comment);
-
 
         return getCommentDtoFromComment(comment);
     }

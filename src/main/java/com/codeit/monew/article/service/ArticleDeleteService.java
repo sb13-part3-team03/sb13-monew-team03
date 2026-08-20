@@ -20,8 +20,8 @@ public class ArticleDeleteService {
     private final ArticleInterestRepository articleInterestRepository;
     // TODO: 연관 데이터 Repository 준비되면 연결
     // private final ArticleViewRepository articleViewRepository;
-    // private final CommentRepository commentRepository;
-    // private final CommentLikeRepository commentLikeRepository;
+    private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
     // 논리 삭제
     @Transactional
@@ -40,8 +40,8 @@ public class ArticleDeleteService {
                 .orElseThrow(ArticleNotFoundException::new);
 
         // TODO: 관련 데이터 먼저 삭제 후 Article 삭제
-        // commentLikeRepository.deleteAllByComment_Article_Id(articleId);
-        // commentRepository.deleteAllByArticle_Id(articleId);
+        commentLikeRepository.deleteAllByComment_Article_Id(articleId);
+        commentRepository.deleteAllByArticle_Id(articleId);
         articleInterestRepository.deleteAllByArticle_Id(articleId);
         // articleViewRepository.deleteAllByArticle_Id(articleId);
 
