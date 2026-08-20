@@ -1,7 +1,7 @@
 package com.codeit.monew.auth.service;
 
 import com.codeit.monew.auth.dto.request.LoginRequest;
-import com.codeit.monew.global.exception.LoginFailedException;
+import com.codeit.monew.user.exception.LoginFailedException;
 import com.codeit.monew.user.dto.response.UserResponse;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
@@ -20,7 +20,8 @@ public class AuthService {
 
     public UserResponse login(LoginRequest request) {
 
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository
+                .findByEmailAndDeletedAtIsNull(request.email())
                 .orElseThrow(LoginFailedException::new);
 
         if (!passwordEncoder.matches(

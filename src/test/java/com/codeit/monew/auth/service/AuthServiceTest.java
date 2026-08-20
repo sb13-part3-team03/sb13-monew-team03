@@ -1,8 +1,8 @@
 package com.codeit.monew.auth.service;
 
 import com.codeit.monew.auth.dto.request.LoginRequest;
-import com.codeit.monew.global.exception.LoginFailedException;
 import com.codeit.monew.user.entity.User;
+import com.codeit.monew.user.exception.LoginFailedException;
 import com.codeit.monew.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class AuthServiceTest {
                 "encoded-password"
         );
 
-        given(userRepository.findByEmail(request.email()))
+        given(userRepository.findByEmailAndDeletedAtIsNull(request.email()))
                 .willReturn(Optional.of(user));
 
         given(passwordEncoder.matches(
@@ -82,7 +82,7 @@ class AuthServiceTest {
                 "password1234"
         );
 
-        given(userRepository.findByEmail(request.email()))
+        given(userRepository.findByEmailAndDeletedAtIsNull(request.email()))
                 .willReturn(Optional.empty());
 
         // when & then
@@ -110,7 +110,7 @@ class AuthServiceTest {
                 "encoded-password"
         );
 
-        given(userRepository.findByEmail(request.email()))
+        given(userRepository.findByEmailAndDeletedAtIsNull(request.email()))
                 .willReturn(Optional.of(user));
 
         given(passwordEncoder.matches(
@@ -125,5 +125,27 @@ class AuthServiceTest {
 
         verify(passwordEncoder)
                 .matches("wrong-password", "encoded-password");
+    }
+
+    @Test
+    @DisplayName("논리 삭제된 사용자는 로그인에 실패한다.")
+    void login_whenUserIsDeleted_throwsException() {
+
+        // given
+        LoginRequest request = new LoginRequest(
+                "deleted@example.com",
+                "password1234"
+        );
+
+        given(userRepository.findByEmailAndDeletedAtIsNull(request.email()))
+                .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(LoginFailedException.class)
+                .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");
+
+        verify(passwordEncoder, never())
+                .matches(anyString(), anyString());
     }
 }
