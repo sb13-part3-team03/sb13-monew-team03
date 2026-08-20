@@ -10,6 +10,7 @@ import com.codeit.monew.interest.exception.InterestNotFoundException;
 import com.codeit.monew.interest.exception.SubscriptionNotFoundException;
 import com.codeit.monew.interest.repository.InterestRepository;
 import com.codeit.monew.interest.repository.SubscriptionRepository;
+import com.codeit.monew.interest.repository.projection.InterestSearchResult;
 import com.codeit.monew.interest.service.command.*;
 import com.codeit.monew.interest.service.condition.InterestSearchCondition;
 import com.codeit.monew.user.entity.User;
@@ -30,7 +31,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -240,16 +241,14 @@ class InterestServiceTest {
                     List.of("농구", "배구")
             );
 
-            given(interestRepository.findAllByCondition(condition, 3))
-                    .willReturn(List.of(interest1, interest2));
+            given(interestRepository.search(condition, 3))
+                    .willReturn(List.of(
+                            new InterestSearchResult(interest1, 3L, false),
+                            new InterestSearchResult(interest2, 5L, false)
+                    ));
 
             given(interestRepository.countByCondition(condition))
                     .willReturn(2L);
-
-            given(subscriptionRepository.findSubscribedInterestIds(
-                    eq(userId),
-                    anyList()
-            )).willReturn(Set.of());
 
             // when
             CursorPageResponseInterestDto result =
@@ -263,9 +262,15 @@ class InterestServiceTest {
             assertThat(result.nextCursor()).isNull();
             assertThat(result.nextAfter()).isNull();
 
+            assertThat(result.content().get(0).subscriberCount())
+                    .isEqualTo(3L);
+
+            assertThat(result.content().get(1).subscriberCount())
+                    .isEqualTo(5L);
+
             then(interestRepository)
                     .should()
-                    .findAllByCondition(condition, 3);
+                    .search(condition, 3);
         }
 
         @Test
@@ -299,20 +304,15 @@ class InterestServiceTest {
                     List.of("국내", "해외")
             );
 
-            given(interestRepository.findAllByCondition(condition, 3))
+            given(interestRepository.search(condition, 3))
                     .willReturn(List.of(
-                            interest1,
-                            interest2,
-                            interest3
+                            new InterestSearchResult(interest1, 3L, false),
+                            new InterestSearchResult(interest2, 5L, false),
+                            new InterestSearchResult(interest3, 7L, false)
                     ));
 
             given(interestRepository.countByCondition(condition))
                     .willReturn(3L);
-
-            given(subscriptionRepository.findSubscribedInterestIds(
-                    eq(userId),
-                    anyList()
-            )).willReturn(Set.of());
 
             // when
             CursorPageResponseInterestDto result =
@@ -357,19 +357,22 @@ class InterestServiceTest {
                     List.of("국내", "해외")
             );
 
-            given(interestRepository.findAllByCondition(condition, 3))
+            given(interestRepository.search(condition, 3))
                     .willReturn(List.of(
-                            subscribedInterest,
-                            notSubscribedInterest
+                            new InterestSearchResult(
+                                    subscribedInterest,
+                                    10L,
+                                    true
+                            ),
+                            new InterestSearchResult(
+                                    notSubscribedInterest,
+                                    5L,
+                                    false
+                            )
                     ));
 
             given(interestRepository.countByCondition(condition))
                     .willReturn(2L);
-
-            given(subscriptionRepository.findSubscribedInterestIds(
-                    eq(userId),
-                    anyList()
-            )).willReturn(Set.of(subscribedInterest.getId()));
 
             // when
             CursorPageResponseInterestDto result =
