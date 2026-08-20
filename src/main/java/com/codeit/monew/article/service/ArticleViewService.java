@@ -1,5 +1,6 @@
 package com.codeit.monew.article.service;
 
+import com.codeit.monew.article.dto.command.ArticleViewCreateCommand;
 import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.article.dto.response.ArticleViewResult;
 import com.codeit.monew.article.entity.Article;
@@ -29,7 +30,10 @@ public class ArticleViewService {
     private final ArticleViewMapper articleViewMapper;
 
     @Transactional
-    public ArticleViewDto save(UUID articleId, UUID userId) {
+    public ArticleViewDto save(ArticleViewCreateCommand command) {
+        UUID articleId = command.articleId();
+        UUID userId = command.userId();
+
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(ArticleNotFoundException::new);
 

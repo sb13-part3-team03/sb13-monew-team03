@@ -1,6 +1,7 @@
 package com.codeit.monew.article.controller;
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
+import com.codeit.monew.article.dto.command.ArticleViewCreateCommand;
 import com.codeit.monew.article.dto.request.ArticleSearchRequest;
 import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
@@ -41,8 +42,10 @@ public class ArticleController {
             @PathVariable UUID articleId,
             @RequestHeader("Monew-Request-User-ID") UUID userId
     ) {
-        ArticleViewDto response = articleViewService.save(articleId, userId);
-        return ResponseEntity.ok(response);
+        ArticleViewCreateCommand command =
+                new ArticleViewCreateCommand(articleId, userId);
+
+        return ResponseEntity.ok(articleViewService.save(command));
     }
 
     // 논리 삭제
