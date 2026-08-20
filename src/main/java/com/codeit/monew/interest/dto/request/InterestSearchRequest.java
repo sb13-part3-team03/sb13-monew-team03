@@ -27,7 +27,7 @@ public record InterestSearchRequest(
 
 ) {
 
-    @AssertTrue(message = "subscriberCount 정렬 시 cursor는 숫자여야 합니다.")
+    @AssertTrue(message = "subscriberCount 정렬 시 cursor는 0 이상의 숫자여야 합니다.")
     public boolean isValidSubscriberCountCursor() {
         if (!"subscriberCount".equals(orderBy)
                 || cursor == null
@@ -36,8 +36,7 @@ public record InterestSearchRequest(
         }
 
         try {
-            Long.parseLong(cursor);
-            return true;
+            return Long.parseLong(cursor) >= 0;
         } catch (NumberFormatException e) {
             return false;
         }

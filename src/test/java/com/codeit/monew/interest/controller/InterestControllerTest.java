@@ -278,6 +278,26 @@ class InterestControllerTest {
         }
 
         @Test
+        @DisplayName("구독자 수 정렬에서 커서가 음수이면 실패")
+        void fail_whenSubscriberCountCursorIsNegative() throws Exception {
+            UUID userId = UUID.randomUUID();
+
+            mockMvc.perform(get("/api/interests")
+                            .header(
+                                    "Monew-Request-User-ID",
+                                    userId.toString()
+                            )
+                            .param("orderBy", "subscriberCount")
+                            .param("direction", "ASC")
+                            .param("cursor", "-1")
+                            .param("limit", "10"))
+                    .andExpect(status().isBadRequest());
+
+            then(interestService)
+                    .shouldHaveNoInteractions();
+        }
+
+        @Test
         @DisplayName("요청자 ID 헤더가 없으면 실패")
         void fail_whenUserIdHeaderIsMissing() throws Exception {
             // when & then
