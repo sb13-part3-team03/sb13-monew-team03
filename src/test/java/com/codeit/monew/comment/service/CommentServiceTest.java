@@ -4,7 +4,9 @@ package com.codeit.monew.comment.service;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.comment.dto.command.*;
-import com.codeit.monew.comment.dto.request.CommentUpdateRequest;
+import com.codeit.monew.comment.dto.command.comment.CommentCreateCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentQueryCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentUpdateCommand;
 import com.codeit.monew.comment.dto.response.CommentDto;
 import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
@@ -54,33 +56,6 @@ public class CommentServiceTest {
 
     @InjectMocks
     CommentServiceImpl commentService;
-
-    private Optional<Article> getArticleMock(UUID articleId){
-        Article article = mock(Article.class);
-        ReflectionTestUtils.setField(article,"id",articleId);
-        return Optional.of(article);
-    }
-
-    private Optional<User> getUserMock(UUID userId){
-        User user = mock(User.class);
-        ReflectionTestUtils.setField(user,"id",userId);
-        return Optional.of(user);
-    }
-
-    private Comment getComment(UUID id, Article article, User user, String content){
-        Comment comment = new Comment(
-                article,
-                user,
-                content
-        );
-
-        ReflectionTestUtils.setField(comment,"id",id);
-        return comment;
-    }
-
-    private Optional<CommentDtoCreateCommand> getCommentDtoFromUUID(UUID commentId){
-        return Optional.of(getDtoCreateCommand(commentId,null,null,false));
-    }
 
 
     @Test
@@ -196,7 +171,6 @@ public class CommentServiceTest {
         assertThat(response.nextAfter()).isEqualTo(result.nextAfter());
     }
 
-
     @Test
     @DisplayName("Comment Update test")
     public void updateTest(){
@@ -212,23 +186,130 @@ public class CommentServiceTest {
         CommentUpdateCommand command = new CommentUpdateCommand(
                 commentId,
                 NEW_CONTENT,
-                commentId
+                userId
         );
+
+        Optional<Comment> comment = getComment(commentId,mock(Article.class),user,"old content");
 
         // when
         // get comment when find by id
         given(commentRepository.findByIdAndDeletedAtIsNull(any(UUID.class)))
-                .willReturn(getComment(commentId,mock(Article.class),user,"old content"));
+                .willReturn(comment);
 
-        CommentDto result = commentService.update(command);
+        // return comment value for repository save method
+        given(commentRepository.save(any(Comment.class)))
+                .willAnswer( invocation -> invocation.getArgument(0));
+
+        given(commentRepository.getDtoCommandById(any(UUID.class))).willReturn(getCommentDtoFromUUID(commentId));
+
+        // mock object dint return value in that original method.
+        // set how to work that method
+        when(user.getId()).thenReturn(userId);
+
+        commentService.update(command);
+
+        // contents will change to NEW_CONTENT
+        assertThat(comment.orElseThrow(RuntimeException::new).getContent()).isEqualTo(NEW_CONTENT);
+
+        // get comment 1 times
+        verify(commentRepository,times(1))
+                .findByIdAndDeletedAtIsNull(any(UUID.class));
+    }
+
+
+    @Test
+    @DisplayName("Comment logical Delete test")
+    public void logicalDeleteTest(){
+        // check comment`s deletedAt field set
+        UUID commentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        User user = getUserMock(userId).orElseThrow(RuntimeException::new);
+
+        Optional<Comment> comment = getComment(commentId,mock(Article.class),user,"old content");
+
+        // when
+        given(commentRepository.findByIdAndDeletedAtIsNull(any(UUID.class)))
+                .willReturn(comment);
+
+        commentService.mask(commentId);
+
+        // then
+
+        log.info("{} - comment masked at {}","TEST",comment.orElseThrow(RuntimeException::new).getDeletedAt());
+
+        assertThat(comment.orElseThrow(RuntimeException::new).getDeletedAt()).isNotNull();
+
+        // get comment 1 times
+        verify(commentRepository,times(1))
+                .findByIdAndDeletedAtIsNull(any(UUID.class));
+
+        // save method called at 1 times.
+        verify(commentRepository,times(1))
+                .save(any(Comment.class));
+
 
     }
 
 
+    @Test
+    @DisplayName("Comment Delete test")
+    public void deleteTest(){
+        // check repository return entity
+        // check repository delete runnable
+        UUID commentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        User user = getUserMock(userId).orElseThrow(RuntimeException::new);
+
+        Optional<Comment> comment = getComment(commentId,mock(Article.class),user,"old content");
+
+        // when
+        given(commentRepository.findByIdAndDeletedAtIsNull(any(UUID.class)))
+                .willReturn(comment);
+
+        commentService.delete(commentId);
+
+        // get comment 1 times
+        verify(commentRepository,times(1))
+                .findByIdAndDeletedAtIsNull(any(UUID.class));
+
+        // delete method called at 1 times.
+        verify(commentRepository,times(1))
+                .delete(any(Comment.class));
+
+    }
 
 
+    private Optional<Article> getArticleMock(UUID articleId){
+        Article article = mock(Article.class);
+        ReflectionTestUtils.setField(article,"id",articleId);
+        return Optional.of(article);
+    }
 
+    private Optional<User> getUserMock(UUID userId){
+        User user = mock(User.class);
+        ReflectionTestUtils.setField(user,"id",userId);
+        return Optional.of(user);
+    }
 
+    private Optional<Comment> getComment(UUID id, Article article, User user, String content){
+
+        log.info("{} - Comment info : id - {}, user - {}, article - {}","TEST",id,user.getId(),article.getId());
+
+        Comment comment = new Comment(
+                article,
+                user,
+                content
+        );
+
+        ReflectionTestUtils.setField(comment,"id",id);
+        return Optional.of(comment);
+    }
+
+    private Optional<CommentDtoCreateCommand> getCommentDtoFromUUID(UUID commentId){
+        return Optional.of(getDtoCreateCommand(commentId,null,null,false));
+    }
 
 
 
@@ -309,8 +390,7 @@ public class CommentServiceTest {
             UUID userId,
             Boolean likeByMe
     ){
-        log.info("TEST - create CommentDto Command : comment - {}, article - {}, user - {}", commentId, articleId, userId);
-        return new CommentDtoCreateCommand(
+         return new CommentDtoCreateCommand(
                 commentId,
                 articleId,
                 userId,

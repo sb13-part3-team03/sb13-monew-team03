@@ -3,6 +3,9 @@ package com.codeit.monew.comment.service;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.comment.dto.command.*;
+import com.codeit.monew.comment.dto.command.comment.CommentCreateCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentQueryCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentUpdateCommand;
 import com.codeit.monew.comment.dto.response.CommentDto;
 import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
@@ -20,13 +23,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CommentServiceImpl implements CommentService {
+
+    private final String SERVICE_NAME = "Comment";
 
     private final ArticleRepository articleRepository;
     private final CommentRepository commentRepository;
@@ -38,8 +42,18 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public CommentDto registry(CommentCreateCommand command){
+
+        log.info("{} - Comment Registry requested By User : {}",SERVICE_NAME,command.userId());
+
         Article article = getArticleOrExcept(command.articleId());
         User user = getUserOrExcept(command.userId());
+
+        log.debug(
+                "{} - Comment Registry - articleId : {}, userId : {}",
+                SERVICE_NAME,
+                article.getId(),
+                user.getId()
+        );
 
         Comment comment = commentRepository.save(
                 new Comment(
@@ -56,13 +70,12 @@ public class CommentServiceImpl implements CommentService {
     @Transactional(readOnly = true)
     public CursorContainerDto<CommentDto> query(CommentQueryCommand command){
 
-        log.debug("query size - {}",command.size());
-
+        log.info("{} - Comment Queried by ID : {}",SERVICE_NAME,command.requestUserId());
 
         // Todo - repository param change? commmand -> comdition and where.
         Slice<CommentDtoCreateCommand> createDtoCommands = commentRepository.getAllCommentsWithCursor(command);
 
-        log.debug("repository return objects : size - {}",createDtoCommands.getSize());
+        log.debug("{} - repository return objects : size - {}", SERVICE_NAME, createDtoCommands.getSize());
 
         return commentMapper.toDto(
                 getCursorContainerCommand(
@@ -76,9 +89,52 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public CommentDto update(CommentUpdateCommand command){
-        return null;
+
+        Comment comment = getCommentById(command.commentId());
+
+        // todo - check user is owner of comment
+        if (!comment.getUser().getId().equals(command.userId()))
+            throw new CommentException(ErrorCode.COMMENT_NOT_FOUND);
+
+        // value checked request dto
+        comment.update(command.content());
+
+        Comment result = commentRepository.save(comment);
+
+        return getCommentDtoFromComment(result);
     }
+
+
+    @Override
+    @Transactional
+    public void mask(UUID commentId){
+        // logical delete.
+
+        log.info("{} - Comment Marked like Deleted : id - {}", SERVICE_NAME, commentId);
+
+        Comment comment = getCommentById(commentId);
+
+        // add value in deletedAt field
+        comment.delete();
+
+        // not delete instance in now.
+        commentRepository.save(comment);
+    }
+
+
+    @Override
+    @Transactional
+    public void delete(UUID commentId){
+        // delete comment like info associate comment
+
+        log.info("{} - Comment Deleted : id - {}", SERVICE_NAME, commentId);
+
+        Comment comment = getCommentById(commentId);
+        commentRepository.delete(comment);
+    }
+
 
     private Long getCommentsCountConditionedByArticle(UUID articleId){
         // comment count is determined by article id.
@@ -130,16 +186,19 @@ public class CommentServiceImpl implements CommentService {
         );
     }
 
+    private Comment getCommentById(UUID commentId){
+        return commentRepository.findByIdAndDeletedAtIsNull(commentId)
+                .orElseThrow(() -> new CommentException(ErrorCode.COMMENT_NOT_FOUND));
+    }
+
     private Article getArticleOrExcept(UUID articleId){
-        Optional<Article> article = articleRepository.findById(articleId);
-        if (article.isEmpty()) throw new CommentException(ErrorCode.COMMENT_ARTICLE_NOT_FOUND);
-        return article.get();
+        return articleRepository.findById(articleId)
+                .orElseThrow(() -> new CommentException(ErrorCode.COMMENT_ARTICLE_NOT_FOUND));
     }
 
     private User getUserOrExcept(UUID userId){
-        Optional<User> user = userRepository.findById(userId);
-        if (user.isEmpty()) throw new CommentException(ErrorCode.COMMENT_USER_NOT_FOUND);
-        return user.get();
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new CommentException(ErrorCode.COMMENT_USER_NOT_FOUND));
     }
 
     private CommentDto getCommentDtoFromComment(Comment comment){
