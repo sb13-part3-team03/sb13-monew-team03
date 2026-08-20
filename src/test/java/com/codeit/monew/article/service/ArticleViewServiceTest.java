@@ -53,6 +53,9 @@ public class ArticleViewServiceTest {
     @Mock
     private ArticleViewMapper articleViewMapper;
 
+    @Mock
+    private ArticleViewSaveService articleViewSaveService;
+
     @InjectMocks
     private ArticleViewService articleViewService;
 
@@ -79,6 +82,22 @@ public class ArticleViewServiceTest {
         articleView = ArticleView.create(article, user);
     }
 
+    private ArticleViewDto createExpectedDto() {
+        return new ArticleViewDto(
+                articleView.getId(),
+                user.getId(),
+                articleView.getCreatedAt(),
+                article.getId(),
+                "NAVER",
+                "https://example.com/article",
+                "테스트 기사",
+                article.getPublishDate(),
+                "테스트 요약",
+                3L,
+                5L
+        );
+    }
+
     @Test
     @DisplayName("조회 기록이 없으면 ArticleView를 저장한다")
     void saveArticleView_whenNotExists() {
@@ -94,7 +113,7 @@ public class ArticleViewServiceTest {
                 user.getId()
         )).willReturn(Optional.empty());
 
-        given(articleViewRepository.save(any(ArticleView.class)))
+        given(articleViewSaveService.save(article, user))
                 .willReturn(articleView);
 
         given(commentRepository.countAllByDeletedAtIsNullAndArticleId(article.getId()))
@@ -103,19 +122,7 @@ public class ArticleViewServiceTest {
         given(articleViewRepository.countByArticleId(article.getId()))
                 .willReturn(5L);
 
-        ArticleViewDto expected = new ArticleViewDto(
-                articleView.getId(),
-                user.getId(),
-                articleView.getCreatedAt(),
-                article.getId(),
-                "NAVER",
-                "https://example.com/article",
-                "테스트 기사",
-                article.getPublishDate(),
-                "테스트 요약",
-                3L,
-                5L
-        );
+        ArticleViewDto expected = createExpectedDto();
 
         given(articleViewMapper.toDto(any(ArticleViewResult.class)))
                 .willReturn(expected);
@@ -129,9 +136,9 @@ public class ArticleViewServiceTest {
         // then
         assertThat(result).isEqualTo(expected);
 
-        then(articleViewRepository)
+        then(articleViewSaveService)
                 .should()
-                .save(any(ArticleView.class));
+                .save(article, user);
     }
 
     @Test
@@ -149,6 +156,19 @@ public class ArticleViewServiceTest {
                 user.getId()
         )).willReturn(Optional.of(articleView));
 
+        given(commentRepository.countAllByDeletedAtIsNullAndArticleId(
+                article.getId()
+        )).willReturn(3L);
+
+        given(articleViewRepository.countByArticleId(
+                article.getId()
+        )).willReturn(5L);
+
+        ArticleViewDto expected = createExpectedDto();
+
+        given(articleViewMapper.toDto(any(ArticleViewResult.class)))
+                .willReturn(expected);
+
         ArticleViewCreateCommand command =
                 new ArticleViewCreateCommand(
                         article.getId(),
@@ -156,12 +176,14 @@ public class ArticleViewServiceTest {
                 );
 
         // when
-        articleViewService.save(command);
+        ArticleViewDto result = articleViewService.save(command);
 
         // then
-        then(articleViewRepository)
+        assertThat(result).isEqualTo(expected);
+
+        then(articleViewSaveService)
                 .should(never())
-                .save(any(ArticleView.class));
+                .save(any(Article.class), any(User.class));
     }
 
     @Test
