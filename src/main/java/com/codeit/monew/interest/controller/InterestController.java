@@ -42,7 +42,6 @@ public class InterestController {
         return ResponseEntity.ok(interestService.subscribe(command));
     }
 
-    //Todo 목록 조회 구현 시 추가
     @GetMapping
     public ResponseEntity<CursorPageResponseInterestDto> findInterests(
             @Valid @ModelAttribute InterestSearchRequest request,
