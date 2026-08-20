@@ -36,16 +36,20 @@ public class ArticleViewService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        ArticleView articleView = ArticleView.create(article, user);
-
-        ArticleView saved = articleViewRepository.save(articleView);
+        // 기사 조회 기록이 있으면 저장 생략
+        ArticleView articleView = articleViewRepository
+                .findByArticleIdAndUserId(articleId, userId)
+                .orElseGet(() -> {
+                    ArticleView newArticleView = ArticleView.create(article, user);
+                    return articleViewRepository.save(newArticleView);
+                });
 
         // commentCount, viewCount 조회
         Long commentCount = commentRepository.countByArticleId(articleId);
         Long viewCount = articleViewRepository.countByArticleId(articleId);
 
         ArticleViewResult result = new ArticleViewResult(
-                saved,
+                articleView,
                 commentCount,
                 viewCount
         );
