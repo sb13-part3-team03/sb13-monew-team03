@@ -2,7 +2,7 @@ package com.codeit.monew.user.controller;
 
 import com.codeit.monew.auth.dto.request.LoginRequest;
 import com.codeit.monew.auth.service.AuthService;
-import com.codeit.monew.global.exception.UserForbiddenException;
+import com.codeit.monew.user.exception.UserForbiddenException;
 import com.codeit.monew.user.dto.request.UserCreateRequest;
 import com.codeit.monew.user.dto.request.UserUpdateRequest;
 import com.codeit.monew.user.dto.response.UserResponse;
@@ -58,6 +58,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    // 사용자 논리 삭제
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> delete(
             @PathVariable UUID userId,
@@ -66,6 +67,19 @@ public class UserController {
         validateUserAccess(userId, requestUserId);
 
         userService.delete(userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // 사용자 물리 삭제
+    @DeleteMapping("/{userId}/hard")
+    public ResponseEntity<Void> hardDelete(
+            @PathVariable UUID userId,
+            @RequestHeader(REQUEST_USER_ID_HEADER) UUID requestUserId
+    ) {
+        validateUserAccess(userId, requestUserId);
+
+        userService.hardDelete(userId);
 
         return ResponseEntity.noContent().build();
     }

@@ -1,7 +1,7 @@
 package com.codeit.monew.user.service;
 
-import com.codeit.monew.global.exception.DuplicateEmailException;
-import com.codeit.monew.global.exception.UserNotFoundException;
+import com.codeit.monew.user.exception.DuplicateEmailException;
+import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.user.dto.request.UserCreateRequest;
 import com.codeit.monew.user.dto.request.UserUpdateRequest;
 import com.codeit.monew.user.dto.response.UserResponse;
@@ -202,5 +202,48 @@ class UserServiceTest {
         // when & then
         assertThatThrownBy(() -> userService.delete(userId))
                 .isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("존재하는 사용자를 물리 삭제한다.")
+    void hardDeleteUser_whenUserExists_deletesUser() {
+
+        // given
+        UUID userId = UUID.randomUUID();
+
+        User user = new User(
+                "test@example.com",
+                "테스트",
+                "encoded-password"
+        );
+
+        given(userRepository.findById(userId))
+                .willReturn(Optional.of(user));
+
+        // when
+        userService.hardDelete(userId);
+
+        // then
+        verify(userRepository)
+                .delete(user);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자를 물리 삭제하면 예외가 발생한다.")
+    void hardDeleteUser_whenUserDoesNotExist_throwsUserNotFoundException() {
+
+        // given
+        UUID userId = UUID.randomUUID();
+
+        given(userRepository.findById(userId))
+                .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.hardDelete(userId))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("사용자를 찾을 수 없습니다.");
+
+        verify(userRepository, never())
+                .delete(any(User.class));
     }
 }

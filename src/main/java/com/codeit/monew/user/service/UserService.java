@@ -1,7 +1,7 @@
 package com.codeit.monew.user.service;
 
-import com.codeit.monew.global.exception.DuplicateEmailException;
-import com.codeit.monew.global.exception.UserNotFoundException;
+import com.codeit.monew.user.exception.DuplicateEmailException;
+import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.user.dto.request.UserCreateRequest;
 import com.codeit.monew.user.dto.request.UserUpdateRequest;
 import com.codeit.monew.user.dto.response.UserResponse;
@@ -65,11 +65,21 @@ public class UserService {
         );
     }
 
+    // 사용자 논리 삭제
     public void delete(UUID userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         user.delete();
+    }
+
+    // 사용자 물리 삭제
+    public void hardDelete(UUID userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        userRepository.delete(user);
     }
 }
