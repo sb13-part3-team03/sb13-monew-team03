@@ -28,6 +28,7 @@ public class ArticleViewService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final ArticleViewMapper articleViewMapper;
+    private final ArticleViewSaveService articleViewSaveService;
 
     @Transactional
     public ArticleViewDto save(ArticleViewCreateCommand command) {
@@ -40,23 +41,18 @@ public class ArticleViewService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        // 기사 조회 기록이 있으면 저장 생략
-        ArticleView articleView = articleViewRepository
-                .findByArticleIdAndUserId(articleId, userId)
-                .orElseGet(() -> {
-                    ArticleView newArticleView = ArticleView.create(article, user);
-                    return articleViewRepository.save(newArticleView);
-                });
+        ArticleView articleView =
+                articleViewRepository.findByArticleIdAndUserId(articleId, userId)
+                        .orElseGet(() -> articleViewSaveService.save(article, user));
 
-        // commentCount, viewCount 조회
-        Long commentCount = commentRepository.countAllByDeletedAtIsNullAndArticleId(articleId);
-        Long viewCount = articleViewRepository.countByArticleId(articleId);
+        Long commentCount =
+                commentRepository.countAllByDeletedAtIsNullAndArticleId(articleId);
 
-        ArticleViewResult result = new ArticleViewResult(
-                articleView,
-                commentCount,
-                viewCount
-        );
+        Long viewCount =
+                articleViewRepository.countByArticleId(articleId);
+
+        ArticleViewResult result =
+                new ArticleViewResult(articleView, commentCount, viewCount);
 
         return articleViewMapper.toDto(result);
     }
