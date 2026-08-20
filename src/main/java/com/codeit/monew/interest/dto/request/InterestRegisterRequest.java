@@ -1,5 +1,6 @@
 package com.codeit.monew.interest.dto.request;
 
+import com.codeit.monew.interest.service.command.InterestRegisterCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -16,4 +17,10 @@ public record InterestRegisterRequest(
         List<@NotBlank String> keywords
 
 ) {
+    public InterestRegisterCommand toCommand() {
+        return new InterestRegisterCommand(
+                name,
+                keywords
+        );
+    }
 }
