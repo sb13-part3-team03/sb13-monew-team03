@@ -120,7 +120,7 @@ class InterestServiceTest {
             given(userRepository.findById(userId))
                     .willReturn(Optional.of(user));
 
-            given(subscriptionRepository.save(any(Subscription.class)))
+            given(subscriptionRepository.saveAndFlush(any(Subscription.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
 
             given(subscriptionRepository.countByInterestId(interest.getId()))
@@ -142,7 +142,7 @@ class InterestServiceTest {
 
             then(subscriptionRepository)
                     .should()
-                    .save(any(Subscription.class));
+                    .saveAndFlush(any(Subscription.class));
         }
 
         @Test

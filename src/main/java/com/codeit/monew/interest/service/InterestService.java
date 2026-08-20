@@ -1,5 +1,6 @@
 package com.codeit.monew.interest.service;
 
+import com.codeit.monew.global.exception.UserNotFoundException;
 import com.codeit.monew.interest.dto.response.CursorPageResponseInterestDto;
 import com.codeit.monew.interest.dto.response.InterestDto;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
@@ -15,6 +16,8 @@ import com.codeit.monew.interest.service.condition.InterestSearchCondition;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,15 +56,14 @@ public class InterestService {
         validateDuplicateSubscription(command.userId(), command.interestId());
 
         // User 조회
-        // Todo user 관련 커스텀 예외 제작 완료 시 적용하기
         User user = userRepository.findById(command.userId())
-                .orElseThrow();
+                .orElseThrow(() -> new UserNotFoundException());
 
         // Subscription 생성
         Subscription subscription = new Subscription(user, interest);
 
         // Subscription 저장
-        Subscription savedSubscription = subscriptionRepository.save(subscription);
+        Subscription savedSubscription = saveSubscription(subscription);
 
         // 구독자 수
         long subscriberCount = subscriptionRepository.countByInterestId(interest.getId());
@@ -109,6 +111,35 @@ public class InterestService {
 
         // Subscription 물리 삭제
         subscriptionRepository.delete(subscription);
+    }
+
+    // 구독 저장 메서드
+    private Subscription saveSubscription(Subscription subscription) {
+        try {
+            return subscriptionRepository.saveAndFlush(subscription);
+        } catch (DataIntegrityViolationException e) {
+            if (isDuplicateSubscriptionConstraint(e)) {
+                throw new AlreadySubscribedException();
+            }
+            throw e;
+        }
+    }
+
+    //DB의 UNIQUE 제약 판별
+    private boolean isDuplicateSubscriptionConstraint(
+            DataIntegrityViolationException e
+    ) {
+        Throwable cause = e;
+
+        while (cause != null) {
+            if (cause instanceof ConstraintViolationException cve) {
+                return "uk_subscription_user_interest"
+                        .equals(cve.getConstraintName());
+            }
+            cause = cause.getCause();
+        }
+
+        return false;
     }
 
     // 이미 구독되어 있는 상태에서 구독 요청이 왔는지 검증
