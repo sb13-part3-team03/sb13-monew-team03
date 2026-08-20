@@ -10,10 +10,10 @@ import java.util.UUID;
 
 public interface CommentRepository extends JpaRepository<Comment, UUID>, CommentRepositoryDsl {
     long countByDeletedAtIsNull();
+
     Long countAllByDeletedAtIsNullAndArticleId(UUID id);
+
     Optional<Comment> findByIdAndDeletedAtIsNull(UUID id);
 
     void deleteAllByArticle_Id(UUID id);
-
-    long countByArticleId(UUID articleId);
 }

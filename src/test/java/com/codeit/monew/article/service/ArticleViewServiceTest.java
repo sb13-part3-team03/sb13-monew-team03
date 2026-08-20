@@ -97,7 +97,7 @@ public class ArticleViewServiceTest {
         given(articleViewRepository.save(any(ArticleView.class)))
                 .willReturn(articleView);
 
-        given(commentRepository.countByArticleId(article.getId()))
+        given(commentRepository.countAllByDeletedAtIsNullAndArticleId(article.getId()))
                 .willReturn(3L);
 
         given(articleViewRepository.countByArticleId(article.getId()))

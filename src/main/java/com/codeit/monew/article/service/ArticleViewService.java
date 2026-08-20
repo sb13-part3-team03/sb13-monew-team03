@@ -49,7 +49,7 @@ public class ArticleViewService {
                 });
 
         // commentCount, viewCount 조회
-        Long commentCount = commentRepository.countByArticleId(articleId);
+        Long commentCount = commentRepository.countAllByDeletedAtIsNullAndArticleId(articleId);
         Long viewCount = articleViewRepository.countByArticleId(articleId);
 
         ArticleViewResult result = new ArticleViewResult(
