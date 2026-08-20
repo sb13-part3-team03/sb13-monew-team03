@@ -47,8 +47,6 @@ public class ArticleRepositoryImplTest {
     @DisplayName("댓글 수와 조회 수 집계")
     void countCommentsAndViews() {
         // given
-        Instant now = Instant.parse("2026-08-18T01:00:00Z");
-
         Article article = createArticle(
                 "https://example.com/article/1",
                 "삼성전자 새로운 기술 발표",
@@ -189,9 +187,6 @@ public class ArticleRepositoryImplTest {
 
         articleRepository.saveAll(List.of(article1, article2, article3));
 
-        // 서로 다른 사용자 3명
-        Instant now = Instant.parse("2026-08-18T01:00:00Z");
-
         User user1 = new User("user1@test.com", "user1", "password");
         User user2 = new User("user2@test.com", "user2", "password");
         User user3 = new User("user3@test.com", "user3", "password");
@@ -225,14 +220,9 @@ public class ArticleRepositoryImplTest {
         List<ArticleSearchResult> firstPage =
                 articleRepository.searchArticles(firstPageCommand, firstPageCommand.orderBy());
 
-        ArticleSearchResult lastArticle = firstPage.get(1);
-
-        String cursor = "2";
-        UUID after = article2.getId();
-
         ArticleSearchCommand secondPageCommand = searchCommand(
-                cursor,
-                after,
+                "2",
+                article2.getId(),
                 "commentCount",
                 "desc",
                 2,
@@ -269,9 +259,7 @@ public class ArticleRepositoryImplTest {
                 "2026-08-03T10:00:00Z"
         );
 
-        articleRepository.saveAll(
-                List.of(article1, article2, article3)
-        );
+        articleRepository.saveAll(List.of(article1, article2, article3));
 
         UUID userId = UUID.randomUUID();
 
