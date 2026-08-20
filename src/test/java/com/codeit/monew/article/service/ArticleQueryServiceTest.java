@@ -30,7 +30,7 @@ class ArticleQueryServiceTest {
     private ArticleMapper articleMapper;
 
     @InjectMocks
-    private ArticleQueryServiceImpl articleQueryService;
+    private ArticleQueryService articleQueryService;
 
     @Test
     @DisplayName("기사 검색 - 다음 페이지가 존재하면 nextCursor와 nextAfter를 생성한다")
