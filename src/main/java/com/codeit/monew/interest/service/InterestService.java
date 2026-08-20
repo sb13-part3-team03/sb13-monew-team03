@@ -1,6 +1,5 @@
 package com.codeit.monew.interest.service;
 
-import com.codeit.monew.global.exception.UserNotFoundException;
 import com.codeit.monew.interest.dto.response.CursorPageResponseInterestDto;
 import com.codeit.monew.interest.dto.response.InterestDto;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
@@ -14,6 +13,7 @@ import com.codeit.monew.interest.repository.SubscriptionRepository;
 import com.codeit.monew.interest.service.command.*;
 import com.codeit.monew.interest.service.condition.InterestSearchCondition;
 import com.codeit.monew.user.entity.User;
+import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
