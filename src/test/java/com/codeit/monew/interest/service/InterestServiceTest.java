@@ -1,5 +1,6 @@
 package com.codeit.monew.interest.service;
 
+import com.codeit.monew.interest.dto.response.CursorPageResponseInterestDto;
 import com.codeit.monew.interest.dto.response.InterestDto;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
 import com.codeit.monew.interest.entity.Interest;
@@ -10,6 +11,7 @@ import com.codeit.monew.interest.exception.SubscriptionNotFoundException;
 import com.codeit.monew.interest.repository.InterestRepository;
 import com.codeit.monew.interest.repository.SubscriptionRepository;
 import com.codeit.monew.interest.service.command.*;
+import com.codeit.monew.interest.service.condition.InterestSearchCondition;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -204,6 +207,182 @@ class InterestServiceTest {
 
             then(userRepository)
                     .shouldHaveNoInteractions();
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 목록 조회")
+    class FindInterests {
+
+        @Test
+        @DisplayName("성공")
+        void success() {
+            // given
+            UUID userId = UUID.randomUUID();
+
+            InterestSearchCondition condition = new InterestSearchCondition(
+                    "스포츠",
+                    "name",
+                    "ASC",
+                    null,
+                    null,
+                    2,
+                    userId
+            );
+
+            Interest interest1 = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest interest2 = new Interest(
+                    "스포츠 뉴스",
+                    List.of("농구", "배구")
+            );
+
+            given(interestRepository.findAllByCondition(condition, 3))
+                    .willReturn(List.of(interest1, interest2));
+
+            given(interestRepository.countByCondition(condition))
+                    .willReturn(2L);
+
+            given(subscriptionRepository.findSubscribedInterestIds(
+                    eq(userId),
+                    anyList()
+            )).willReturn(Set.of());
+
+            // when
+            CursorPageResponseInterestDto result =
+                    interestService.findInterests(condition);
+
+            // then
+            assertThat(result.content()).hasSize(2);
+            assertThat(result.size()).isEqualTo(2);
+            assertThat(result.totalElements()).isEqualTo(2L);
+            assertThat(result.hasNext()).isFalse();
+            assertThat(result.nextCursor()).isNull();
+            assertThat(result.nextAfter()).isNull();
+
+            then(interestRepository)
+                    .should()
+                    .findAllByCondition(condition, 3);
+        }
+
+        @Test
+        @DisplayName("다음 페이지가 있으면 커서 정보를 반환")
+        void success_withNextPage() {
+            // given
+            UUID userId = UUID.randomUUID();
+
+            InterestSearchCondition condition = new InterestSearchCondition(
+                    null,
+                    "name",
+                    "ASC",
+                    null,
+                    null,
+                    2,
+                    userId
+            );
+
+            Interest interest1 = new Interest(
+                    "게임",
+                    List.of("PC", "콘솔")
+            );
+
+            Interest interest2 = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest interest3 = new Interest(
+                    "여행",
+                    List.of("국내", "해외")
+            );
+
+            given(interestRepository.findAllByCondition(condition, 3))
+                    .willReturn(List.of(
+                            interest1,
+                            interest2,
+                            interest3
+                    ));
+
+            given(interestRepository.countByCondition(condition))
+                    .willReturn(3L);
+
+            given(subscriptionRepository.findSubscribedInterestIds(
+                    eq(userId),
+                    anyList()
+            )).willReturn(Set.of());
+
+            // when
+            CursorPageResponseInterestDto result =
+                    interestService.findInterests(condition);
+
+            // then
+            assertThat(result.content()).hasSize(2);
+            assertThat(result.size()).isEqualTo(2);
+            assertThat(result.totalElements()).isEqualTo(3L);
+            assertThat(result.hasNext()).isTrue();
+
+            assertThat(result.nextCursor())
+                    .isEqualTo("스포츠");
+
+            assertThat(result.nextAfter())
+                    .isEqualTo(interest2.getCreatedAt());
+        }
+
+        @Test
+        @DisplayName("구독한 관심사는 subscribedByMe가 true")
+        void success_whenSubscribed() {
+            // given
+            UUID userId = UUID.randomUUID();
+
+            InterestSearchCondition condition = new InterestSearchCondition(
+                    null,
+                    "name",
+                    "ASC",
+                    null,
+                    null,
+                    2,
+                    userId
+            );
+
+            Interest subscribedInterest = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest notSubscribedInterest = new Interest(
+                    "여행",
+                    List.of("국내", "해외")
+            );
+
+            given(interestRepository.findAllByCondition(condition, 3))
+                    .willReturn(List.of(
+                            subscribedInterest,
+                            notSubscribedInterest
+                    ));
+
+            given(interestRepository.countByCondition(condition))
+                    .willReturn(2L);
+
+            given(subscriptionRepository.findSubscribedInterestIds(
+                    eq(userId),
+                    anyList()
+            )).willReturn(Set.of(subscribedInterest.getId()));
+
+            // when
+            CursorPageResponseInterestDto result =
+                    interestService.findInterests(condition);
+
+            // then
+            assertThat(result.content()).hasSize(2);
+
+            assertThat(result.content().get(0).subscribedByMe())
+                    .isTrue();
+
+            assertThat(result.content().get(1).subscribedByMe())
+                    .isFalse();
         }
     }
 
