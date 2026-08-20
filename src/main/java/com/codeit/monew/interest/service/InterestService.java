@@ -1,6 +1,6 @@
 package com.codeit.monew.interest.service;
 
-import com.codeit.monew.global.exception.UserNotFoundException;
+import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.interest.dto.response.CursorPageResponseInterestDto;
 import com.codeit.monew.interest.dto.response.InterestDto;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
