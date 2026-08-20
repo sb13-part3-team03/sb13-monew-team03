@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -98,6 +99,30 @@ public class ArticleViewServiceTest {
         );
     }
 
+    private void assertArticleViewResult(
+            ArticleView expectedArticleView,
+            Long expectedCommentCount,
+            Long expectedViewCount
+    ) {
+        ArgumentCaptor<ArticleViewResult> captor =
+                ArgumentCaptor.forClass(ArticleViewResult.class);
+
+        then(articleViewMapper)
+                .should()
+                .toDto(captor.capture());
+
+        ArticleViewResult actual = captor.getValue();
+
+        assertThat(actual.articleView())
+                .isEqualTo(expectedArticleView);
+
+        assertThat(actual.commentCount())
+                .isEqualTo(expectedCommentCount);
+
+        assertThat(actual.viewCount())
+                .isEqualTo(expectedViewCount);
+    }
+
     @Test
     @DisplayName("조회 기록이 없으면 ArticleView를 저장한다")
     void saveArticleView_whenNotExists() {
@@ -135,6 +160,8 @@ public class ArticleViewServiceTest {
 
         // then
         assertThat(result).isEqualTo(expected);
+
+        assertArticleViewResult(articleView, 3L, 5L);
 
         then(articleViewSaveService)
                 .should()
@@ -180,6 +207,8 @@ public class ArticleViewServiceTest {
 
         // then
         assertThat(result).isEqualTo(expected);
+
+        assertArticleViewResult(articleView, 3L, 5L);
 
         then(articleViewSaveService)
                 .should(never())
