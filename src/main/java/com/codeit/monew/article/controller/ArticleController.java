@@ -2,9 +2,11 @@ package com.codeit.monew.article.controller;
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.request.ArticleSearchRequest;
+import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.service.ArticleDeleteService;
 import com.codeit.monew.article.service.ArticleQueryService;
+import com.codeit.monew.article.service.ArticleViewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import java.util.UUID;
 public class ArticleController {
 
     private final ArticleQueryService articleService;
+    private final ArticleViewService articleViewService;
     private final ArticleDeleteService articleDeleteService;
 
     // 뉴스 기사 검색 목록 커서페이지네이션 조회
@@ -30,6 +33,15 @@ public class ArticleController {
 
         CursorPageResponseArticleDto response = articleService.searchArticles(command);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{articleId}/article-views")
+    public ResponseEntity<ArticleViewDto> save(
+            @PathVariable UUID articleId,
+            @RequestHeader("Monew-Request-User-ID") UUID userId
+    ) {
+        ArticleViewDto response = articleViewService.save(articleId, userId);
         return ResponseEntity.ok(response);
     }
 
