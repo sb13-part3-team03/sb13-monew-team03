@@ -1,9 +1,6 @@
 package com.codeit.monew.article.repository;
 
 import static com.codeit.monew.article.entity.QArticle.article;
-import static com.codeit.monew.article.entity. QArticleInterest.articleInterest;
-import static com.codeit.monew.article.entity.QArticleView.articleView;
-import static com.codeit.monew.comment.entity.QComment.comment;
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
@@ -11,10 +8,12 @@ import com.codeit.monew.article.dto.response.ArticleSearchResult;
 import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.entity.QArticleInterest;
 import com.codeit.monew.article.entity.QArticleView;
+import com.codeit.monew.comment.entity.QComment;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -72,16 +71,11 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .select(Projections.constructor(
                         ArticleSearchResult.class,
                         article,
-                        comment.id.countDistinct(),
-                        articleView.id.countDistinct(),
-                        // 현재 user가 이 article을 조회했는지
+                        commentCountExpression(),
+                        viewCountExpression(),
                         viewedByMeExpression(command.userId())
                 ))
                 .from(article)
-                .leftJoin(comment)
-                .on(comment.article.eq(article))
-                .leftJoin(articleView)
-                .on(articleView.article.eq(article))
                 .where(
                         keywordContains(command.keyword()),
                         hasInterestExpression(command.interestId()),
@@ -93,12 +87,8 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                                 command.direction(),
                                 command.cursor(),
                                 command.after()
-                        )
-                )
-                .groupBy(article.id)
-                .having(
-                        // comment 및 interest는 집계 함수로 having 절에서 정렬
-                        cursorHavingCondition(command, orderBy)
+                        ),
+                        cursorCondition(command, orderBy)
                 )
                 .orderBy(
                         orderSpecifiers(orderBy, command.direction())
@@ -106,6 +96,34 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .limit(command.limit() + 1)
                 .fetch();
 
+    }
+
+    // 댓글 수 서브쿼리
+    private NumberExpression<Long> commentCountExpression() {
+        QComment commentCount = new QComment("commentCount");
+
+        return Expressions.numberTemplate(
+                Long.class,
+                "({0})",
+                JPAExpressions
+                        .select(commentCount.id.count())
+                        .from(commentCount)
+                        .where(commentCount.article.eq(article))
+        );
+    }
+
+    // 조회 수 서브쿼리
+    private NumberExpression<Long> viewCountExpression() {
+        QArticleView viewCount = new QArticleView("viewCount");
+
+        return Expressions.numberTemplate(
+                Long.class,
+                "({0})",
+                JPAExpressions
+                        .select(viewCount.id.count())
+                        .from(viewCount)
+                        .where(viewCount.article.eq(article))
+        );
     }
 
     // 게시글의 관심사 존재 여부를 EXISTS로 확인
@@ -140,14 +158,47 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .exists();
     }
 
-    // 댓글 수 / 조회 수 정렬 커서 페이지네이션
-    private BooleanExpression cursorHavingCondition(ArticleSearchCommand command, String orderBy) {
+    // 키워드 검색 - 제목 OR 요약
+    private BooleanExpression keywordContains(String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return null;
+        }
+
+        return article.title.containsIgnoreCase(keyword)
+                .or(article.summary.containsIgnoreCase(keyword));
+    }
+
+    // 출처 필터
+    private BooleanExpression sourceIn(List<ArticleSource> sources) {
+        return sources != null && !sources.isEmpty()
+                ? article.source.in(sources)
+                : null;
+    }
+
+    // 시작 날짜 이상
+    private BooleanExpression publishedAtGoe(Instant startDate) {
+        return startDate != null
+                ? article.publishDate.goe(startDate)
+                : null;
+    }
+
+    // 종료 날짜 이하
+    private BooleanExpression publishedAtLoe(Instant endDate) {
+        return endDate != null
+                ? article.publishDate.loe(endDate)
+                : null;
+    }
+
+    // 댓글 수 / 조회 수 커서 페이지네이션
+    private BooleanExpression cursorCondition(
+            ArticleSearchCommand command,
+            String orderBy
+    ) {
         if (!StringUtils.hasText(command.cursor())
                 || command.after() == null) {
             return null;
         }
 
-        // publishDate는 WHERE의 publishedDateCursorCondition에서 처리
         if ("publishDate".equals(orderBy)) {
             return null;
         }
@@ -159,9 +210,9 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
         NumberExpression<Long> countExpression;
 
         if ("commentCount".equals(orderBy)) {
-            countExpression = comment.id.countDistinct();
+            countExpression = commentCountExpression();
         } else if ("viewCount".equals(orderBy)) {
-            countExpression = articleView.id.countDistinct();
+            countExpression = viewCountExpression();
         } else {
             return null;
         }
@@ -226,13 +277,13 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
         switch (orderBy) {
             case "commentCount":
                 orderSpecifiers.add(
-                        new OrderSpecifier<>(direction, comment.id.countDistinct())
+                        new OrderSpecifier<>(direction, commentCountExpression())
                 );
                 break;
 
             case "viewCount":
                 orderSpecifiers.add(
-                        new OrderSpecifier<>(direction, articleView.id.countDistinct())
+                        new OrderSpecifier<>(direction, viewCountExpression())
                 );
                 break;
 
@@ -246,37 +297,6 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
         orderSpecifiers.add(new OrderSpecifier<>(direction, article.id));
 
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
-    }
-
-    // 키워드 검색 - 제목 OR 요약
-    private BooleanExpression keywordContains(String keyword) {
-        if (!StringUtils.hasText(keyword)) {
-            return null;
-        }
-
-        return article.title.containsIgnoreCase(keyword)
-                .or(article.summary.containsIgnoreCase(keyword));
-    }
-
-    // 출처 필터
-    private BooleanExpression sourceIn(List<ArticleSource> sources) {
-        return sources != null && !sources.isEmpty()
-                ? article.source.in(sources)
-                : null;
-    }
-
-    // 시작 날짜 이상
-    private BooleanExpression publishedAtGoe(Instant startDate) {
-        return startDate != null
-                ? article.publishDate.goe(startDate)
-                : null;
-    }
-
-    // 종료 날짜 이하
-    private BooleanExpression publishedAtLoe(Instant endDate) {
-        return endDate != null
-                ? article.publishDate.loe(endDate)
-                : null;
     }
 
 }
