@@ -2,10 +2,12 @@ package com.codeit.monew.interest.controller;
 
 import com.codeit.monew.interest.dto.request.InterestRegisterRequest;
 import com.codeit.monew.interest.dto.request.InterestUpdateRequest;
+import com.codeit.monew.interest.dto.response.CursorPageResponseInterestDto;
 import com.codeit.monew.interest.dto.response.InterestDto;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
 import com.codeit.monew.interest.service.InterestService;
 import com.codeit.monew.interest.service.command.*;
+import com.codeit.monew.interest.service.condition.InterestSearchCondition;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -164,16 +166,150 @@ class InterestControllerTest {
                     .subscribe(any(InterestSubscribeCommand.class));
         }
 
-//        @Test
-//        @DisplayName("요청자 헤더가 없으면 실패")
-//        void fail_whenUserHeaderIsMissing() throws Exception {
-//            UUID interestId = UUID.randomUUID();
-//
-//            mockMvc.perform(post("/api/interests/{interestId}/subscriptions", interestId))
-//                    .andExpect(status().isBadRequest());
-//
-//            then(interestService).shouldHaveNoInteractions();
-//        }
+        @Test
+        @DisplayName("요청자 헤더가 없으면 실패")
+        void fail_whenUserHeaderIsMissing() throws Exception {
+            UUID interestId = UUID.randomUUID();
+
+            mockMvc.perform(post("/api/interests/{interestId}/subscriptions", interestId))
+                    .andExpect(status().isBadRequest());
+
+            then(interestService).shouldHaveNoInteractions();
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 목록 조회")
+    class FindInterests {
+
+        @Test
+        @DisplayName("성공")
+        void success() throws Exception {
+            // given
+            UUID userId = UUID.randomUUID();
+            UUID interestId1 = UUID.randomUUID();
+            UUID interestId2 = UUID.randomUUID();
+
+            CursorPageResponseInterestDto response =
+                    new CursorPageResponseInterestDto(
+                            List.of(
+                                    new InterestDto(
+                                            interestId1,
+                                            "스포츠",
+                                            List.of("축구", "야구"),
+                                            10L,
+                                            true
+                                    ),
+                                    new InterestDto(
+                                            interestId2,
+                                            "스포츠 뉴스",
+                                            List.of("농구", "배구"),
+                                            5L,
+                                            false
+                                    )
+                            ),
+                            "스포츠 뉴스",
+                            Instant.parse("2026-08-20T10:00:00Z"),
+                            2,
+                            10L,
+                            true
+                    );
+
+            given(interestService.findInterests(
+                    any(InterestSearchCondition.class)
+            )).willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/interests")
+                            .header(
+                                    "Monew-Request-User-ID",
+                                    userId.toString()
+                            )
+                            .param("keyword", "스포츠")
+                            .param("orderBy", "name")
+                            .param("direction", "ASC")
+                            .param("limit", "2"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].id")
+                            .value(interestId1.toString()))
+                    .andExpect(jsonPath("$.content[0].name")
+                            .value("스포츠"))
+                    .andExpect(jsonPath("$.content[0].subscriberCount")
+                            .value(10))
+                    .andExpect(jsonPath("$.content[0].subscribedByMe")
+                            .value(true))
+                    .andExpect(jsonPath("$.content[1].name")
+                            .value("스포츠 뉴스"))
+                    .andExpect(jsonPath("$.nextCursor")
+                            .value("스포츠 뉴스"))
+                    .andExpect(jsonPath("$.nextAfter")
+                            .value("2026-08-20T10:00:00Z"))
+                    .andExpect(jsonPath("$.size").value(2))
+                    .andExpect(jsonPath("$.totalElements").value(10))
+                    .andExpect(jsonPath("$.hasNext").value(true));
+
+            then(interestService)
+                    .should()
+                    .findInterests(any(InterestSearchCondition.class));
+        }
+
+        @Test
+        @DisplayName("구독자 수 정렬에서 커서가 숫자가 아니면 실패")
+        void fail_whenSubscriberCountCursorIsNotNumber() throws Exception {
+            // given
+            UUID userId = UUID.randomUUID();
+
+            // when & then
+            mockMvc.perform(get("/api/interests")
+                            .header(
+                                    "Monew-Request-User-ID",
+                                    userId.toString()
+                            )
+                            .param("orderBy", "subscriberCount")
+                            .param("direction", "ASC")
+                            .param("cursor", "abc")
+                            .param("limit", "10"))
+                    .andExpect(status().isBadRequest());
+
+            then(interestService)
+                    .shouldHaveNoInteractions();
+        }
+
+        @Test
+        @DisplayName("구독자 수 정렬에서 커서가 음수이면 실패")
+        void fail_whenSubscriberCountCursorIsNegative() throws Exception {
+            UUID userId = UUID.randomUUID();
+
+            mockMvc.perform(get("/api/interests")
+                            .header(
+                                    "Monew-Request-User-ID",
+                                    userId.toString()
+                            )
+                            .param("orderBy", "subscriberCount")
+                            .param("direction", "ASC")
+                            .param("cursor", "-1")
+                            .param("limit", "10"))
+                    .andExpect(status().isBadRequest());
+
+            then(interestService)
+                    .shouldHaveNoInteractions();
+        }
+
+        @Test
+        @DisplayName("요청자 ID 헤더가 없으면 실패")
+        void fail_whenUserIdHeaderIsMissing() throws Exception {
+            // when & then
+            mockMvc.perform(get("/api/interests")
+                            .param("orderBy", "name")
+                            .param("direction", "ASC")
+                            .param("limit", "10"))
+                    .andExpect(status().isBadRequest());
+
+            then(interestService)
+                    .shouldHaveNoInteractions();
+        }
     }
 
     @Nested
@@ -272,15 +408,15 @@ class InterestControllerTest {
                     .unsubscribe(any(InterestUnsubscribeCommand.class));
         }
 
-//        @Test
-//        @DisplayName("요청자 헤더가 없으면 실패")
-//        void fail_whenUserHeaderIsMissing() throws Exception {
-//            UUID interestId = UUID.randomUUID();
-//
-//            mockMvc.perform(delete("/api/interests/{interestId}/subscriptions", interestId))
-//                    .andExpect(status().isBadRequest());
-//
-//            then(interestService).shouldHaveNoInteractions();
-//        }
+        @Test
+        @DisplayName("요청자 헤더가 없으면 실패")
+        void fail_whenUserHeaderIsMissing() throws Exception {
+            UUID interestId = UUID.randomUUID();
+
+            mockMvc.perform(delete("/api/interests/{interestId}/subscriptions", interestId))
+                    .andExpect(status().isBadRequest());
+
+            then(interestService).shouldHaveNoInteractions();
+        }
     }
 }

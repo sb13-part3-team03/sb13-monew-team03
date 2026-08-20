@@ -42,16 +42,15 @@ public class InterestController {
         return ResponseEntity.ok(interestService.subscribe(command));
     }
 
-    //Todo 목록 조회 구현 시 추가
-//    @GetMapping
-//    public ResponseEntity<CursorPageResponseInterestDto> findInterests(
-//            @Valid @ModelAttribute InterestSearchRequest request,
-//            @RequestHeader("Monew-Request-User-ID") UUID userId
-//    ) {
-//        InterestSearchCondition condition = request.toCondition(userId);
-//
-//        return ResponseEntity.ok(interestService.findInterests(condition));
-//    }
+    @GetMapping
+    public ResponseEntity<CursorPageResponseInterestDto> findInterests(
+            @Valid @ModelAttribute InterestSearchRequest request,
+            @RequestHeader("Monew-Request-User-ID") UUID userId
+    ) {
+        InterestSearchCondition condition = request.toCondition(userId);
+
+        return ResponseEntity.ok(interestService.findInterests(condition));
+    }
 
     @PatchMapping("/{interestId}")
     public ResponseEntity<InterestDto> updateInterest(
