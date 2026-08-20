@@ -10,6 +10,7 @@ import com.codeit.monew.interest.exception.InterestNotFoundException;
 import com.codeit.monew.interest.exception.SubscriptionNotFoundException;
 import com.codeit.monew.interest.repository.InterestRepository;
 import com.codeit.monew.interest.repository.SubscriptionRepository;
+import com.codeit.monew.interest.repository.projection.InterestSearchResult;
 import com.codeit.monew.interest.service.command.*;
 import com.codeit.monew.interest.service.condition.InterestSearchCondition;
 import com.codeit.monew.user.entity.User;
@@ -21,6 +22,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -72,7 +75,47 @@ public class InterestService {
     }
 
     public CursorPageResponseInterestDto findInterests(InterestSearchCondition condition) {
-        return null;
+        int limit = condition.limit();
+
+        List<InterestSearchResult> results = interestRepository.search(condition, limit + 1);
+
+        boolean hasNext = results.size() > limit;
+
+        if (hasNext) {
+            results = results.subList(0, limit);
+        }
+
+        List<InterestDto> content = results.stream()
+                .map(result -> InterestDto.from(
+                        result.interest(),
+                        result.subscriberCount(),
+                        result.subscribedByMe()
+                ))
+                .toList();
+
+        long totalElements = interestRepository.countByCondition(condition);
+
+        String nextCursor = null;
+        Instant nextAfter = null;
+
+        if (hasNext && !results.isEmpty()) {
+            InterestSearchResult last = results.get(results.size() - 1);
+
+            nextCursor = "subscriberCount".equals(condition.orderBy())
+                    ? String.valueOf(last.subscriberCount())
+                    : last.interest().getName();
+
+            nextAfter = last.interest().getCreatedAt();
+        }
+
+        return new CursorPageResponseInterestDto(
+                content,
+                nextCursor,
+                nextAfter,
+                content.size(),
+                totalElements,
+                hasNext
+        );
     }
 
     @Transactional

@@ -1,5 +1,6 @@
 package com.codeit.monew.interest.service;
 
+import com.codeit.monew.interest.dto.response.CursorPageResponseInterestDto;
 import com.codeit.monew.interest.dto.response.InterestDto;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
 import com.codeit.monew.interest.entity.Interest;
@@ -9,7 +10,9 @@ import com.codeit.monew.interest.exception.InterestNotFoundException;
 import com.codeit.monew.interest.exception.SubscriptionNotFoundException;
 import com.codeit.monew.interest.repository.InterestRepository;
 import com.codeit.monew.interest.repository.SubscriptionRepository;
+import com.codeit.monew.interest.repository.projection.InterestSearchResult;
 import com.codeit.monew.interest.service.command.*;
+import com.codeit.monew.interest.service.condition.InterestSearchCondition;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -19,15 +22,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -204,6 +209,191 @@ class InterestServiceTest {
 
             then(userRepository)
                     .shouldHaveNoInteractions();
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 목록 조회")
+    class FindInterests {
+
+        @Test
+        @DisplayName("성공")
+        void success() {
+            // given
+            UUID userId = UUID.randomUUID();
+
+            InterestSearchCondition condition = new InterestSearchCondition(
+                    "스포츠",
+                    "name",
+                    "ASC",
+                    null,
+                    null,
+                    2,
+                    userId
+            );
+
+            Interest interest1 = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest interest2 = new Interest(
+                    "스포츠 뉴스",
+                    List.of("농구", "배구")
+            );
+
+            given(interestRepository.search(condition, 3))
+                    .willReturn(List.of(
+                            new InterestSearchResult(interest1, 3L, false),
+                            new InterestSearchResult(interest2, 5L, false)
+                    ));
+
+            given(interestRepository.countByCondition(condition))
+                    .willReturn(2L);
+
+            // when
+            CursorPageResponseInterestDto result =
+                    interestService.findInterests(condition);
+
+            // then
+            assertThat(result.content()).hasSize(2);
+            assertThat(result.size()).isEqualTo(2);
+            assertThat(result.totalElements()).isEqualTo(2L);
+            assertThat(result.hasNext()).isFalse();
+            assertThat(result.nextCursor()).isNull();
+            assertThat(result.nextAfter()).isNull();
+
+            assertThat(result.content().get(0).subscriberCount())
+                    .isEqualTo(3L);
+
+            assertThat(result.content().get(1).subscriberCount())
+                    .isEqualTo(5L);
+
+            then(interestRepository)
+                    .should()
+                    .search(condition, 3);
+        }
+
+        @Test
+        @DisplayName("다음 페이지가 있으면 커서 정보를 반환")
+        void success_withNextPage() {
+            // given
+            UUID userId = UUID.randomUUID();
+
+            InterestSearchCondition condition = new InterestSearchCondition(
+                    null,
+                    "name",
+                    "ASC",
+                    null,
+                    null,
+                    2,
+                    userId
+            );
+
+            Interest interest1 = new Interest(
+                    "게임",
+                    List.of("PC", "콘솔")
+            );
+
+            Interest interest2 = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest interest3 = new Interest(
+                    "여행",
+                    List.of("국내", "해외")
+            );
+
+            Instant createdAt =
+                    Instant.parse("2026-08-20T10:00:00Z");
+
+            ReflectionTestUtils.setField(
+                    interest2,
+                    "createdAt",
+                    createdAt
+            );
+
+            given(interestRepository.search(condition, 3))
+                    .willReturn(List.of(
+                            new InterestSearchResult(interest1, 3L, false),
+                            new InterestSearchResult(interest2, 5L, false),
+                            new InterestSearchResult(interest3, 7L, false)
+                    ));
+
+            given(interestRepository.countByCondition(condition))
+                    .willReturn(3L);
+
+            // when
+            CursorPageResponseInterestDto result =
+                    interestService.findInterests(condition);
+
+            // then
+            assertThat(result.content()).hasSize(2);
+            assertThat(result.hasNext()).isTrue();
+
+            assertThat(result.nextCursor())
+                    .isEqualTo("스포츠");
+
+            assertThat(result.nextAfter())
+                    .isEqualTo(createdAt);
+        }
+
+        @Test
+        @DisplayName("구독한 관심사는 subscribedByMe가 true")
+        void success_whenSubscribed() {
+            // given
+            UUID userId = UUID.randomUUID();
+
+            InterestSearchCondition condition = new InterestSearchCondition(
+                    null,
+                    "name",
+                    "ASC",
+                    null,
+                    null,
+                    2,
+                    userId
+            );
+
+            Interest subscribedInterest = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest notSubscribedInterest = new Interest(
+                    "여행",
+                    List.of("국내", "해외")
+            );
+
+            given(interestRepository.search(condition, 3))
+                    .willReturn(List.of(
+                            new InterestSearchResult(
+                                    subscribedInterest,
+                                    10L,
+                                    true
+                            ),
+                            new InterestSearchResult(
+                                    notSubscribedInterest,
+                                    5L,
+                                    false
+                            )
+                    ));
+
+            given(interestRepository.countByCondition(condition))
+                    .willReturn(2L);
+
+            // when
+            CursorPageResponseInterestDto result =
+                    interestService.findInterests(condition);
+
+            // then
+            assertThat(result.content()).hasSize(2);
+
+            assertThat(result.content().get(0).subscribedByMe())
+                    .isTrue();
+
+            assertThat(result.content().get(1).subscribedByMe())
+                    .isFalse();
         }
     }
 
