@@ -1,4 +1,4 @@
 package com.codeit.monew.article.service;
 
-public interface ArticleViewService {
+public class ArticleViewService {
 }
