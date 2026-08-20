@@ -3,6 +3,9 @@ package com.codeit.monew.comment.service;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.comment.dto.command.*;
+import com.codeit.monew.comment.dto.command.comment.CommentCreateCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentQueryCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentUpdateCommand;
 import com.codeit.monew.comment.dto.response.CommentDto;
 import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
@@ -20,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -92,12 +94,16 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = getCommentById(command.commentId());
 
+        // todo - check user is owner of comment
+        if (!comment.getUser().getId().equals(command.userId()))
+            throw new CommentException(ErrorCode.COMMENT_NOT_FOUND);
+
         // value checked request dto
         comment.update(command.content());
 
-        comment = commentRepository.save(comment);
+        Comment result = commentRepository.save(comment);
 
-        return getCommentDtoFromComment(comment);
+        return getCommentDtoFromComment(result);
     }
 
 
@@ -121,6 +127,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void delete(UUID commentId){
+        // delete comment like info associate comment
 
         log.info("{} - Comment Deleted : id - {}", SERVICE_NAME, commentId);
 

@@ -1,9 +1,9 @@
 package com.codeit.monew.comment.comtroller;
 
 
-import com.codeit.monew.comment.dto.command.CommentCreateCommand;
-import com.codeit.monew.comment.dto.command.CommentQueryCommand;
-import com.codeit.monew.comment.dto.command.CommentUpdateCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentCreateCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentQueryCommand;
+import com.codeit.monew.comment.dto.command.comment.CommentUpdateCommand;
 import com.codeit.monew.comment.dto.request.CommentRegisterRequest;
 import com.codeit.monew.comment.dto.request.CommentUpdateRequest;
 import com.codeit.monew.comment.dto.response.CommentDto;
