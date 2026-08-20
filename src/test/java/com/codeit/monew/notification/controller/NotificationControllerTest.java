@@ -83,7 +83,7 @@ class NotificationControllerTest {
         .andExpect(jsonPath("$.content[0].confirmed").value(true))
         .andExpect(jsonPath("$.content[1].confirmed").value(true))
         .andExpect(jsonPath("$.content[0].content").value("댓글2"))
-        .andExpect(jsonPath("$.content[1].content").value("구독1"))
+        .andExpect(jsonPath("$.content[1].content").value("관심사1"))
         .andExpect(jsonPath("$.size").value(2))
         .andExpect(jsonPath("$.totalElements").value(2))
         .andExpect(jsonPath("$.hasNext").value(false));

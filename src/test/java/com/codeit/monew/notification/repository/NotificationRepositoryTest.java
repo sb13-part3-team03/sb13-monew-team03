@@ -70,6 +70,8 @@ class NotificationRepositoryTest {
   void deleteConfirmedBefore() {
     Instant threshold = BASE_TIME.plusSeconds(10);
     Notification oldConfirmed = saveNotification(UUID.randomUUID(), true, BASE_TIME);
+    Notification thresholdConfirmed =
+        saveNotification(UUID.randomUUID(), true, threshold);
     Notification recentConfirmed =
         saveNotification(UUID.randomUUID(), true, threshold.plusSeconds(1));
     Notification oldNotConfirmed = saveNotification(UUID.randomUUID(), false, BASE_TIME);
@@ -79,6 +81,7 @@ class NotificationRepositoryTest {
 
     assertThat(deletedCount).isEqualTo(1);
     assertThat(notificationRepository.findById(oldConfirmed.getId())).isEmpty();
+    assertThat(notificationRepository.findById(thresholdConfirmed.getId())).isPresent();
     assertThat(notificationRepository.findById(recentConfirmed.getId())).isPresent();
     assertThat(notificationRepository.findById(oldNotConfirmed.getId())).isPresent();
   }
