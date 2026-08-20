@@ -133,8 +133,7 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom{
     ) {
         if (!"name".equals(condition.orderBy())
                 || condition.cursor() == null
-                || condition.cursor().isBlank()
-                || condition.after() == null) {
+                || condition.cursor().isBlank()) {
             return null;
         }
 
@@ -146,6 +145,10 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom{
         BooleanExpression primaryCondition = desc
                 ? interest.name.lt(cursor)
                 : interest.name.gt(cursor);
+
+        if (condition.after() == null) {
+            return primaryCondition;
+        }
 
         BooleanExpression sameValueCondition =
                 interest.name.eq(cursor)
@@ -164,8 +167,7 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom{
     ) {
         if (!"subscriberCount".equals(condition.orderBy())
                 || condition.cursor() == null
-                || condition.cursor().isBlank()
-                || condition.after() == null) {
+                || condition.cursor().isBlank()) {
             return null;
         }
 
@@ -177,6 +179,10 @@ public class InterestRepositoryImpl implements InterestRepositoryCustom{
         BooleanExpression primaryCondition = desc
                 ? subscriberCount().lt(cursor)
                 : subscriberCount().gt(cursor);
+
+        if (condition.after() == null) {
+            return primaryCondition;
+        }
 
         BooleanExpression sameValueCondition =
                 subscriberCount().eq(cursor)

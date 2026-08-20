@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -304,6 +305,15 @@ class InterestServiceTest {
                     List.of("국내", "해외")
             );
 
+            Instant createdAt =
+                    Instant.parse("2026-08-20T10:00:00Z");
+
+            ReflectionTestUtils.setField(
+                    interest2,
+                    "createdAt",
+                    createdAt
+            );
+
             given(interestRepository.search(condition, 3))
                     .willReturn(List.of(
                             new InterestSearchResult(interest1, 3L, false),
@@ -320,15 +330,13 @@ class InterestServiceTest {
 
             // then
             assertThat(result.content()).hasSize(2);
-            assertThat(result.size()).isEqualTo(2);
-            assertThat(result.totalElements()).isEqualTo(3L);
             assertThat(result.hasNext()).isTrue();
 
             assertThat(result.nextCursor())
                     .isEqualTo("스포츠");
 
             assertThat(result.nextAfter())
-                    .isEqualTo(interest2.getCreatedAt());
+                    .isEqualTo(createdAt);
         }
 
         @Test

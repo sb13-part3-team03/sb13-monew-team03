@@ -519,6 +519,96 @@ class InterestRepositoryTest {
             // then
             assertThat(result).isEqualTo(2L);
         }
+
+        @Test
+        @DisplayName("이름 기준 커서만 있어도 이후 데이터 조회 성공")
+        void success_withNameCursorWithoutAfter() {
+            // given
+            saveInterest("게임", List.of("RPG"));
+            saveInterest("스포츠", List.of("축구"));
+            saveInterest("여행", List.of("해외"));
+
+            InterestSearchCondition condition =
+                    createCondition(
+                            null,
+                            "name",
+                            "ASC",
+                            "스포츠",
+                            null,
+                            10,
+                            UUID.randomUUID()
+                    );
+
+            // when
+            List<InterestSearchResult> result =
+                    interestRepository.search(condition, 10);
+
+            // then
+            assertThat(result)
+                    .extracting(searchResult ->
+                            searchResult.interest().getName())
+                    .containsExactly("여행");
+        }
+
+        @Test
+        @DisplayName("구독자 수 기준 커서만 있어도 이후 데이터 조회 성공")
+        void success_withSubscriberCountCursorWithoutAfter() {
+            // given
+            Interest sports =
+                    saveInterest("스포츠", List.of("축구"));
+
+            Interest game =
+                    saveInterest("게임", List.of("RPG"));
+
+            Interest travel =
+                    saveInterest("여행", List.of("해외"));
+
+            User user1 = saveUser(
+                    "user1@test.com",
+                    "사용자1"
+            );
+            User user2 = saveUser(
+                    "user2@test.com",
+                    "사용자2"
+            );
+            User user3 = saveUser(
+                    "user3@test.com",
+                    "사용자3"
+            );
+
+            subscribe(user1, sports);
+            subscribe(user2, sports);
+            subscribe(user3, sports);
+
+            subscribe(user1, game);
+            subscribe(user2, game);
+
+            subscribe(user1, travel);
+
+            InterestSearchCondition condition =
+                    createCondition(
+                            null,
+                            "subscriberCount",
+                            "DESC",
+                            "2",
+                            null,
+                            10,
+                            user1.getId()
+                    );
+
+            // when
+            List<InterestSearchResult> result =
+                    interestRepository.search(condition, 10);
+
+            // then
+            assertThat(result).hasSize(1);
+
+            assertThat(result.get(0).interest().getName())
+                    .isEqualTo("여행");
+
+            assertThat(result.get(0).subscriberCount())
+                    .isEqualTo(1L);
+        }
     }
 
     private Interest saveInterest(
