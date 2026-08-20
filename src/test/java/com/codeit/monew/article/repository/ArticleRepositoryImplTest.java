@@ -4,6 +4,7 @@ package com.codeit.monew.article.repository;
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
 import com.codeit.monew.article.entity.Article;
+import com.codeit.monew.article.entity.ArticleInterest;
 import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.entity.ArticleView;
 import com.codeit.monew.comment.entity.Comment;
@@ -97,6 +98,67 @@ public class ArticleRepositoryImplTest {
         assertThat(result.article().getTitle()).isEqualTo("삼성전자 새로운 기술 발표");
         assertThat(result.commentCount()).isEqualTo(2L);
         assertThat(result.viewCount()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("관심사로 게시글 검색하면 해당 관심사가 연결된 게시글만 조회")
+    void countAndSearchByInterest() {
+        // given
+        Interest interest = new Interest("삼성", List.of("삼성전자"));
+
+        Article article1 = createArticle(
+                "https://example.com/article/1",
+                "삼성전자 새로운 기술 발표",
+                "2026-08-18T01:00:00Z"
+        );
+
+        Article article2 = createArticle(
+                "https://example.com/article/2",
+                "현대자동차 새로운 기술 발표",
+                "2026-08-17T01:00:00Z"
+        );
+
+        em.persist(interest);
+        em.persist(article1);
+        em.persist(article2);
+
+        em.flush();
+
+        em.persist(ArticleInterest.create(article1, interest));
+
+        em.flush();
+        em.clear();
+
+        User user = new User("user1@test.com", "user1", "password");
+
+        em.persist(user);
+        em.flush();
+
+        ArticleSearchCommand command = searchCommand(
+                null,
+                null,
+                "publishDate",
+                "desc",
+                2,
+                user.getId(),
+                interest.getId()
+        );
+
+        // when
+        long count = articleRepository.countTotalElements(command);
+
+        List<ArticleSearchResult> results =
+                articleRepository.searchArticles(command, command.orderBy());
+
+        System.out.println("count = " + count);
+        System.out.println("interestId = " + interest.getId());
+        System.out.println("command.interestId = " + command.interestId());
+
+        // then
+        assertThat(count).isEqualTo(1);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).article().getId())
+                .isEqualTo(article1.getId());
     }
 
     @Test
@@ -387,9 +449,29 @@ public class ArticleRepositoryImplTest {
             int limit,
             UUID userId
     ) {
+        return searchCommand(
+                cursor,
+                after,
+                orderBy,
+                direction,
+                limit,
+                userId,
+                null
+        );
+    }
+
+    private ArticleSearchCommand searchCommand(
+            String cursor,
+            UUID after,
+            String orderBy,
+            String direction,
+            int limit,
+            UUID userId,
+            UUID interestId
+    ) {
         return new ArticleSearchCommand(
                 null,
-                null,
+                interestId,
                 null,
                 null,
                 null,
