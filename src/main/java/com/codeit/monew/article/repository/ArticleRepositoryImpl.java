@@ -9,6 +9,7 @@ import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
 
 import com.codeit.monew.article.entity.ArticleSource;
+import com.codeit.monew.article.entity.QArticleInterest;
 import com.codeit.monew.article.entity.QArticleView;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -42,13 +43,11 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     public long countTotalElements(ArticleSearchCommand command) {
 
         Long count = queryFactory
-                .select(article.id.countDistinct())
+                .select(article.id.count())
                 .from(article)
-                .leftJoin(articleInterest)
-                .on(articleInterest.article.eq(article))
                 .where(
                         keywordContains(command.keyword()),
-                        interestIdEq(command.interestId()),
+                        hasInterestExpression(command.interestId()),
                         sourceIn(command.sourceIn()),
                         publishedAtGoe(command.publishDateFrom()),
                         publishedAtLoe(command.publishDateTo())
@@ -79,15 +78,13 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                         viewedByMeExpression(command.userId())
                 ))
                 .from(article)
-                .leftJoin(articleInterest)
-                .on(articleInterest.article.eq(article))
                 .leftJoin(comment)
                 .on(comment.article.eq(article))
                 .leftJoin(articleView)
                 .on(articleView.article.eq(article))
                 .where(
                         keywordContains(command.keyword()),
-                        interestIdEq(command.interestId()),
+                        hasInterestExpression(command.interestId()),
                         sourceIn(command.sourceIn()),
                         publishedAtGoe(command.publishDateFrom()),
                         publishedAtLoe(command.publishDateTo()),
@@ -111,7 +108,25 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
 
     }
 
-    // 사용자 조회 확인용 EXISTS
+    // 게시글의 관심사 존재 여부를 EXISTS로 확인
+    private BooleanExpression hasInterestExpression(UUID interestId) {
+        if (interestId == null) {
+            return null;
+        }
+
+        QArticleInterest articleInterest = new QArticleInterest("articleInterest");
+
+        return JPAExpressions
+                .selectOne()
+                .from(articleInterest)
+                .where(
+                        articleInterest.article.eq(article),
+                        articleInterest.interest.id.eq(interestId)
+                )
+                .exists();
+    }
+
+    // 사용자의 게시글 조회 여부 확인
     private BooleanExpression viewedByMeExpression(UUID userId) {
         QArticleView viewedArticleView = new QArticleView("viewedArticleView");
 
@@ -241,13 +256,6 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
 
         return article.title.containsIgnoreCase(keyword)
                 .or(article.summary.containsIgnoreCase(keyword));
-    }
-
-    // 관심사 필터
-    private BooleanExpression interestIdEq(UUID interestId) {
-        return interestId != null
-                ? articleInterest.interest.id.eq(interestId)
-                : null;
     }
 
     // 출처 필터
