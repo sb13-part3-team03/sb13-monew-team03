@@ -10,4 +10,5 @@ public interface ArticleInterestRepository
         extends JpaRepository<ArticleInterest, ArticleInterestId> {
 
     void deleteAllByArticle_Id(UUID articleId);
+    void deleteAllByInterest_Id(UUID interestId);
 }
