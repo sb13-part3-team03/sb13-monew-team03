@@ -132,8 +132,8 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = getCommentById(commentId);
 
-        // delete associate like
-        commentLikeRepository.deleteAllByComment(comment);
+        // delete associate like => impl by cascade.remove
+//        commentLikeRepository.deleteAllByComment(comment);
 
         commentRepository.delete(comment);
 
