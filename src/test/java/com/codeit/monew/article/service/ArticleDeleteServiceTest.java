@@ -105,6 +105,15 @@ class ArticleDeleteServiceTest {
 
         verify(articleRepository)
                 .delete(article);
+
+        verify(commentLikeRepository)
+                .deleteAllByComment_Article_Id(articleId);
+
+        verify(commentRepository)
+                .deleteAllByArticle_Id(articleId);
+
+        verify(articleViewRepository)
+                .deleteAllByArticle_Id(articleId);
     }
 
     @Test
