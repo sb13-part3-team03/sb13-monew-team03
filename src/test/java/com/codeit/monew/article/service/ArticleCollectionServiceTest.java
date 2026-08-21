@@ -70,7 +70,7 @@ class ArticleCollectionServiceTest {
                 Instant.parse("2026-08-18T03:00:00Z")
         );
 
-        given(interestRepository.findAll())
+        given(interestRepository.findAllWithKeywords())
                 .willReturn(List.of(interest));
 
         given(newsCollector.collect("AI"))
@@ -115,7 +115,7 @@ class ArticleCollectionServiceTest {
                 Instant.parse("2026-08-18T03:00:00Z")
         );
 
-        given(interestRepository.findAll())
+        given(interestRepository.findAllWithKeywords())
                 .willReturn(List.of(interest));
 
         given(newsCollector.collect("AI"))
@@ -150,7 +150,7 @@ class ArticleCollectionServiceTest {
                 Instant.parse("2026-08-18T03:00:00Z")
         );
 
-        given(interestRepository.findAll())
+        given(interestRepository.findAllWithKeywords())
                 .willReturn(List.of(interest));
 
         given(newsCollector.collect("AI"))
@@ -202,7 +202,7 @@ class ArticleCollectionServiceTest {
                 collectedArticle.publishDate()
         );
 
-        given(interestRepository.findAll())
+        given(interestRepository.findAllWithKeywords())
                 .willReturn(List.of(interest));
 
         given(newsCollector.collect("AI"))
@@ -248,7 +248,7 @@ class ArticleCollectionServiceTest {
                 List.of("AI")
         );
 
-        given(interestRepository.findAll())
+        given(interestRepository.findAllWithKeywords())
                 .willReturn(List.of(interest));
 
         given(newsCollector.collect("AI"))
