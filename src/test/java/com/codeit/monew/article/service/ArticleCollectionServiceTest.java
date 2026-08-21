@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -220,5 +221,44 @@ class ArticleCollectionServiceTest {
         // then
         verify(articleInterestRepository, never())
                 .save(any(ArticleInterest.class));
+    }
+
+    @Test
+    @DisplayName("등록된 관심사가 없으면 뉴스 수집기를 호출하지 않는다.")
+    void collectAndSave_whenNoInterests_doesNotCollectNews() {
+
+        // given
+        given(interestRepository.findAllWithKeywords())
+                .willReturn(List.of());
+
+        // when
+        articleCollectionService.collectAndSave();
+
+        // then
+        verify(newsCollector, never()).collect(any());
+    }
+
+    @Test
+    @DisplayName("뉴스 수집 중 예외가 발생해도 전체 수집은 중단되지 않는다.")
+    void collectAndSave_whenCollectorThrowsException_doesNotThrow() {
+
+        // given
+        Interest interest = new Interest(
+                "인공지능",
+                List.of("AI")
+        );
+
+        given(interestRepository.findAll())
+                .willReturn(List.of(interest));
+
+        given(newsCollector.collect("AI"))
+                .willThrow(new IllegalStateException("수집 실패"));
+
+        // when & then
+        assertThatCode(() -> articleCollectionService.collectAndSave())
+                .doesNotThrowAnyException();
+
+        verify(articleRepository, never())
+                .save(any(Article.class));
     }
 }

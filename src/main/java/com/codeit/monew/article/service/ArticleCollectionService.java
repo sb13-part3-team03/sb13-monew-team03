@@ -28,7 +28,7 @@ public class ArticleCollectionService {
     public void collectAndSave() {
 
         // 1. 등록된 모든 관심사 조회
-        List<Interest> interests = interestRepository.findAll();
+        List<Interest> interests = interestRepository.findAllWithKeywords();
 
         // 2. 관심사별로 처리
         for (Interest interest : interests) {
