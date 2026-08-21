@@ -57,6 +57,7 @@ public enum ErrorCode {
     COMMENT_LIKE_ALREADY_EXISTED(HttpStatus.CONFLICT,"이미 좋아요가 눌린 상태 입니다."),
 
     // interest
+    SIMILAR_INTEREST_NAME(HttpStatus.CONFLICT, "유사한 이름의 관심사가 이미 존재합니다."),
     INTEREST_NOT_FOUND(HttpStatus.NOT_FOUND, "관심사 정보를 찾을 수 없습니다."),
     ALREADY_SUBSCRIBED(HttpStatus.CONFLICT, "이미 구독 중인 관심사입니다."),
     SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "구독 정보를 찾을 수 없습니다.");

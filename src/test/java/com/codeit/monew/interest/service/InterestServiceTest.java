@@ -7,6 +7,7 @@ import com.codeit.monew.interest.entity.Interest;
 import com.codeit.monew.interest.entity.Subscription;
 import com.codeit.monew.interest.exception.AlreadySubscribedException;
 import com.codeit.monew.interest.exception.InterestNotFoundException;
+import com.codeit.monew.interest.exception.SimilarInterestNameException;
 import com.codeit.monew.interest.exception.SubscriptionNotFoundException;
 import com.codeit.monew.interest.repository.InterestRepository;
 import com.codeit.monew.interest.repository.SubscriptionRepository;
@@ -35,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class InterestServiceTest {
@@ -68,6 +70,9 @@ class InterestServiceTest {
                     command.keywords()
             );
 
+            given(interestRepository.findAll())
+                    .willReturn(List.of());
+
             given(interestRepository.save(any(Interest.class)))
                     .willReturn(savedInterest);
 
@@ -79,6 +84,97 @@ class InterestServiceTest {
             assertThat(result.keywords()).containsExactly("축구", "야구");
             assertThat(result.subscriberCount()).isZero();
             assertThat(result.subscribedByMe()).isFalse();
+
+            then(interestRepository)
+                    .should()
+                    .save(any(Interest.class));
+        }
+
+        @Test
+        @DisplayName("80% 이상 유사한 이름의 관심사가 존재하면 실패")
+        void fail_whenSimilarInterestNameExists() {
+            // given
+            InterestRegisterCommand command = new InterestRegisterCommand(
+                    "스포츠뉴스",
+                    List.of("축구")
+            );
+
+            Interest existingInterest = new Interest(
+                    "스포츠뉴수",
+                    List.of("야구")
+            );
+
+            given(interestRepository.findAll())
+                    .willReturn(List.of(existingInterest));
+
+            // when & then
+            assertThatThrownBy(
+                    () -> interestService.createInterest(command)
+            ).isInstanceOf(SimilarInterestNameException.class);
+
+            then(interestRepository)
+                    .should(never())
+                    .save(any(Interest.class));
+        }
+
+        @Test
+        @DisplayName("동일한 이름의 관심사가 존재하면 실패")
+        void fail_whenSameInterestNameExists() {
+            // given
+            InterestRegisterCommand command = new InterestRegisterCommand(
+                    "스포츠",
+                    List.of("축구")
+            );
+
+            Interest existingInterest = new Interest(
+                    "스포츠",
+                    List.of("야구")
+            );
+
+            given(interestRepository.findAll())
+                    .willReturn(List.of(existingInterest));
+
+            // when & then
+            assertThatThrownBy(
+                    () -> interestService.createInterest(command)
+            ).isInstanceOf(SimilarInterestNameException.class);
+
+            then(interestRepository)
+                    .should(never())
+                    .save(any(Interest.class));
+        }
+
+        @Test
+        @DisplayName("80% 미만으로 유사한 이름은 등록 성공")
+        void success_whenSimilarityIsLessThan80Percent() {
+            // given
+            InterestRegisterCommand command = new InterestRegisterCommand(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest existingInterest = new Interest(
+                    "스포츠1",
+                    List.of("농구")
+            );
+
+            Interest savedInterest = new Interest(
+                    command.name(),
+                    command.keywords()
+            );
+
+            given(interestRepository.findAll())
+                    .willReturn(List.of(existingInterest));
+
+            given(interestRepository.save(any(Interest.class)))
+                    .willReturn(savedInterest);
+
+            // when
+            InterestDto result =
+                    interestService.createInterest(command);
+
+            // then
+            assertThat(result.name()).isEqualTo("스포츠");
 
             then(interestRepository)
                     .should()

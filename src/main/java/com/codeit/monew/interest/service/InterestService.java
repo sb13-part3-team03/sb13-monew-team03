@@ -7,6 +7,7 @@ import com.codeit.monew.interest.entity.Interest;
 import com.codeit.monew.interest.entity.Subscription;
 import com.codeit.monew.interest.exception.AlreadySubscribedException;
 import com.codeit.monew.interest.exception.InterestNotFoundException;
+import com.codeit.monew.interest.exception.SimilarInterestNameException;
 import com.codeit.monew.interest.exception.SubscriptionNotFoundException;
 import com.codeit.monew.interest.repository.InterestRepository;
 import com.codeit.monew.interest.repository.SubscriptionRepository;
@@ -36,9 +37,8 @@ public class InterestService {
 
     @Transactional
     public InterestDto createInterest(InterestRegisterCommand command) {
-        /* Todo 80% 유사도 검증 로직
-
-        */
+        // Levenshtein Distance를 사용한 80% 유사도 검증 로직
+        validateSimilarName(command.name());
 
         // Interest 생성
         Interest interest = new Interest(command.name(), command.keywords());
@@ -154,6 +154,61 @@ public class InterestService {
 
         // Subscription 물리 삭제
         subscriptionRepository.delete(subscription);
+    }
+
+    // 관심사 이름 유사도 계산 및 검증
+    private void validateSimilarName(String name) {
+        boolean existsSimilarName = interestRepository.findAll().stream()
+                .map(Interest::getName)
+                .anyMatch(existingName -> calculateSimilarity(name, existingName) >= 0.8);
+
+        if (existsSimilarName) {
+            throw new SimilarInterestNameException();
+        }
+    }
+
+    // 유사도 계산 로직
+    private double calculateSimilarity(String source, String target) {
+        int maxLength = Math.max(source.length(), target.length());
+
+        if (maxLength == 0) {
+            return 1.0;
+        }
+
+        int distance = calculateLevenshteinDistance(source, target);
+
+        return 1.0 - ((double) distance / maxLength);
+    }
+
+    // Levenshtein Distance 계산 메서드
+    private int calculateLevenshteinDistance(String source, String target) {
+        int[][] dp = new int[source.length() + 1][target.length() + 1];
+
+        for (int i = 0; i <= source.length(); i++) {
+            dp[i][0] = i;
+        }
+
+        for (int j = 0; j <= target.length(); j++) {
+            dp[0][j] = j;
+        }
+
+        for (int i = 1; i <= source.length(); i++) {
+            for (int j = 1; j <= target.length(); j++) {
+                int cost = source.charAt(i - 1) == target.charAt(j - 1)
+                        ? 0
+                        : 1;
+
+                dp[i][j] = Math.min(
+                        Math.min(
+                                dp[i - 1][j] + 1,
+                                dp[i][j - 1] + 1
+                        ),
+                        dp[i - 1][j - 1] + cost
+                );
+            }
+        }
+
+        return dp[source.length()][target.length()];
     }
 
     // 구독 저장 메서드
