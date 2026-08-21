@@ -21,6 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -591,16 +593,22 @@ class InterestServiceTest {
             );
 
             // then
-            then(articleInterestRepository)
-                    .should()
+            InOrder inOrder = inOrder(
+                    interestRepository,
+                    articleInterestRepository,
+                    subscriptionRepository
+            );
+
+            inOrder.verify(interestRepository)
+                    .findById(interestId);
+
+            inOrder.verify(articleInterestRepository)
                     .deleteAllByInterest_Id(interest.getId());
 
-            then(subscriptionRepository)
-                    .should()
+            inOrder.verify(subscriptionRepository)
                     .deleteAllByInterestId(interest.getId());
 
-            then(interestRepository)
-                    .should()
+            inOrder.verify(interestRepository)
                     .delete(interest);
         }
 
