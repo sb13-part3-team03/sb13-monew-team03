@@ -3,6 +3,7 @@ package com.codeit.monew.article.controller;
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.command.ArticleViewCreateCommand;
 import com.codeit.monew.article.dto.request.ArticleSearchRequest;
+import com.codeit.monew.article.dto.response.ArticleDto;
 import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.entity.ArticleSource;
@@ -37,6 +38,14 @@ public class ArticleController {
         CursorPageResponseArticleDto response = articleService.searchArticles(command);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{articleId}")
+    public ResponseEntity<ArticleDto> getArticle(
+            @PathVariable UUID articleId,
+            @RequestHeader("Monew-Request-User-ID")  UUID userId
+    ) {
+        return ResponseEntity.ok(articleService.getArticle(articleId, userId));
     }
 
     @GetMapping("/sources")
