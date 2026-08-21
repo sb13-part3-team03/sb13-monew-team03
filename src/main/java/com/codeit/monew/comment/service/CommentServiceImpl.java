@@ -9,7 +9,6 @@ import com.codeit.monew.comment.dto.command.comment.CommentUpdateCommand;
 import com.codeit.monew.comment.dto.response.CommentDto;
 import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
-import com.codeit.monew.comment.entity.CommentLike;
 import com.codeit.monew.comment.exception.CommentException;
 import com.codeit.monew.comment.mapper.CommentMapper;
 import com.codeit.monew.comment.repository.CommentLikeRepository;
@@ -141,7 +140,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private void authCheck(Comment comment,  UUID userId){
-        if (comment.getUser().getId() != userId)
+        if (!comment.getUser().getId().equals(userId))
             throw new CommentException(ErrorCode.COMMENT_FORBIDDEN);
     }
 

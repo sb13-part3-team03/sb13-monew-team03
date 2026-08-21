@@ -186,6 +186,8 @@ public class CommentServiceTest {
 
         User user = getUserMock(userId).orElseThrow(RuntimeException::new);
 
+        when(user.getId()).thenReturn(userId);
+
         CommentUpdateCommand command = new CommentUpdateCommand(
                 commentId,
                 NEW_CONTENT,

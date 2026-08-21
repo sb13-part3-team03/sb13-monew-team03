@@ -53,6 +53,7 @@ public class CommentLikeServiceImpl implements CommentLikeService {
 
         CommentLike commentLike = commentLikeRepository.save(new CommentLike(comment,user));
 
+        // todo - 1 + N 쿼리 해결위해 find 매서드 join 매서드로 별도 생성.
         CommentLikeDtoCreateCommand createCommand = new CommentLikeDtoCreateCommand(
 
                 // commentLike information
@@ -77,11 +78,9 @@ public class CommentLikeServiceImpl implements CommentLikeService {
     @Override
     @Transactional
     public void cancel(CommentLikeCancelCommand command){
-        CommentLike commentLike = getCommentLikeOrExcept(command.userId(),command.userId());
+        CommentLike commentLike = getCommentLikeOrExcept(command.commentId(),command.userId());
         commentLikeRepository.delete(commentLike);
     }
-
-    // todo - 1 + N 쿼리 해결위해 find 매서드 join 매서드로 별도 생성.
 
     private User getUserOrExcept(UUID userId){
         return userRepository.findById(userId)

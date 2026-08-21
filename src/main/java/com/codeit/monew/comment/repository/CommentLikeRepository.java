@@ -1,14 +1,10 @@
 package com.codeit.monew.comment.repository;
 
-import com.codeit.monew.comment.dto.command.CommentLikeDtoCreateCommand;
 import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.entity.CommentLike;
-import com.querydsl.core.annotations.QueryDelegate;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,7 +12,7 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
 
     Boolean existsByComment_IdAndUser_Id(UUID commentId, UUID userId);
 
-    @EntityGraph(attributePaths = {"users","articles"})
+    @EntityGraph(attributePaths = {"user","comment"})
     Optional<CommentLike> findByComment_IdAndUser_Id(UUID commentId, UUID userId);
 
     Long countAllByComment(Comment comment);
@@ -24,8 +20,6 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
     void deleteAllByComment(Comment comment);
 
     void deleteAllByComment_Article_Id(UUID id);
-
-    UUID comment(Comment comment);
 
 //    @Query(
 //            """
