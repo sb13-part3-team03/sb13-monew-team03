@@ -228,7 +228,7 @@ class ArticleCollectionServiceTest {
     void collectAndSave_whenNoInterests_doesNotCollectNews() {
 
         // given
-        given(interestRepository.findAll())
+        given(interestRepository.findAllWithKeywords())
                 .willReturn(List.of());
 
         // when
