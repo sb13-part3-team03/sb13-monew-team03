@@ -37,7 +37,9 @@ public class CommentLikeServiceImpl implements CommentLikeService {
     @Transactional
     public CommentLikeDto registry(CommentLikeRegistryCommand command){
 
-        // todo - duplication depend need
+        if (commentLikeRepository.existsByComment_IdAndUser_Id(command.commentId(),command.userId()))
+            throw new CommentException(ErrorCode.COMMENT_LIKE_ALREADY_EXISTED);
+
 
         Comment comment = getCommentOrExcept(command.commentId());
         User user = getUserOrExcept(command.userId());
@@ -75,13 +77,8 @@ public class CommentLikeServiceImpl implements CommentLikeService {
     @Override
     @Transactional
     public void cancel(CommentLikeCancelCommand command){
-
-
-        Comment comment = getCommentOrExcept(command.commentId());
-
-        if (!comment.getUser().getId().equals(command.userId()))
-            throw new CommentException(ErrorCode.COMMENT_INVALID_VALUE);
-
+        CommentLike commentLike = getCommentLikeOrExcept(command.userId(),command.userId());
+        commentLikeRepository.delete(commentLike);
     }
 
     // todo - 1 + N 쿼리 해결위해 find 매서드 join 매서드로 별도 생성.
@@ -95,4 +92,10 @@ public class CommentLikeServiceImpl implements CommentLikeService {
         return commentRepository.findByIdAndDeletedAtIsNull(commentId)
                 .orElseThrow(() -> new CommentException(ErrorCode.COMMENT_NOT_FOUND));
     }
+
+    private CommentLike getCommentLikeOrExcept(UUID commentId, UUID userId){
+        return commentLikeRepository.findByComment_IdAndUser_Id(commentId,userId)
+                .orElseThrow(() -> new CommentException(ErrorCode.COMMENT_LIKE_NOT_FOUND));
+    }
+
 }

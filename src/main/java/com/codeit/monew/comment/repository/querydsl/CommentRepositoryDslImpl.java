@@ -44,7 +44,6 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
     private final QArticle article = QArticle.article;
 
 
-    // todo - add deleted_at is null condition
     @Override
     public Optional<CommentDtoCreateCommand> getDtoCommandById(UUID commentId){
         /*
@@ -70,6 +69,12 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
              where c.id = u.id
              group by u.id
          */
+        BooleanBuilder where = new BooleanBuilder();
+
+        where.and(comment.id.eq(commentId));
+        where.and(comment.deletedAt.isNull());
+
+
         CommentDtoCreateCommand result = queryFactory.select(
                 Projections.constructor(
                         CommentDtoCreateCommand.class,
@@ -84,13 +89,12 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
                 ))
                 .from(comment)
                 .join(comment.user,user)
-                .where(comment.id.eq(commentId))
+                .where(where)
                 .fetchOne();
 
         return Optional.ofNullable(result);
     }
 
-    // todo - add deleted_at is null condition
     @Override
     public Slice<CommentDtoCreateCommand> getAllCommentsWithCursor(CommentQueryCommand command){
         /*  ANSI SQL
