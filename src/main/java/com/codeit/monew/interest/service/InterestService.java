@@ -1,5 +1,6 @@
 package com.codeit.monew.interest.service;
 
+import com.codeit.monew.article.repository.ArticleInterestRepository;
 import com.codeit.monew.interest.dto.response.CursorPageResponseInterestDto;
 import com.codeit.monew.interest.dto.response.InterestDto;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
@@ -33,6 +34,7 @@ public class InterestService {
 
     private final InterestRepository interestRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final ArticleInterestRepository articleInterestRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -138,6 +140,9 @@ public class InterestService {
         // Interest 조회
         Interest interest = interestRepository.findById(command.interestId())
                 .orElseThrow(() -> new InterestNotFoundException());
+
+        // Article과 Interest 연결 정보 물리 삭제
+        articleInterestRepository.deleteAllByInterest_Id(interest.getId());
 
         // 해당 Interest 구독되어 있던 정보 물리 삭제
         subscriptionRepository.deleteAllByInterestId(interest.getId());

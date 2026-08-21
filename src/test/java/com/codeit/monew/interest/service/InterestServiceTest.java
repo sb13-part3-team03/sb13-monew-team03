@@ -1,5 +1,6 @@
 package com.codeit.monew.interest.service;
 
+import com.codeit.monew.article.repository.ArticleInterestRepository;
 import com.codeit.monew.interest.dto.response.CursorPageResponseInterestDto;
 import com.codeit.monew.interest.dto.response.InterestDto;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
@@ -45,6 +46,9 @@ class InterestServiceTest {
 
     @Mock
     private SubscriptionRepository subscriptionRepository;
+
+    @Mock
+    private ArticleInterestRepository articleInterestRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -587,6 +591,10 @@ class InterestServiceTest {
             );
 
             // then
+            then(articleInterestRepository)
+                    .should()
+                    .deleteAllByInterest_Id(interest.getId());
+
             then(subscriptionRepository)
                     .should()
                     .deleteAllByInterestId(interest.getId());
@@ -611,6 +619,9 @@ class InterestServiceTest {
                             new InterestDeleteCommand(interestId)
                     )
             ).isInstanceOf(InterestNotFoundException.class);
+
+            then(articleInterestRepository)
+                    .shouldHaveNoInteractions();
 
             then(subscriptionRepository)
                     .shouldHaveNoInteractions();
