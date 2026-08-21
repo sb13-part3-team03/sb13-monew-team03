@@ -18,6 +18,8 @@ public interface ArticleViewRepository extends JpaRepository<ArticleView, UUID> 
 
     long countByArticleId(UUID articleId);
 
+    boolean existsByArticle_IdAndUser_Id(UUID articleId, UUID userId);
+
     void deleteAllByArticle_Id(UUID articleId);
 
 }
