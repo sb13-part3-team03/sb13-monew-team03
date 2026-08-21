@@ -4,6 +4,7 @@ import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleDto;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
+import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.mapper.ArticleMapper;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.global.exception.ErrorCode;
@@ -25,6 +26,11 @@ public class ArticleQueryService {
 
     private final ArticleRepository articleRepository;
     private final ArticleMapper articleMapper;
+
+    @Transactional(readOnly = true)
+    public List<ArticleSource> getSources() {
+        return List.of(ArticleSource.values());
+    }
 
     @Transactional(readOnly = true)
     public CursorPageResponseArticleDto searchArticles(ArticleSearchCommand command) {

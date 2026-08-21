@@ -5,6 +5,7 @@ import com.codeit.monew.article.dto.command.ArticleViewCreateCommand;
 import com.codeit.monew.article.dto.request.ArticleSearchRequest;
 import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
+import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.service.ArticleDeleteService;
 import com.codeit.monew.article.service.ArticleQueryService;
 import com.codeit.monew.article.service.ArticleViewService;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -37,8 +39,13 @@ public class ArticleController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/sources")
+    public ResponseEntity<List<ArticleSource>> getSources() {
+        return ResponseEntity.ok(articleService.getSources());
+    }
+
     @PostMapping("/{articleId}/article-views")
-    public ResponseEntity<ArticleViewDto> save(
+    public ResponseEntity<ArticleViewDto> saveArticleView(
             @PathVariable UUID articleId,
             @RequestHeader("Monew-Request-User-ID") UUID userId
     ) {
