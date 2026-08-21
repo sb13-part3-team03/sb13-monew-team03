@@ -5,6 +5,7 @@ import com.codeit.monew.article.dto.response.ArticleDto;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.entity.Article;
+import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.mapper.ArticleMapper;
 import com.codeit.monew.article.repository.ArticleRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -99,6 +100,16 @@ class ArticleQueryServiceTest {
         verify(articleRepository).countTotalElements(command);
 
         verify(articleMapper).toDtoList(List.of(result1, result2));
+    }
+
+    @Test
+    @DisplayName("출처 목록 조회")
+    void getSources_returnsAllArticleSources() {
+        List<ArticleSource> result = articleQueryService.getSources();
+
+        assertThat(result).containsExactlyElementsOf(
+                List.of(ArticleSource.values())
+        );
     }
 
 }
