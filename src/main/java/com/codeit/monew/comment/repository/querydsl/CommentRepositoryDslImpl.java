@@ -43,6 +43,8 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
     private final QUser user = QUser.user;
     private final QArticle article = QArticle.article;
 
+
+    // todo - add deleted_at is null condition
     @Override
     public Optional<CommentDtoCreateCommand> getDtoCommandById(UUID commentId){
         /*
@@ -88,6 +90,7 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
         return Optional.ofNullable(result);
     }
 
+    // todo - add deleted_at is null condition
     @Override
     public Slice<CommentDtoCreateCommand> getAllCommentsWithCursor(CommentQueryCommand command){
         /*  ANSI SQL
@@ -223,6 +226,8 @@ public class CommentRepositoryDslImpl implements CommentRepositoryDsl {
                         command.direction()
                 )
         );
+
+        where.and(comment.deletedAt.isNull());
 
         return where;
     }

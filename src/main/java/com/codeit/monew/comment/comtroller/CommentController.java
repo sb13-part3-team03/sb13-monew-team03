@@ -69,7 +69,7 @@ public class CommentController implements CommentControllerDoc{
     @PatchMapping("/{commentId}")
     public ResponseEntity<CommentDto> modifiedComment(
             @PathVariable UUID commentId,
-            @RequestBody CommentUpdateRequest request,
+            @Validated @RequestBody CommentUpdateRequest request,
             @RequestHeader(value = "Monew-Request-User-Id") UUID userId
     ){
         return ResponseEntity.ok(
@@ -83,6 +83,7 @@ public class CommentController implements CommentControllerDoc{
         );
     }
 
+    // getting user id from header?
     @DeleteMapping("/{commentId}")
     public ResponseEntity<?> logicalDeleteComment(
             @PathVariable UUID commentId

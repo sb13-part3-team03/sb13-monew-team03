@@ -6,6 +6,7 @@ import com.codeit.monew.comment.dto.command.CommentDtoCreateCommand;
 import com.codeit.monew.comment.dto.command.comment.CommentQueryCommand;
 import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.entity.CommentLike;
+import com.codeit.monew.global.config.JpaAuditingConfig;
 import com.codeit.monew.global.config.QuerydslConfig;
 import com.codeit.monew.user.entity.User;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,10 @@ import static org.assertj.core.api.Assertions.*;
 @DataJpaTest
 @DisplayName("comment repository test")
 @ActiveProfiles("test")
-@Import(QuerydslConfig.class)
+@Import({
+        JpaAuditingConfig.class,
+        QuerydslConfig.class
+})
 @Slf4j
 public class CommentRepositoryTest {
     @Autowired
@@ -50,12 +54,13 @@ public class CommentRepositoryTest {
         // set Comment and User first
         for (TestCommentCreateCommand command : commands) {
             // set createAt manually
-            Comment comment = getComment(command.article(), command.user(), command.createdAt());
+            Comment comment = getComment(command.article(), command.user());
 
-            setCommentLikes(comment,command.likeUserList(),comment.getCreatedAt());
+            setCommentLikes(comment,command.likeUserList());
 
             commentList.add(comment);
         }
+
         // registry db
         entityManager.flush();
         entityManager.clear();
@@ -64,14 +69,10 @@ public class CommentRepositoryTest {
         return commentList;
     }
 
-    private void setCommentLikes(Comment comment, List<User> commentLikeUserList, Instant commentCtime){
+    private void setCommentLikes(Comment comment, List<User> commentLikeUserList){
         int counter = 15;
         for (User user : commentLikeUserList){
             CommentLike commentLike = new CommentLike(comment,user);
-            ReflectionTestUtils.setField(commentLike,"createdAt",commentCtime.plus(counter,ChronoUnit.MINUTES));
-
-            // no updated at in edr but base entity has only c and mtime has.
-            ReflectionTestUtils.setField(commentLike,"updatedAt",commentCtime.plus(counter,ChronoUnit.MINUTES));
 
             entityManager.persist(commentLike);
 
@@ -88,7 +89,7 @@ public class CommentRepositoryTest {
             ArrayList<Comment> comments = new ArrayList<>();
             for(UUID userid : userIds){
                 User user = getUserMock(userid);
-                comments.add(getComment(article,user,Instant.now()));
+                comments.add(getComment(article,user));
             }
             entityManager.flush();
             entityManager.clear();
@@ -98,13 +99,12 @@ public class CommentRepositoryTest {
         }
     }
 
-    private Comment getComment(Article article, User user, Instant ctime){
+    private Comment getComment(Article article, User user){
         Comment comment = new Comment(article, user, "content");
-        ReflectionTestUtils.setField(comment,"createdAt", ctime);
-        ReflectionTestUtils.setField(comment,"updatedAt", ctime);
-        log.debug(">> before comment information - {}, {}, {}",comment.getId(),comment.getCreatedAt(),comment.getUpdatedAt());
+
         entityManager.persist(comment);
-        log.debug(">> after comment information - {}, {}, {}",comment.getId(),comment.getCreatedAt(),comment.getUpdatedAt());
+
+
         return comment;
     }
 
@@ -119,8 +119,6 @@ public class CommentRepositoryTest {
             // string for unique validation field
             String salt = RandomString.make(10);
 
-            ReflectionTestUtils.setField(article,"createdAt", Instant.now());
-            ReflectionTestUtils.setField(article,"updatedAt", Instant.now());
             ReflectionTestUtils.setField(article,"source", ArticleSource.NAVER);
             ReflectionTestUtils.setField(article,"sourceUrl", "https://localhost/" + salt);
             ReflectionTestUtils.setField(article,"title", "title");
@@ -128,9 +126,7 @@ public class CommentRepositoryTest {
             ReflectionTestUtils.setField(article,"publishDate", Instant.now());
 
 
-            log.debug(">> before article information - {}, {}, {}",article.getId(),article.getCreatedAt(),article.getUpdatedAt());
             entityManager.persist(article);
-            log.debug(">> after article information - {}, {}, {}",article.getId(),article.getCreatedAt(),article.getUpdatedAt());
             return article;
         } catch (Exception e) {
             log.warn("article mock create error",e);
@@ -144,16 +140,13 @@ public class CommentRepositoryTest {
 
         User user = new User(nickname + "@email.com",nickname,"password");
 
-        ReflectionTestUtils.setField(user,"createdAt",Instant.now());
-        ReflectionTestUtils.setField(user,"updatedAt",Instant.now());
-
         entityManager.persist(user);
 
         return user;
     }
 
     @Test
-    @DisplayName("get CommentDtoCreateCommand method test")
+    @DisplayName("TEST0 - get CommentDtoCreateCommand method test")
     @Transactional
     public void getDtoCommentTest(){
         // 매서드가 지정한 커맨트를 잘 받아오는지 테스트.
@@ -209,16 +202,16 @@ public class CommentRepositoryTest {
 
             // test comment create at different time and like count.
             // 3 comment to article 1, 1 comment for article 2
-            TestCommentCreateCommand command1 = new TestCommentCreateCommand(user1,article1,List.of(user1,user2),Instant.now().minus(30, ChronoUnit.MINUTES));
+            TestCommentCreateCommand command1 = new TestCommentCreateCommand(user3,article2,List.of(user1),Instant.now().minus(5,ChronoUnit.DAYS));
             TestCommentCreateCommand command2 = new TestCommentCreateCommand(user2,article1,List.of(),Instant.now().minus(10,ChronoUnit.HOURS));
-            TestCommentCreateCommand command3 = new TestCommentCreateCommand(user3,article2,List.of(user1),Instant.now().minus(5,ChronoUnit.DAYS));
-            TestCommentCreateCommand command4 = new TestCommentCreateCommand(user4,article1,List.of(user1,user2,user3,user4),Instant.now().minus(1,ChronoUnit.HOURS));
+            TestCommentCreateCommand command3 = new TestCommentCreateCommand(user4,article1,List.of(user1,user2,user3,user4),Instant.now().minus(1,ChronoUnit.HOURS));
+            TestCommentCreateCommand command4 = new TestCommentCreateCommand(user1,article1,List.of(user1,user2),Instant.now().minus(30, ChronoUnit.MINUTES));
 
             commentList.addAll(setCommentFromCommand(command1,command2,command3,command4));
         }
 
         @Test
-        @DisplayName("query article 1, sort by createdAt desc. no cursor and size is 2")
+        @DisplayName("TEST - query article 1, sort by createdAt desc. no cursor and size is 2")
         @Transactional
         public void getAllCommentWithConditionTest(){
             // given
@@ -242,22 +235,22 @@ public class CommentRepositoryTest {
             // the number of comment will get countByDeletedAtIsEmpty() or countAllByArticleId() method
             Long allElementCount = commentRepository.countAllByDeletedAtIsNullAndArticleId(articleList.get(0).getId());
 
-            log.debug("result - {}", result);
+            log(commentList,null,allElementCount,result.getContent());
 
             assertThat(result.getNumberOfElements()).isEqualTo(2);
             assertThat(allElementCount).isEqualTo(3);      // article 1 is contained 3 comments
 
-            // returned first comment equal to comment 1
+            // return newest comment is first
             assertThat(
                     result.getContent().get(0).id()
             ).isEqualTo(
-                    commentList.get(0).getId()
+                    commentList.get(3).getId()
             );
 
         }
 
         @Test
-        @DisplayName("query no article, sort by createdAt asc. no cursor and size is 2")
+        @DisplayName("TEST2 - query no article, sort by createdAt asc. no cursor and size is 2")
         @Transactional
         public void getAllCommentWithConditionTest2(){
             // given
@@ -281,22 +274,22 @@ public class CommentRepositoryTest {
             // the number of comment will get countByDeletedAtIsEmpty() or countAllByDeletedAtIsNullAndArticleId()() method
             Long allElementCount = commentRepository.countByDeletedAtIsNull();
 
-            log.debug("Query result - get element count : {}, query result : {}", allElementCount, result.getContent());
+            log(commentList,null,allElementCount,result.getContent());
 
             assertThat(result.getNumberOfElements()).isEqualTo(2);
             assertThat(allElementCount).isEqualTo(4);      // all article has contained 3 comments
 
-            // returned oldest comment equal to comment 3
+            // returned oldest comment is first
             assertThat(
                     result.getContent().get(0).id()
             ).isEqualTo(
-                    commentList.get(2).getId()
+                    commentList.get(0).getId()
             );
 
         }
 
         @Test
-        @DisplayName("query 1 article, sort by like count asc. no cursor and size is 2")
+        @DisplayName("TEST3 - query 1 article, sort by like count asc. no cursor and size is 2")
         @Transactional
         public void getAllCommentWithConditionTest3(){
             // given
@@ -320,16 +313,16 @@ public class CommentRepositoryTest {
             // the number of comment will get countByDeletedAtIsEmpty() or countAllByDeletedAtIsNullAndArticleId()() method
             Long allElementCount = commentRepository.countAllByDeletedAtIsNullAndArticleId(articleList.get(0).getId());
 
-            log.debug("Query result - get element count : {}, query result : {}", allElementCount, result.getContent());
+            log(commentList,null,allElementCount,result.getContent());
 
             assertThat(result.getSize()).isEqualTo(2);
             assertThat(allElementCount).isEqualTo(3);      // all article has contained 3 comments
 
-            // returned second like count comment is comment 1
+            // returned second like count comment is comment 3
             assertThat(
                     result.getContent().get(1).id()
             ).isEqualTo(
-                    commentList.get(0).getId()
+                    commentList.get(3).getId()
             );
 
             // the comment was liked by self
@@ -337,11 +330,17 @@ public class CommentRepositoryTest {
         }
 
         @Test
-        @DisplayName("query 1 article, sort by like count asc. has cursor and size is 2")
+        @DisplayName("TEST4 -  article, sort by like count asc. has cursor and size is 2")
         @Transactional
         public void getAllCommentWithConditionTest4(){
             // given
             // setup comment, user, article ...
+
+            // comment 4 is cursor
+            // set Instant truncate micro second
+            long halfNanoUnit = ChronoUnit.MICROS.getDuration().toNanos() / 2;
+            Instant cursor = commentList.get(3).getCreatedAt().plusNanos(halfNanoUnit).truncatedTo(ChronoUnit.MICROS);
+
 
             // set test command(request)
             CommentQueryCommand command = new CommentQueryCommand(
@@ -349,7 +348,7 @@ public class CommentRepositoryTest {
                     "likeCount",
                     "asc",
                     "2",
-                    commentList.get(0).getCreatedAt().toString(), // comment 1 is cursor
+                    cursor.toString(),
                     2L,
                     userIdList.get(0).getId() // userid1
             );
@@ -361,17 +360,17 @@ public class CommentRepositoryTest {
             // the number of comment will get countByDeletedAtIsEmpty() or countAllByArticleId() method
             Long allElementCount = commentRepository.countAllByDeletedAtIsNullAndArticleId(articleList.get(0).getId());
 
-            log.debug("Query result - get element count : {}, query result : {}", allElementCount, result.getContent());
+            log(commentList,cursor.toString(),allElementCount,result.getContent());
 
             assertThat(result.getSize()).isEqualTo(2);      // page 2 has 2 size
             assertThat(result.getNumberOfElements()).isEqualTo(1);      // page 2 has 1comments
             assertThat(allElementCount).isEqualTo(3);      // all article has contained 3 comments
 
-            // returned first(third comment by article) like count comment is comment 4
+            // returned biggest like count comment is comment 3
             assertThat(
                     result.getContent().get(0).id()
             ).isEqualTo(
-                    commentList.get(3).getId()
+                    commentList.get(2).getId()
             );
 
             // the comment was liked by self
@@ -380,8 +379,24 @@ public class CommentRepositoryTest {
 
         }
 
-    }
+        private void log(List<Comment> comments, String cursor, Long counter, List<CommentDtoCreateCommand> result){
+            for (Comment comment : comments){
+                log.debug("TEST - Comments - id : {}, ctime : {}", comment.getId(),comment.getCreatedAt());
+            }
+            log.debug("TEST - cursor : {}", cursor);
+            log.debug("Query result - get element count : {}", counter);
+            for(CommentDtoCreateCommand dtoInfo : result){
+                log.debug(
+                        "TEST - DtoInfo - Id : {}, CreatedAt : {}, likeCount : {}",
+                        dtoInfo.id(),
+                        dtoInfo.createdAt(),
+                        dtoInfo.likeCount()
+                );
+            }
+        }
 
+
+    }
 
 
 

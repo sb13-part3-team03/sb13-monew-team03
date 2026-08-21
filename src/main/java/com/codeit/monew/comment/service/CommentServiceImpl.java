@@ -94,7 +94,7 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = getCommentById(command.commentId());
 
-        // todo - check user is owner of comment
+
         if (!comment.getUser().getId().equals(command.userId()))
             throw new CommentException(ErrorCode.COMMENT_NOT_FOUND);
 
@@ -106,7 +106,7 @@ public class CommentServiceImpl implements CommentService {
         return getCommentDtoFromComment(result);
     }
 
-
+    // todo - if all header has monew login user id, check comment owner is same user
     @Override
     @Transactional
     public void mask(UUID commentId){
@@ -123,7 +123,8 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.save(comment);
     }
 
-
+    // todo - if all header has monew login user id, check comment owner is same user
+    // todo - delete commentLike associate  comment
     @Override
     @Transactional
     public void delete(UUID commentId){
