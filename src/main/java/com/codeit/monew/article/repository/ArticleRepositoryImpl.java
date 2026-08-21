@@ -110,7 +110,10 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 JPAExpressions
                         .select(commentCount.id.count())
                         .from(commentCount)
-                        .where(commentCount.article.eq(article))
+                        .where(
+                                commentCount.article.eq(article),
+                                commentCount.deletedAt.isNull()
+                        )
         );
     }
 
