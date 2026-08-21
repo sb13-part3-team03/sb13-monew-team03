@@ -4,9 +4,13 @@ import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleDto;
 import com.codeit.monew.article.dto.response.ArticleSearchResult;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
+import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleSource;
+import com.codeit.monew.article.exception.ArticleNotFoundException;
 import com.codeit.monew.article.mapper.ArticleMapper;
 import com.codeit.monew.article.repository.ArticleRepository;
+import com.codeit.monew.article.repository.ArticleViewRepository;
+import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.global.exception.ErrorCode;
 import com.codeit.monew.global.exception.MonewException;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +29,9 @@ import java.util.UUID;
 public class ArticleQueryService {
 
     private final ArticleRepository articleRepository;
+    private final CommentRepository commentRepository;
+    private final ArticleViewRepository articleViewRepository;
     private final ArticleMapper articleMapper;
-
-    @Transactional(readOnly = true)
-    public List<ArticleSource> getSources() {
-        return List.of(ArticleSource.values());
-    }
 
     @Transactional(readOnly = true)
     public CursorPageResponseArticleDto searchArticles(ArticleSearchCommand command) {
@@ -61,11 +62,9 @@ public class ArticleQueryService {
             nextAfter = last.article().getId();
         }
 
-        long totalElements =
-                articleRepository.countTotalElements(command);
+        long totalElements = articleRepository.countTotalElements(command);
 
-        List<ArticleDto> articleDtos =
-                articleMapper.toDtoList(content);
+        List<ArticleDto> articleDtos = articleMapper.toDtoList(content);
 
         return new CursorPageResponseArticleDto(
                 articleDtos,
@@ -75,6 +74,28 @@ public class ArticleQueryService {
                 totalElements,
                 hasNext
         );
+    }
+
+    @Transactional(readOnly = true)
+    public ArticleDto getArticle(
+            UUID articleId,
+            UUID userId
+    ) {
+        Article article = articleRepository.findById(articleId)
+                .orElseThrow(ArticleNotFoundException::new);
+
+        Long commentCount = commentRepository.countByArticleId(articleId);
+
+        Long viewCount = articleViewRepository.countByArticleId(articleId);
+
+        boolean viewedByMe = articleViewRepository.existsByArticle_IdAndUser_Id(articleId, userId);
+
+        return articleMapper.toDto(article, commentCount, viewCount, viewedByMe);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ArticleSource> getSources() {
+        return List.of(ArticleSource.values());
     }
 
     private String createNextCursor(
