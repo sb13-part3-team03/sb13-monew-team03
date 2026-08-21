@@ -275,19 +275,30 @@ class SubscriptionRepositoryTest {
                     )
             );
 
-            Interest interest = interestRepository.saveAndFlush(
+            Interest interest1 = interestRepository.saveAndFlush(
                     new Interest(
                             "스포츠",
                             List.of("축구", "야구")
                     )
             );
 
-            subscriptionRepository.saveAndFlush(
-                    new Subscription(user1, interest)
+            Interest interest2 = interestRepository.saveAndFlush(
+                    new Interest(
+                            "게임",
+                            List.of("RPG", "FPS")
+                    )
             );
 
             subscriptionRepository.saveAndFlush(
-                    new Subscription(user2, interest)
+                    new Subscription(user1, interest1)
+            );
+
+            subscriptionRepository.saveAndFlush(
+                    new Subscription(user1, interest2)
+            );
+
+            subscriptionRepository.saveAndFlush(
+                    new Subscription(user2, interest1)
             );
 
             // when
