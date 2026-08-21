@@ -4,6 +4,7 @@ import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.exception.ArticleNotFoundException;
 import com.codeit.monew.article.repository.ArticleInterestRepository;
 import com.codeit.monew.article.repository.ArticleRepository;
+import com.codeit.monew.article.repository.ArticleViewRepository;
 import com.codeit.monew.comment.repository.CommentLikeRepository;
 import com.codeit.monew.comment.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +19,9 @@ public class ArticleDeleteService {
 
     private final ArticleRepository articleRepository;
     private final ArticleInterestRepository articleInterestRepository;
-    // TODO: 연관 데이터 Repository 준비되면 연결
-    // private final ArticleViewRepository articleViewRepository;
-//    private final CommentRepository commentRepository;
-//    private final CommentLikeRepository commentLikeRepository;
+    private final ArticleViewRepository articleViewRepository;
+    private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
     // 논리 삭제
     @Transactional
@@ -39,11 +39,10 @@ public class ArticleDeleteService {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(ArticleNotFoundException::new);
 
-        // TODO: 관련 데이터 먼저 삭제 후 Article 삭제
-//        commentLikeRepository.deleteAllByComment_Article_Id(articleId);
-//        commentRepository.deleteAllByArticle_Id(articleId);
+        commentLikeRepository.deleteAllByComment_Article_Id(articleId);
+        commentRepository.deleteAllByArticle_Id(articleId);
         articleInterestRepository.deleteAllByArticle_Id(articleId);
-        // articleViewRepository.deleteAllByArticle_Id(articleId);
+        articleViewRepository.deleteAllByArticle_Id(articleId);
 
         articleRepository.delete(article);
 
