@@ -2,6 +2,7 @@ package com.codeit.monew.comment.repository;
 
 import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.repository.querydsl.CommentRepositoryDsl;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -15,6 +16,7 @@ public interface CommentRepository extends JpaRepository<Comment, UUID>, Comment
 
     long countByArticleIdAndDeletedAtIsNull(UUID articleId);
 
+    @EntityGraph(attributePaths = {"user","article"})
     Optional<Comment> findByIdAndDeletedAtIsNull(UUID id);
 
     long countByArticleId(UUID articleId);

@@ -111,22 +111,16 @@ public class CommentLikeServiceTest {
     @Test
     @DisplayName("cancel CommentLike test")
     public void cancelTest(){
-        // db 에서 지워지는 것 으로 카운트도 설정되므로, db 에서 잘 지워지는지 확인
-
         UUID commentLikeId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
 
-        Comment comment = spy(Comment.class);
-
-        given(commentRepository.findByIdAndDeletedAtIsNull(any(UUID.class)))
-                .willReturn(Optional.of(comment));
-
-
+        given(commentLikeRepository.findByComment_IdAndUser_Id(any(UUID.class),any(UUID.class)))
+                .willReturn(Optional.of(mock(CommentLike.class)));
 
         commentLikeService.cancel(new CommentLikeCancelCommand(commentLikeId,userId));
 
         // verify
-//        verify(commentLikeRepository,times(1)).deleteById(commentLikeId);
+        verify(commentLikeRepository,times(1)).delete(any(CommentLike.class));
     }
 
 

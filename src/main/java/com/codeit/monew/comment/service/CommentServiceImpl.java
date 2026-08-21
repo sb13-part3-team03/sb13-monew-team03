@@ -72,7 +72,6 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("{} - Comment Queried by ID : {}",SERVICE_NAME,command.requestUserId());
 
-        // Todo - repository param change? commmand -> comdition and where.
         Slice<CommentDtoCreateCommand> createDtoCommands = commentRepository.getAllCommentsWithCursor(command);
 
         log.debug("{} - repository return objects : size - {}", SERVICE_NAME, createDtoCommands.getSize());
@@ -94,9 +93,7 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = getCommentById(command.commentId());
 
-        // todo - check user is owner of comment
-        if (!comment.getUser().getId().equals(command.userId()))
-            throw new CommentException(ErrorCode.COMMENT_NOT_FOUND);
+        authCheck(comment, command.userId());
 
         // value checked request dto
         comment.update(command.content());
@@ -106,7 +103,8 @@ public class CommentServiceImpl implements CommentService {
         return getCommentDtoFromComment(result);
     }
 
-
+    // todo - if all header has monew login user id, check comment owner is same user
+    // now the header dose not send to comment delete.
     @Override
     @Transactional
     public void mask(UUID commentId){
@@ -123,7 +121,8 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.save(comment);
     }
 
-
+    // todo - if all header has monew login user id, check comment owner is same user
+    // now the header dose not send to comment delete.
     @Override
     @Transactional
     public void delete(UUID commentId){
@@ -132,9 +131,18 @@ public class CommentServiceImpl implements CommentService {
         log.info("{} - Comment Deleted : id - {}", SERVICE_NAME, commentId);
 
         Comment comment = getCommentById(commentId);
+
+        // delete associate like
+        commentLikeRepository.deleteAllByComment(comment);
+
         commentRepository.delete(comment);
+
     }
 
+    private void authCheck(Comment comment,  UUID userId){
+        if (!comment.getUser().getId().equals(userId))
+            throw new CommentException(ErrorCode.COMMENT_FORBIDDEN);
+    }
 
     private Long getCommentsCountConditionedByArticle(UUID articleId){
         // comment count is determined by article id.
