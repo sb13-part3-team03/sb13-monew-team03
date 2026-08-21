@@ -9,6 +9,8 @@ import com.codeit.monew.article.repository.ArticleInterestRepository;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.interest.entity.Interest;
 import com.codeit.monew.interest.repository.InterestRepository;
+import com.codeit.monew.interest.repository.SubscriptionRepository;
+import com.codeit.monew.notification.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,12 @@ class ArticleCollectionServiceTest {
     private ArticleInterestRepository articleInterestRepository;
 
     @Mock
+    private SubscriptionRepository subscriptionRepository;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
     private NewsCollector newsCollector;
 
     private ArticleCollectionService articleCollectionService;
@@ -49,6 +57,8 @@ class ArticleCollectionServiceTest {
                 interestRepository,
                 articleRepository,
                 articleInterestRepository,
+                subscriptionRepository,
+                notificationService,
                 List.of(newsCollector)
         );
     }
