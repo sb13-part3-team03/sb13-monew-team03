@@ -9,6 +9,7 @@ import com.codeit.monew.comment.dto.command.comment.CommentUpdateCommand;
 import com.codeit.monew.comment.dto.response.CommentDto;
 import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
+import com.codeit.monew.comment.entity.CommentLike;
 import com.codeit.monew.comment.exception.CommentException;
 import com.codeit.monew.comment.mapper.CommentMapper;
 import com.codeit.monew.comment.repository.CommentLikeRepository;
@@ -72,7 +73,6 @@ public class CommentServiceImpl implements CommentService {
 
         log.info("{} - Comment Queried by ID : {}",SERVICE_NAME,command.requestUserId());
 
-        // Todo - repository param change? commmand -> comdition and where.
         Slice<CommentDtoCreateCommand> createDtoCommands = commentRepository.getAllCommentsWithCursor(command);
 
         log.debug("{} - repository return objects : size - {}", SERVICE_NAME, createDtoCommands.getSize());
@@ -94,9 +94,7 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = getCommentById(command.commentId());
 
-
-        if (!comment.getUser().getId().equals(command.userId()))
-            throw new CommentException(ErrorCode.COMMENT_NOT_FOUND);
+        authCheck(comment, command.userId());
 
         // value checked request dto
         comment.update(command.content());
@@ -107,6 +105,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     // todo - if all header has monew login user id, check comment owner is same user
+    // now the header dose not send to comment delete.
     @Override
     @Transactional
     public void mask(UUID commentId){
@@ -124,7 +123,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     // todo - if all header has monew login user id, check comment owner is same user
-    // todo - delete commentLike associate  comment
+    // now the header dose not send to comment delete.
     @Override
     @Transactional
     public void delete(UUID commentId){
@@ -133,9 +132,18 @@ public class CommentServiceImpl implements CommentService {
         log.info("{} - Comment Deleted : id - {}", SERVICE_NAME, commentId);
 
         Comment comment = getCommentById(commentId);
+
+        // delete associate like
+        commentLikeRepository.deleteAllByComment(comment);
+
         commentRepository.delete(comment);
+
     }
 
+    private void authCheck(Comment comment,  UUID userId){
+        if (comment.getUser().getId() != userId)
+            throw new CommentException(ErrorCode.COMMENT_FORBIDDEN);
+    }
 
     private Long getCommentsCountConditionedByArticle(UUID articleId){
         // comment count is determined by article id.

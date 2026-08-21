@@ -11,6 +11,7 @@ import com.codeit.monew.comment.dto.response.CommentDto;
 import com.codeit.monew.comment.dto.response.CursorContainerDto;
 import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.mapper.CommentMapper;
+import com.codeit.monew.comment.repository.CommentLikeRepository;
 import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
@@ -45,6 +46,8 @@ public class CommentServiceTest {
 
     @Mock
     CommentRepository commentRepository;
+    @Mock
+    CommentLikeRepository commentLikeRepository;
     @Mock
     ArticleRepository articleRepository;
     @Mock
@@ -278,6 +281,8 @@ public class CommentServiceTest {
         verify(commentRepository,times(1))
                 .delete(any(Comment.class));
 
+        verify(commentLikeRepository,times(1))
+                .deleteAllByComment(any());
     }
 
 
