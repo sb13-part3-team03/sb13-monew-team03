@@ -212,7 +212,7 @@ class SubscriptionRepositoryTest {
     class DeleteAllByInterestId {
 
         @Test
-        @DisplayName("해당 관심사의 모든 구독 정보를 삭제한다")
+        @DisplayName("관심사 ID로 모든 구독 정보를 삭제한다")
         void success() {
             // given
             Interest interest = interestRepository.save(
@@ -253,6 +253,54 @@ class SubscriptionRepositoryTest {
                             interest.getId()
                     )
             ).isZero();
+        }
+
+        @Test
+        @DisplayName("사용자 ID로 모든 구독 정보를 삭제한다")
+        void deleteAllByUserId_success() {
+            // given
+            User user1 = userRepository.saveAndFlush(
+                    new User(
+                            "user1@test.com",
+                            "사용자1",
+                            "password"
+                    )
+            );
+
+            User user2 = userRepository.saveAndFlush(
+                    new User(
+                            "user2@test.com",
+                            "사용자2",
+                            "password"
+                    )
+            );
+
+            Interest interest = interestRepository.saveAndFlush(
+                    new Interest(
+                            "스포츠",
+                            List.of("축구", "야구")
+                    )
+            );
+
+            subscriptionRepository.saveAndFlush(
+                    new Subscription(user1, interest)
+            );
+
+            subscriptionRepository.saveAndFlush(
+                    new Subscription(user2, interest)
+            );
+
+            // when
+            subscriptionRepository.deleteAllByUserId(user1.getId());
+            subscriptionRepository.flush();
+
+            // then
+            List<Subscription> subscriptions =
+                    subscriptionRepository.findAll();
+
+            assertThat(subscriptions).hasSize(1);
+            assertThat(subscriptions.get(0).getUser().getId())
+                    .isEqualTo(user2.getId());
         }
     }
 }
