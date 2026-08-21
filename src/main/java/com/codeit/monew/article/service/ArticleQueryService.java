@@ -81,7 +81,7 @@ public class ArticleQueryService {
             UUID articleId,
             UUID userId
     ) {
-        Article article = articleRepository.findById(articleId)
+        Article article = articleRepository.findByIdAndDeletedAtIsNull(articleId)
                 .orElseThrow(ArticleNotFoundException::new);
 
         Long commentCount = commentRepository.countByArticleId(articleId);

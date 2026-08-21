@@ -45,6 +45,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .select(article.id.count())
                 .from(article)
                 .where(
+                        article.deletedAt.isNull(),
                         keywordContains(command.keyword()),
                         hasInterestExpression(command.interestId()),
                         sourceIn(command.sourceIn()),
@@ -77,6 +78,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 ))
                 .from(article)
                 .where(
+                        article.deletedAt.isNull(),
                         keywordContains(command.keyword()),
                         hasInterestExpression(command.interestId()),
                         sourceIn(command.sourceIn()),
