@@ -1,7 +1,6 @@
 package com.codeit.monew.comment.service;
 
 
-import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.comment.dto.command.CommentLikeDtoCreateCommand;
 import com.codeit.monew.comment.dto.command.like.CommentLikeCancelCommand;
 import com.codeit.monew.comment.dto.command.like.CommentLikeRegistryCommand;
@@ -11,13 +10,11 @@ import com.codeit.monew.comment.entity.CommentLike;
 import com.codeit.monew.comment.mapper.CommentMapper;
 import com.codeit.monew.comment.repository.CommentLikeRepository;
 import com.codeit.monew.comment.repository.CommentRepository;
-import com.codeit.monew.global.entity.BaseEntity;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.commons.util.ReflectionUtils;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;

@@ -1,7 +1,6 @@
 package com.codeit.monew.comment.repository;
 
 import com.codeit.monew.comment.dto.command.CommentLikeDtoCreateCommand;
-import com.codeit.monew.comment.entity.Comment;
 import com.codeit.monew.comment.entity.CommentLike;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,9 +16,12 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
     @EntityGraph(attributePaths = {"user","comment"})
     Optional<CommentLike> findByComment_IdAndUser_Id(UUID commentId, UUID userId);
 
-    Long countAllByComment(Comment comment);
+    // not use method
+//    Long countAllByComment(Comment comment);
+//
+//    void deleteAllByComment(Comment comment);
+    //
 
-    void deleteAllByComment(Comment comment);
 
     void deleteAllByComment_Article_Id(UUID id);
 
