@@ -7,6 +7,11 @@ import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.repository.ArticleInterestRepository;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.interest.entity.Interest;
+import com.codeit.monew.interest.entity.Subscription;
+import com.codeit.monew.interest.repository.SubscriptionRepository;
+import com.codeit.monew.notification.enums.ResourceType;
+import com.codeit.monew.notification.service.NotificationService;
+import com.codeit.monew.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -27,10 +33,22 @@ import static org.mockito.Mockito.verify;
 class ArticleSaveServiceTest {
 
     @Mock
+    private Subscription subscription;
+
+    @Mock
+    private User user;
+
+    @Mock
     private ArticleRepository articleRepository;
 
     @Mock
     private ArticleInterestRepository articleInterestRepository;
+
+    @Mock
+    private SubscriptionRepository subscriptionRepository;
+
+    @Mock
+    private NotificationService notificationService;
 
     private ArticleSaveService articleSaveService;
 
@@ -38,7 +56,9 @@ class ArticleSaveServiceTest {
     void setUp() {
         articleSaveService = new ArticleSaveService(
                 articleRepository,
-                articleInterestRepository
+                articleInterestRepository,
+                subscriptionRepository,
+                notificationService
         );
     }
 
@@ -175,6 +195,10 @@ class ArticleSaveServiceTest {
         // then
         verify(articleInterestRepository, never())
                 .save(any(ArticleInterest.class));
+        verify(subscriptionRepository, never())
+                .findAllByInterestId(any());
+        verify(notificationService, never())
+                .create(any(), any(), any(), any());
     }
 
     private Interest createInterest() {
@@ -191,6 +215,81 @@ class ArticleSaveServiceTest {
                 "AI 관련 뉴스",
                 "AI 관련 뉴스 요약",
                 Instant.parse("2026-08-18T03:00:00Z")
+        );
+    }
+
+    @Test
+    @DisplayName("새로운 기사와 관심사가 연결되면 해당 관심사의 구독자를 조회한다.")
+    void saveOneArticle_whenNewlyLinked_findsSubscriptions() {
+
+        // given
+        Interest interest = createInterest();
+        CollectedArticleDTO dto = createCollectedArticle();
+
+        Article existingArticle = Article.create(
+                dto.source(),
+                dto.sourceUrl(),
+                dto.title(),
+                dto.summary(),
+                dto.publishDate()
+        );
+
+        given(articleRepository.findBySourceUrl(dto.sourceUrl()))
+                .willReturn(Optional.of(existingArticle));
+
+        given(articleInterestRepository.existsById(any()))
+                .willReturn(false);
+
+        // when
+        articleSaveService.saveOneArticle(dto, interest);
+
+        // then
+        verify(subscriptionRepository)
+                .findAllByInterestId(interest.getId());
+    }
+
+    @Test
+    @DisplayName("새로운 기사와 관심사가 연결되면 구독자에게 알림을 생성한다.")
+    void saveOneArticle_whenNewlyLinked_createsNotification() {
+
+        // given
+        Interest interest = createInterest();
+        CollectedArticleDTO dto = createCollectedArticle();
+
+        Article existingArticle = Article.create(
+                dto.source(),
+                dto.sourceUrl(),
+                dto.title(),
+                dto.summary(),
+                dto.publishDate()
+        );
+
+        UUID userId = UUID.randomUUID();
+
+        given(articleRepository.findBySourceUrl(dto.sourceUrl()))
+                .willReturn(Optional.of(existingArticle));
+
+        given(articleInterestRepository.existsById(any()))
+                .willReturn(false);
+
+        given(subscriptionRepository.findAllByInterestId(interest.getId()))
+                .willReturn(List.of(subscription));
+
+        given(subscription.getUser())
+                .willReturn(user);
+
+        given(user.getId())
+                .willReturn(userId);
+
+        // when
+        articleSaveService.saveOneArticle(dto, interest);
+
+        // then
+        verify(notificationService).create(
+                existingArticle.getSummary(),
+                userId,
+                ResourceType.INTEREST,
+                interest.getId()
         );
     }
 }

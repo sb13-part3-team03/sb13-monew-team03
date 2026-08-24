@@ -7,6 +7,9 @@ import com.codeit.monew.article.entity.ArticleInterestId;
 import com.codeit.monew.article.repository.ArticleInterestRepository;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.interest.entity.Interest;
+import com.codeit.monew.interest.repository.SubscriptionRepository;
+import com.codeit.monew.notification.enums.ResourceType;
+import com.codeit.monew.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +20,8 @@ public class ArticleSaveService {
 
     private final ArticleRepository articleRepository;
     private final ArticleInterestRepository articleInterestRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public void saveOneArticle(
@@ -40,7 +45,15 @@ public class ArticleSaveService {
         }
 
         // 3. 알림 생성
-        // 알림 코드 추가 예정
+        subscriptionRepository.findAllByInterestId(interest.getId())
+                .forEach(subscription ->
+                        notificationService.create(
+                                article.getSummary(),
+                                subscription.getUser().getId(),
+                                ResourceType.INTEREST,
+                                interest.getId()
+                        )
+                );
     }
 
     private Article saveArticle(
