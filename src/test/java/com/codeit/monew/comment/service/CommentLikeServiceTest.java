@@ -1,6 +1,7 @@
 package com.codeit.monew.comment.service;
 
 
+import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.comment.dto.command.CommentLikeDtoCreateCommand;
 import com.codeit.monew.comment.dto.command.like.CommentLikeCancelCommand;
 import com.codeit.monew.comment.dto.command.like.CommentLikeRegistryCommand;
@@ -59,8 +60,7 @@ public class CommentLikeServiceTest {
         Comment comment = spy(Comment.class);
         User user = spy(User.class);
 
-//        when(comment.getArticle()).thenReturn(mock(Article.class));
-//        when(comment.getUser()).thenReturn(user);
+        when(comment.getUser()).thenReturn(user);
 
 
 
