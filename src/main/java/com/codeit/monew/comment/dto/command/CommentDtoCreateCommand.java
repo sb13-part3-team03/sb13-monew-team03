@@ -7,7 +7,7 @@ public record CommentDtoCreateCommand(
         UUID id,
         UUID articleId,
         UUID userId,
-        String userNickName,
+        String userNickname,
         String content,
         Long likeCount,
         Boolean likeByMe,
@@ -19,10 +19,10 @@ public record CommentDtoCreateCommand(
                 "id=" + id +
                 ", articleId=" + articleId +
                 ", userId=" + userId +
-                ", userNickName='" + userNickName + '\'' +
+                ", userNickname='" + userNickname + '\'' +
                 ", content='" + content + '\'' +
                 ", likeCount=" + likeCount +
-                ", likeByMe=" + likeByMe +
+                ", likedByMe=" + likeByMe +
                 ", createdAt=" + createdAt +
                 '}';
     }
