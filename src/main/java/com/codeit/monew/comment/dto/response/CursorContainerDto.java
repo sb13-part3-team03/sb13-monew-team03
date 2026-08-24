@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record CursorContainerDto<T>(
 
         @JsonProperty("content")
-        List<T> container,
+        List<T> content,
 
         String nextCursor,
 
@@ -15,7 +15,7 @@ public record CursorContainerDto<T>(
         Long size,
 
         @JsonProperty("totalElements")
-        Long totalElement,
+        Long totalElements,
 
         Boolean hasNext
 

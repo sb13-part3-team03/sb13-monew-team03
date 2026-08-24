@@ -283,8 +283,9 @@ public class CommentServiceTest {
         verify(commentRepository,times(1))
                 .delete(any(Comment.class));
 
-        verify(commentLikeRepository,times(1))
-                .deleteAllByComment(any());
+        // deleted commentLike when delete comment with cascade.remove
+//        verify(commentLikeRepository,times(1))
+//                .deleteAllByComment(any());
     }
 
 

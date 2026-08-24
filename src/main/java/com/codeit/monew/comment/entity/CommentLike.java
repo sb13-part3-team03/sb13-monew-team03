@@ -7,20 +7,32 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "comment_likes")
+@Table(
+        name = "comment_likes",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "unique_like",
+                        columnNames = {"user_id", "comment_id"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CommentLike extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "comment_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Comment comment;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     public CommentLike(

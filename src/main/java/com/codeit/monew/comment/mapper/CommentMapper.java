@@ -44,7 +44,7 @@ public class CommentMapper {
                 command.commentId(),
                 command.articleId(),
                 command.commentUserId(),
-                command.commentUserNickName(),
+                command.commentUserNickname(),
                 command.commentContent(),
                 command.commentLikeCount(),
                 command.commentCreateAt()

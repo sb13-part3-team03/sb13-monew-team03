@@ -10,7 +10,7 @@ public record CommentLikeDtoCreateCommand (
         UUID commentId,
         UUID articleId,
         UUID commentUserId,
-        String commentUserNickName,
+        String commentUserNickname,
         String commentContent,
         Long commentLikeCount,
         Instant commentCreateAt
