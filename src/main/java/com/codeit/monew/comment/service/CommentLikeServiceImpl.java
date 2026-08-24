@@ -11,6 +11,8 @@ import com.codeit.monew.comment.mapper.CommentMapper;
 import com.codeit.monew.comment.repository.CommentLikeRepository;
 import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.global.exception.ErrorCode;
+import com.codeit.monew.notification.enums.ResourceType;
+import com.codeit.monew.notification.service.NotificationService;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class CommentLikeServiceImpl implements CommentLikeService {
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     private final CommentMapper commentMapper;
 
@@ -52,6 +56,17 @@ public class CommentLikeServiceImpl implements CommentLikeService {
         );
 
         CommentLike commentLike = commentLikeRepository.save(new CommentLike(comment,user));
+
+        // 댓글 좋아요 누를 시 해당 사용자에게 알림 생성, 본인이 좋아요 누를 시 생성안함
+        User commentAuthor = comment.getUser();
+        if (!Objects.equals(commentAuthor.getId(), user.getId())) {
+            notificationService.create(
+                    user.getNickname() + "님이 나의 댓글을 좋아합니다.",
+                    commentAuthor.getId(),
+                    ResourceType.COMMENT,
+                    comment.getId()
+            );
+        }
 
         // todo - 1 + N 쿼리 해결위해 find 매서드 join 매서드로 별도 생성.
         CommentLikeDtoCreateCommand createCommand = new CommentLikeDtoCreateCommand(

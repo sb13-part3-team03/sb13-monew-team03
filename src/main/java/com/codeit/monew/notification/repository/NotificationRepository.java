@@ -20,6 +20,8 @@ public interface NotificationRepository
 
   long countByUserIdAndConfirmedFalse(UUID userId);
 
+  void deleteAllByUserId(UUID userId);
+
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("""
       delete from Notification n

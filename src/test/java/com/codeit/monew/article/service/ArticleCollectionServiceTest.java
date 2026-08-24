@@ -49,7 +49,6 @@ class ArticleCollectionServiceTest {
     @DisplayName("수집한 기사를 기사 저장 서비스에 전달한다.")
     void collectAndSave_whenArticleCollected_callsArticleSaveService() {
 
-        // given
         Interest interest = new Interest(
                 "인공지능",
                 List.of("AI")
@@ -67,10 +66,8 @@ class ArticleCollectionServiceTest {
         given(newsCollector.collect("AI"))
                 .willReturn(List.of(collectedArticle));
 
-        // when
         articleCollectionService.collectAndSave();
 
-        // then
         verify(articleSaveService)
                 .saveOneArticle(collectedArticle, interest);
     }
@@ -79,14 +76,11 @@ class ArticleCollectionServiceTest {
     @DisplayName("등록된 관심사가 없으면 뉴스 수집기를 호출하지 않는다.")
     void collectAndSave_whenNoInterests_doesNotCollectNews() {
 
-        // given
         given(interestRepository.findAllWithKeywords())
                 .willReturn(List.of());
 
-        // when
         articleCollectionService.collectAndSave();
 
-        // then
         verify(newsCollector, never())
                 .collect(any());
 
@@ -98,7 +92,6 @@ class ArticleCollectionServiceTest {
     @DisplayName("뉴스 수집 중 예외가 발생해도 전체 수집은 중단되지 않는다.")
     void collectAndSave_whenCollectorThrowsException_doesNotThrow() {
 
-        // given
         Interest interest = new Interest(
                 "인공지능",
                 List.of("AI")
@@ -108,11 +101,8 @@ class ArticleCollectionServiceTest {
                 .willReturn(List.of(interest));
 
         given(newsCollector.collect("AI"))
-                .willThrow(
-                        new IllegalStateException("수집 실패")
-                );
+                .willThrow(new IllegalStateException("수집 실패"));
 
-        // when & then
         assertThatCode(
                 () -> articleCollectionService.collectAndSave()
         ).doesNotThrowAnyException();
@@ -125,7 +115,6 @@ class ArticleCollectionServiceTest {
     @DisplayName("한 기사 저장에 실패해도 다음 기사는 계속 처리한다.")
     void collectAndSave_whenOneArticleFails_continuesNextArticle() {
 
-        // given
         Interest interest = new Interest(
                 "인공지능",
                 List.of("AI")
@@ -154,10 +143,8 @@ class ArticleCollectionServiceTest {
         ).given(articleSaveService)
                 .saveOneArticle(first, interest);
 
-        // when
         articleCollectionService.collectAndSave();
 
-        // then
         verify(articleSaveService)
                 .saveOneArticle(first, interest);
 

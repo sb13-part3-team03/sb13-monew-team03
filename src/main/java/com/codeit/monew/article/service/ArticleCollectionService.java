@@ -62,10 +62,8 @@ public class ArticleCollectionService {
 
                         } catch (Exception e) {
                             log.error(
-                                    "기사 저장 실패. sourceUrl={}, interest={}, keyword={}",
+                                    "기사 저장 실패. sourceUrl={}",
                                     dto.sourceUrl(),
-                                    interest.getName(),
-                                    keyword,
                                     e
                             );
                         }
