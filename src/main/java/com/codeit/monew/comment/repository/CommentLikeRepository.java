@@ -29,7 +29,7 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
             """
             select
                         cl.id,
-                        u.id,
+                        cl.user.id,
                         cl.createdAt,
                         c.id,
                         c.article.id,
@@ -44,7 +44,7 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
                         c.createdAt
             from CommentLike cl
                         join cl.comment c
-                        join cl.user u
+                        join c.user u
             where c.deletedAt is null
                         and cl.id = :commentLikeId
             """
