@@ -16,7 +16,6 @@ import com.codeit.monew.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.commons.util.ReflectionUtils;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -61,7 +60,6 @@ public class CommentLikeServiceTest {
         Comment comment = spy(Comment.class);
         User user = spy(User.class);
 
-        when(comment.getArticle()).thenReturn(mock(Article.class));
         when(comment.getUser()).thenReturn(user);
 
 
@@ -86,6 +84,19 @@ public class CommentLikeServiceTest {
 
                     return param;
                 });
+
+        given(commentLikeRepository.findCommentLikeByIdToDtoCommand(any(UUID.class)))
+                .willAnswer(
+                        invocation -> {
+                            UUID id = invocation.getArgument(0);
+
+                            // the getted commantLike is not registered. error.
+                            if (!id.equals(commentLikeId)) throw new RuntimeException("commentLike id is not current");
+
+                            return getCommentLikeDtoCommand(id);
+                        }
+                );
+
 
         // map to Dto
         given(commentMapper.toDto(any(CommentLikeDtoCreateCommand.class)))
@@ -134,10 +145,25 @@ public class CommentLikeServiceTest {
                 command.commentId(),
                 command.articleId(),
                 command.commentUserId(),
-                command.commentUserNickName(),
+                command.commentUserNickname(),
                 command.commentContent(),
                 command.commentLikeCount(),
                 command.commentCreateAt()
+        );
+    }
+
+    private CommentLikeDtoCreateCommand getCommentLikeDtoCommand(UUID id){
+        return new CommentLikeDtoCreateCommand(
+                id,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                0L,
+                null
         );
     }
 

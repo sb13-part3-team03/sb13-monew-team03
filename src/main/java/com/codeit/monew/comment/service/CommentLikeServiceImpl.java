@@ -68,24 +68,7 @@ public class CommentLikeServiceImpl implements CommentLikeService {
             );
         }
 
-        // todo - 1 + N 쿼리 해결위해 find 매서드 join 매서드로 별도 생성.
-        CommentLikeDtoCreateCommand createCommand = new CommentLikeDtoCreateCommand(
-
-                // commentLike information
-                commentLike.getId(),
-                commentLike.getUser().getId(),
-                commentLike.getCreatedAt(),
-
-                // comment information
-                comment.getId(),
-                comment.getArticle().getId(),
-                comment.getUser().getId(),
-                comment.getUser().getNickname(),
-                comment.getContent(),
-                commentLikeRepository.countAllByComment(comment),
-                comment.getCreatedAt()
-        );
-
+        CommentLikeDtoCreateCommand createCommand = commentLikeRepository.findCommentLikeByIdToDtoCommand(commentLike.getId());
 
         return commentMapper.toDto(createCommand);
     }

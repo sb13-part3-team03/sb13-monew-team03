@@ -7,7 +7,7 @@ public record CommentDto(
         UUID id,
         UUID articleId,
         UUID userId,
-        String userNickName,
+        String userNickname,
         String content,
         Long likeCount,
         Boolean likeByMe,
