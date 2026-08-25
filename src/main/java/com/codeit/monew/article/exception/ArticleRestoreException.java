@@ -2,9 +2,9 @@ package com.codeit.monew.article.exception;
 
 import com.codeit.monew.global.exception.ErrorCode;
 
-public class S3StorageException extends RuntimeException {
+public class ArticleRestoreException extends RuntimeException {
 
-    public S3StorageException(ErrorCode errorCode, Throwable cause) {
+    public ArticleRestoreException(ErrorCode errorCode, Throwable cause) {
         super(errorCode.getMessage(), cause);
     }
 

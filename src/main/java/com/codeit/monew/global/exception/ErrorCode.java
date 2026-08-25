@@ -57,6 +57,16 @@ public enum ErrorCode {
             "S3 백업 데이터 다운로드에 실패했습니다."
     ),
 
+    S3_BACKUP_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "기사 백업 데이터 생성에 실패했습니다."
+    ),
+
+    ARTICLE_RESTORE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "뉴스 기사 복구에 실패했습니다."
+    ),
+
     // comment exceptions
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND,"요청된 댓글이 존재하지 않습니다."),
     COMMENT_USER_NOT_FOUND(HttpStatus.NOT_FOUND,"요청된 사용자는 존재하지 않는 사용자 입니다."),
