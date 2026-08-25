@@ -62,9 +62,23 @@ public enum ErrorCode {
             "기사 백업 데이터 생성에 실패했습니다."
     ),
 
+    S3_BACKUP_CHECK_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "S3 백업 파일 존재 여부 확인에 실패했습니다."
+    ),
+
+    BACKUP_JOB_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "기사 백업 배치 실행에 실패했습니다."
+    ),
+
     ARTICLE_RESTORE_FAILED(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "뉴스 기사 복구에 실패했습니다."
+    ),
+    INVALID_RESTORE_DATE(
+            HttpStatus.BAD_REQUEST,
+            "복구 날짜 범위가 올바르지 않습니다."
     ),
 
     // comment exceptions
