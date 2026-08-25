@@ -60,7 +60,7 @@ public class CommentLikeServiceImpl implements CommentLikeService {
         // 댓글 좋아요 누를 시 해당 사용자에게 알림 생성, 본인이 좋아요 누를 시 생성안함
         User commentAuthor = comment.getUser();
         if (!Objects.equals(commentAuthor.getId(), user.getId())) {
-            notificationService.create(
+            notificationService.publishCreateEvent(
                     user.getNickname() + "님이 나의 댓글을 좋아합니다.",
                     commentAuthor.getId(),
                     ResourceType.COMMENT,
