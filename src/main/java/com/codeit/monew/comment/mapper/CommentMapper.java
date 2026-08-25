@@ -17,7 +17,7 @@ public class CommentMapper {
                 command.id(),
                 command.articleId(),
                 command.userId(),
-                command.userNickName(),
+                command.userNickname(),
                 command.content(),
                 command.likeCount(),
                 command.likeByMe(),

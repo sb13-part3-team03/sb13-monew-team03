@@ -282,10 +282,6 @@ public class CommentServiceTest {
         // delete method called at 1 times.
         verify(commentRepository,times(1))
                 .delete(any(Comment.class));
-
-        // deleted commentLike when delete comment with cascade.remove
-//        verify(commentLikeRepository,times(1))
-//                .deleteAllByComment(any());
     }
 
 
@@ -347,7 +343,7 @@ public class CommentServiceTest {
                 command.id(),
                 command.articleId(),
                 command.userId(),
-                command.userNickName(),
+                command.userNickname(),
                 command.content(),
                 command.likeCount(),
                 command.likeByMe(),
