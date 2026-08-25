@@ -7,14 +7,17 @@ import com.codeit.monew.notification.dto.response.NotificationDto;
 import com.codeit.monew.notification.condition.NotificationSearchCondition;
 import com.codeit.monew.notification.entity.Notification;
 import com.codeit.monew.notification.enums.ResourceType;
+import com.codeit.monew.notification.event.NotificationCreateEvent;
 import com.codeit.monew.notification.repository.NotificationRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
   private final NotificationRepository notificationRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional(readOnly = true)
   public CursorPageResponseNotificationDto findAllNotConfirmed(NotificationSearchCondition condition) {
@@ -69,6 +73,28 @@ public class NotificationService {
 
   @Transactional
   public void create(String content, UUID userId, ResourceType resourceType, UUID resourceId) {
+    Notification notification = new Notification(content, userId, resourceType, resourceId, false);
+    notificationRepository.save(notification);
+  }
+
+  public void publishCreateEvent(
+      String content,
+      UUID userId,
+      ResourceType resourceType,
+      UUID resourceId
+  ) {
+    eventPublisher.publishEvent(
+        new NotificationCreateEvent(content, userId, resourceType, resourceId)
+    );
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void createInNewTransaction(
+      String content,
+      UUID userId,
+      ResourceType resourceType,
+      UUID resourceId
+  ) {
     Notification notification = new Notification(content, userId, resourceType, resourceId, false);
     notificationRepository.save(notification);
   }
