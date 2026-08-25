@@ -57,6 +57,9 @@ dependencies {
 
     testImplementation 'com.adobe.testing:s3mock-testcontainers:4.11.0'
 
+    // batch
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+
 }
 
 tasks.named('test') {
