@@ -12,18 +12,4 @@ public record CommentDtoCreateCommand(
         Long likeCount,
         Boolean likeByMe,
         Instant createdAt
-) {
-    @Override
-    public String toString() {
-        return "CommentDtoCreateCommand{" +
-                "id=" + id +
-                ", articleId=" + articleId +
-                ", userId=" + userId +
-                ", userNickname='" + userNickname + '\'' +
-                ", content='" + content + '\'' +
-                ", likeCount=" + likeCount +
-                ", likeByMe=" + likeByMe +
-                ", createdAt=" + createdAt +
-                '}';
-    }
-}
+) {}

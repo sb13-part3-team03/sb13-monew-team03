@@ -1,7 +1,6 @@
 package com.codeit.monew.comment.service;
 
 
-import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.comment.dto.command.CommentLikeDtoCreateCommand;
 import com.codeit.monew.comment.dto.command.like.CommentLikeCancelCommand;
 import com.codeit.monew.comment.dto.command.like.CommentLikeRegistryCommand;

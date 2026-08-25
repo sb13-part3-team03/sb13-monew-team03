@@ -16,13 +16,6 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
     @EntityGraph(attributePaths = {"user","comment"})
     Optional<CommentLike> findByComment_IdAndUser_Id(UUID commentId, UUID userId);
 
-    // not use method
-//    Long countAllByComment(Comment comment);
-//
-//    void deleteAllByComment(Comment comment);
-    //
-
-
     void deleteAllByComment_Article_Id(UUID id);
 
     @Query(
