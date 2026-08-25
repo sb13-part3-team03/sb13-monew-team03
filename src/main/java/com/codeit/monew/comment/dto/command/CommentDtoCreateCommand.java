@@ -22,7 +22,7 @@ public record CommentDtoCreateCommand(
                 ", userNickname='" + userNickname + '\'' +
                 ", content='" + content + '\'' +
                 ", likeCount=" + likeCount +
-                ", likedByMe=" + likeByMe +
+                ", likeByMe=" + likeByMe +
                 ", createdAt=" + createdAt +
                 '}';
     }
