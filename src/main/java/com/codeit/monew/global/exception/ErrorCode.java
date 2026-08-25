@@ -46,6 +46,17 @@ public enum ErrorCode {
           "뉴스 기사 정보를 찾을 수 없습니다."
     ),
 
+    // S3 backup
+    S3_BACKUP_UPLOAD_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "S3 백업 데이터 업로드에 실패했습니다."
+    ),
+
+    S3_BACKUP_DOWNLOAD_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "S3 백업 데이터 다운로드에 실패했습니다."
+    ),
+
     // comment exceptions
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND,"요청된 댓글이 존재하지 않습니다."),
     COMMENT_USER_NOT_FOUND(HttpStatus.NOT_FOUND,"요청된 사용자는 존재하지 않는 사용자 입니다."),
