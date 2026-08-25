@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public record CommentLikeDto(
         UUID id,
-        UUID likeBy,
+        UUID likedBy,
         Instant createdAt,
         UUID commentId,
         UUID articleId,
@@ -13,6 +13,6 @@ public record CommentLikeDto(
         String commentUserNickname,
         String commentContent,
         Long commentLikeCount,
-        Instant commentCreateAt
+        Instant commentCreatedAt
 ) {
 }
