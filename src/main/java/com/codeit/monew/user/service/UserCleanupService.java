@@ -32,7 +32,7 @@ public class UserCleanupService {
 
         List<User> users =
                 userRepository
-                        .findAllByDeletedAtIsNotNullAndDeletedAtBefore(threshold);
+                        .findAllByDeletedAtIsNotNullAndDeletedAtLessThanEqual(threshold);
 
         if (users.isEmpty()) {
             log.info("물리 삭제 대상 사용자가 없습니다.");
