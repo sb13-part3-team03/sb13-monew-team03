@@ -1,4 +1,178 @@
 package com.codeit.monew.article.service;
 
+import com.codeit.monew.article.dto.response.ArticleRestoreResultDto;
+import com.codeit.monew.article.entity.Article;
+import com.codeit.monew.article.exception.ArticleRestoreException;
+import com.codeit.monew.article.exception.S3StorageException;
+import com.codeit.monew.article.repository.ArticleRepository;
+import com.codeit.monew.global.exception.ErrorCode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+@Slf4j
 public class ArticleBackupService {
+
+    private final ArticleRepository articleRepository;
+    private final S3StorageService s3StorageService;
+    private final ObjectMapper objectMapper;
+
+    // 백업되지 않은 날짜 찾아 백업
+    public void backup() {
+        List<LocalDate> dates = findUnbackedDates();
+
+        dates.forEach(this::backup);
+    }
+
+    // 하루치 백업
+    public void backup(LocalDate date) {
+
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+
+        Instant fromInstant = date
+                .atStartOfDay(zone)
+                .toInstant();
+
+        Instant toInstant = date
+                .plusDays(1)
+                .atStartOfDay(zone)
+                .toInstant();
+
+        List<Article> articles =
+                articleRepository
+                        .findByPublishDateGreaterThanEqualAndPublishDateLessThan(
+                                fromInstant,
+                                toInstant
+                        );
+
+        try {
+            String json = objectMapper.writeValueAsString(articles);
+
+            String key = "article-backup/"
+                    + date
+                    + "/articles.json";
+
+            s3StorageService.upload(key, json);
+
+        } catch (JsonProcessingException e) {
+            throw new S3StorageException(
+                    ErrorCode.S3_BACKUP_FAILED, e
+            );
+        }
+    }
+
+    private List<LocalDate> findUnbackedDates() {
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+
+        List<Instant> publishDates =
+                articleRepository.findDistinctPublishDates();
+
+        return publishDates.stream()
+                .map(instant -> instant.atZone(zone).toLocalDate())
+                .distinct()
+                .filter(date -> {
+                    String key = "article-backup/"
+                            + date
+                            + "/articles.json";
+
+                    return !s3StorageService.exists(key);
+                })
+                .toList();
+    }
+
+    // 날짜 범위 복구
+    public List<ArticleRestoreResultDto> restore(LocalDate from, LocalDate to) {
+
+        log.info("날짜 범위 복구 시작. from={}, to={}", from, to);
+
+        List<LocalDate> dates = from
+                .datesUntil(to.plusDays(1))
+                .toList();
+
+        log.info("복구 대상 날짜: {}", dates);
+
+        return dates.stream()
+                .map(this::restore)
+                .toList();
+    }
+
+    // 하루치 복구
+    private ArticleRestoreResultDto restore(LocalDate date) {
+        String key = "article-backup/"
+                + date
+                + "/articles.json";
+
+        log.info("S3 백업 다운로드 시작. key={}", key);
+
+        try {
+            // S3에서 해당 날짜 백업 가져오기
+            List<Article> backupArticles =
+                    s3StorageService.download(
+                            key,
+                            new TypeReference<List<Article>>() {
+                            }
+                    );
+
+            log.info("S3 백업 다운로드 완료. date={}, count={}",
+                    date, backupArticles.size());
+
+            List<UUID> articleIds = backupArticles.stream()
+                    .map(Article::getId)
+                    .toList();
+
+            // 현재 DB에 존재하는 기사 확인
+            List<Article> existingArticles = articleRepository.findAllById(articleIds);
+
+            Set<UUID> existingArticleIds = existingArticles.stream()
+                    .map(Article::getId)
+                    .collect(Collectors.toSet());
+
+            // 없는 기사만 추출
+            List<Article> lostArticles = backupArticles.stream()
+                    .filter(article ->
+                            !existingArticleIds.contains(article.getId())
+                    )
+                    .toList();
+
+            List<UUID> restoredArticleIds = lostArticles.stream()
+                    .map(Article::getId)
+                    .toList();
+
+            // 복구
+            articleRepository.saveAll(lostArticles);
+
+            return new ArticleRestoreResultDto(
+                    Instant.now(),
+                    restoredArticleIds,
+                    (long) restoredArticleIds.size()
+            );
+
+        } catch (S3StorageException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("기사 복구 중 오류 발생. date={}", date, e);
+
+            throw new ArticleRestoreException(
+                    ErrorCode.ARTICLE_RESTORE_FAILED, e
+            );
+        }
+    }
+
 }
