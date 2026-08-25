@@ -12,10 +12,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.*;
 
 @Slf4j
 @Service
@@ -80,4 +77,34 @@ public class S3StorageService {
             );
         }
     }
+
+    // S3에 지정된 key의 백업 파일이 존재하는지 확인
+    public boolean exists(String key) {
+        try {
+            s3Client.headObject(
+                    HeadObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .build()
+            );
+
+            return true;
+
+        } catch (NoSuchKeyException e) {
+            // 백업 파일이 존재하지 않는 경우
+            return false;
+
+        } catch (S3Exception e) {
+            // 404 응답은 파일이 존재하지 않는 것으로 처리
+            if (e.statusCode() == 404) {
+                return false;
+            }
+
+            // 그 외 S3 오류는 백업 파일 확인 실패로 처리
+            throw new S3StorageException(
+                    ErrorCode.S3_BACKUP_CHECK_FAILED, e
+            );
+        }
+    }
+
 }
