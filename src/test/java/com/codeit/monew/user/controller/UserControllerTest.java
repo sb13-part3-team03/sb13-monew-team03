@@ -234,7 +234,6 @@ class UserControllerTest {
         // when & then
         mockMvc.perform(
                         patch("/api/users/{userId}", userId)
-                                .header(REQUEST_USER_ID_HEADER, userId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -242,6 +241,9 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.id").value(userId.toString()))
                 .andExpect(jsonPath("$.email").value("test@example.com"))
                 .andExpect(jsonPath("$.nickname").value("새닉네임"));
+
+        verify(userService)
+                .update(eq(userId), any(UserUpdateRequest.class));
     }
 
     @Test
@@ -257,11 +259,13 @@ class UserControllerTest {
         // when & then
         mockMvc.perform(
                         patch("/api/users/{userId}", userId)
-                                .header(REQUEST_USER_ID_HEADER, userId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isBadRequest());
+
+        verify(userService, never())
+                .update(eq(userId), any(UserUpdateRequest.class));
     }
 
     @Test
@@ -280,79 +284,12 @@ class UserControllerTest {
         // when & then
         mockMvc.perform(
                         patch("/api/users/{userId}", userId)
-                                .header(REQUEST_USER_ID_HEADER, userId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isNotFound());
-    }
 
-    @Test
-    @DisplayName("요청 사용자와 수정 대상 사용자가 다르면 403 응답을 반환한다.")
-    void updateUser_whenRequesterIsDifferent_returnsForbidden() throws Exception {
-
-        // given
-        UUID userId = UUID.randomUUID();
-        UUID requestUserId = UUID.randomUUID();
-
-        UserUpdateRequest request =
-                new UserUpdateRequest("새닉네임");
-
-        // when & then
-        mockMvc.perform(
-                        patch("/api/users/{userId}", userId)
-                                .header(REQUEST_USER_ID_HEADER, requestUserId)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
-                )
-                .andExpect(status().isForbidden());
-
-        verify(userService, never())
-                .update(eq(userId), any(UserUpdateRequest.class));
-    }
-
-    @Test
-    @DisplayName("사용자 식별 헤더가 없으면 400 응답을 반환한다.")
-    void updateUser_whenRequestUserIdHeaderIsMissing_returnsBadRequest() throws Exception {
-
-        // given
-        UUID userId = UUID.randomUUID();
-
-        UserUpdateRequest request =
-                new UserUpdateRequest("새닉네임");
-
-        // when & then
-        mockMvc.perform(
-                        patch("/api/users/{userId}", userId)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
-                )
-                .andExpect(status().isBadRequest());
-
-        verify(userService, never())
-                .update(eq(userId), any(UserUpdateRequest.class));
-    }
-
-    @Test
-    @DisplayName("사용자 식별 헤더가 올바른 UUID 형식이 아니면 400 응답을 반환한다.")
-    void updateUser_whenRequestUserIdHeaderIsInvalid_returnsBadRequest() throws Exception {
-
-        // given
-        UUID userId = UUID.randomUUID();
-
-        UserUpdateRequest request =
-                new UserUpdateRequest("새닉네임");
-
-        // when & then
-        mockMvc.perform(
-                        patch("/api/users/{userId}", userId)
-                                .header(REQUEST_USER_ID_HEADER, "invalid-uuid")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
-                )
-                .andExpect(status().isBadRequest());
-
-        verify(userService, never())
+        verify(userService)
                 .update(eq(userId), any(UserUpdateRequest.class));
     }
 

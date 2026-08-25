@@ -48,11 +48,8 @@ public class UserController {
     @PatchMapping("/{userId}")
     public ResponseEntity<UserResponse> update(
             @PathVariable UUID userId,
-            @RequestHeader(REQUEST_USER_ID_HEADER) UUID requestUserId,
             @Valid @RequestBody UserUpdateRequest request
     ) {
-        validateUserAccess(userId, requestUserId);
-
         UserResponse response = userService.update(userId, request);
 
         return ResponseEntity.ok(response);
