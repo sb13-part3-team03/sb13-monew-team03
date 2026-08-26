@@ -198,7 +198,7 @@ class ArticleSaveServiceTest {
         verify(subscriptionRepository, never())
                 .findAllByInterestId(any());
         verify(notificationService, never())
-                .create(any(), any(), any(), any());
+                .publishCreateEvent(any(), any(), any(), any());
     }
 
     private Interest createInterest() {
@@ -285,7 +285,7 @@ class ArticleSaveServiceTest {
         articleSaveService.saveOneArticle(dto, interest);
 
         // then
-        verify(notificationService).create(
+        verify(notificationService).publishCreateEvent(
                 existingArticle.getSummary(),
                 userId,
                 ResourceType.INTEREST,
