@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.core.ResponseBytes;
@@ -30,11 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 public class S3StorageServiceTest {
@@ -179,6 +175,91 @@ public class S3StorageServiceTest {
                         "backup/test.json",
                         new TypeReference<List<String>>() {}
                 )
+        )
+                .isInstanceOf(S3StorageException.class);
+    }
+    @Test
+    @DisplayName("백업 파일 JSON 파싱 실패 시 S3StorageException을 발생시킨다")
+    void download_throwsJsonProcessingException() throws Exception {
+        // given
+        String json = "invalid-json";
+
+        ResponseBytes<GetObjectResponse> response =
+                ResponseBytes.fromByteArray(
+                        GetObjectResponse.builder().build(),
+                        json.getBytes(StandardCharsets.UTF_8)
+                );
+
+        when(s3Client.getObjectAsBytes(any(GetObjectRequest.class)))
+                .thenReturn(response);
+
+        when(objectMapper.readValue(
+                anyString(),
+                any(TypeReference.class)
+        )).thenThrow(new JsonProcessingException("invalid json") {});
+
+        // when & then
+        assertThatThrownBy(() ->
+                s3StorageService.download(
+                        "backup/test.json",
+                        new TypeReference<List<String>>() {}
+                )
+        )
+                .isInstanceOf(S3StorageException.class);
+    }
+
+    @Test
+    @DisplayName("S3에 백업 파일이 존재하면 true를 반환한다")
+    void exists_returnsTrue() {
+        // when
+        boolean result = s3StorageService.exists("backup/test.json");
+
+        // then
+        assertThat(result).isTrue();
+
+        ArgumentCaptor<HeadObjectRequest> captor =
+                ArgumentCaptor.forClass(HeadObjectRequest.class);
+
+        verify(s3Client).headObject(captor.capture());
+
+        HeadObjectRequest request = captor.getValue();
+
+        assertThat(request.bucket()).isEqualTo("test-bucket");
+        assertThat(request.key()).isEqualTo("backup/test.json");
+    }
+
+    @Test
+    @DisplayName("S3에 백업 파일이 없으면 false를 반환한다")
+    void exists_returnsFalseWhenNotFound() {
+        // given
+        S3Exception exception = mock(S3Exception.class);
+
+        when(exception.statusCode()).thenReturn(404);
+
+        when(s3Client.headObject(any(HeadObjectRequest.class)))
+                .thenThrow(exception);
+
+        // when
+        boolean result = s3StorageService.exists("backup/test.json");
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("S3 파일 존재 여부 확인 중 오류가 발생하면 S3StorageException을 발생시킨다")
+    void exists_throwsException() {
+        // given
+        S3Exception exception = mock(S3Exception.class);
+
+        when(exception.statusCode()).thenReturn(500);
+
+        when(s3Client.headObject(any(HeadObjectRequest.class)))
+                .thenThrow(exception);
+
+        // when & then
+        assertThatThrownBy(() ->
+                s3StorageService.exists("backup/test.json")
         )
                 .isInstanceOf(S3StorageException.class);
     }
