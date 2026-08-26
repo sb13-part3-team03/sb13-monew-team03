@@ -267,7 +267,7 @@ class SubscriptionRepositoryTest {
 
     @Nested
     @DisplayName("관심사 구독 전체 삭제")
-    class DeleteAllByInterestId {
+    class DeleteAllSubscriptions {
 
         @Test
         @DisplayName("관심사 ID로 모든 구독 정보를 삭제한다")
