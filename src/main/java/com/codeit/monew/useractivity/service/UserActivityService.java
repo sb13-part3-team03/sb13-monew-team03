@@ -2,12 +2,12 @@ package com.codeit.monew.useractivity.service;
 
 import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
+import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.useractivity.dto.response.CommentActivityDto;
 import com.codeit.monew.useractivity.dto.response.CommentLikeActivityDto;
 import com.codeit.monew.useractivity.dto.response.UserActivityDto;
 import com.codeit.monew.useractivity.entity.UserActivity;
 import com.codeit.monew.useractivity.repository.UserActivityRepository;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,9 +73,7 @@ public class UserActivityService {
 
   private UserActivity findEntity(UUID userId) {
     return userActivityRepository.findById(userId)
-        .orElseThrow(() -> new NoSuchElementException(
-            "User activity does not exist. userId=" + userId
-        ));
+        .orElseThrow(UserNotFoundException::new);
   }
 
 }
