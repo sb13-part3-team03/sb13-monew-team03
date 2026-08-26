@@ -69,9 +69,7 @@ public class ArticleBackupService {
             s3StorageService.upload(key, json);
 
         } catch (JsonProcessingException e) {
-            throw new S3StorageException(
-                    ErrorCode.S3_BACKUP_FAILED, e
-            );
+            throw new S3StorageException(ErrorCode.S3_BACKUP_FAILED);
         }
     }
 

@@ -39,10 +39,7 @@ public class ArticleBackupScheduler {
         } catch (Exception e) {
             log.error("뉴스 기사 백업 배치 실패", e);
 
-            throw new S3StorageException(
-                    ErrorCode.BACKUP_JOB_FAILED,
-                    e
-            );
+            throw new S3StorageException(ErrorCode.BACKUP_JOB_FAILED);
         }
     }
 }

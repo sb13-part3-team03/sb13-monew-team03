@@ -112,7 +112,7 @@ public class ArticleRestoreService {
             log.error("기사 복구 중 오류 발생. date={}", date, e);
 
             throw new ArticleRestoreException(
-                    ErrorCode.ARTICLE_RESTORE_FAILED, e
+                    ErrorCode.ARTICLE_RESTORE_FAILED
             );
         }
     }

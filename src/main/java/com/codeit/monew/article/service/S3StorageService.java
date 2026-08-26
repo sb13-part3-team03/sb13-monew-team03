@@ -44,9 +44,7 @@ public class S3StorageService {
             log.info("S3 백업 업로드 완료: {}", key);
 
         } catch (S3Exception e) {
-            throw new S3StorageException(
-                    ErrorCode.S3_BACKUP_UPLOAD_FAILED, e
-            );
+            throw new S3StorageException(ErrorCode.S3_BACKUP_UPLOAD_FAILED);
         }
     }
 
@@ -72,9 +70,7 @@ public class S3StorageService {
             );
 
         } catch (S3Exception | JsonProcessingException e) {
-            throw new S3StorageException(
-                    ErrorCode.S3_BACKUP_DOWNLOAD_FAILED, e
-            );
+            throw new S3StorageException(ErrorCode.S3_BACKUP_DOWNLOAD_FAILED);
         }
     }
 
@@ -101,9 +97,7 @@ public class S3StorageService {
             }
 
             // 그 외 S3 오류는 백업 파일 확인 실패로 처리
-            throw new S3StorageException(
-                    ErrorCode.S3_BACKUP_CHECK_FAILED, e
-            );
+            throw new S3StorageException(ErrorCode.S3_BACKUP_CHECK_FAILED);
         }
     }
 
