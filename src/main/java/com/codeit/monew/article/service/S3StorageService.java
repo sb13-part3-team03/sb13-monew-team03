@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -43,7 +44,7 @@ public class S3StorageService {
 
             log.info("S3 백업 업로드 완료: {}", key);
 
-        } catch (S3Exception e) {
+        } catch (S3Exception | SdkClientException e) {
             throw new S3StorageException(ErrorCode.S3_BACKUP_UPLOAD_FAILED);
         }
     }
@@ -69,7 +70,7 @@ public class S3StorageService {
                     typeReference
             );
 
-        } catch (S3Exception | JsonProcessingException e) {
+        } catch (S3Exception | SdkClientException | JsonProcessingException e) {
             throw new S3StorageException(ErrorCode.S3_BACKUP_DOWNLOAD_FAILED);
         }
     }
@@ -92,13 +93,15 @@ public class S3StorageService {
 
         } catch (S3Exception e) {
             // 404 응답은 파일이 존재하지 않는 것으로 처리
-            if (e.statusCode() == 404) {
-                return false;
-            }
+            if (e.statusCode() == 404) { return false; }
 
             // 그 외 S3 오류는 백업 파일 확인 실패로 처리
             throw new S3StorageException(ErrorCode.S3_BACKUP_CHECK_FAILED);
-        }
+
+        } catch (SdkClientException e) {
+        throw new S3StorageException(ErrorCode.S3_BACKUP_FAILED);
+
+    }
     }
 
 }
