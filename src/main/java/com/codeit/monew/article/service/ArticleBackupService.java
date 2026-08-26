@@ -16,9 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -155,8 +153,19 @@ public class ArticleBackupService {
                     .map(Article::getId)
                     .toList();
 
-            // 복구
-            articleRepository.saveAll(lostArticles);
+            // 복구용 INSERT
+            for (Article article : lostArticles) {
+
+                articleRepository.insertForRestore(
+                        article.getId(),
+                        article.getSource().name(),
+                        article.getSourceUrl(),
+                        article.getTitle(),
+                        article.getSummary(),
+                        article.getPublishDate(),
+                        article.getDeletedAt()
+                );
+            }
 
             return new ArticleRestoreResultDto(
                     Instant.now(),
