@@ -208,6 +208,64 @@ class SubscriptionRepositoryTest {
     }
 
     @Nested
+    @DisplayName("관심사별 구독 조회")
+    class FindAllByInterestId {
+
+        @Test
+        @DisplayName("관심사 ID로 해당 관심사의 구독 목록을 조회한다")
+        void success() {
+            // given
+            User user1 = new User(
+                    "user1@test.com",
+                    "사용자1",
+                    "password"
+            );
+            User user2 = new User(
+                    "user2@test.com",
+                    "사용자2",
+                    "password"
+            );
+
+            userRepository.saveAllAndFlush(List.of(user1, user2));
+
+            Interest interest1 = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+            Interest interest2 = new Interest(
+                    "경제",
+                    List.of("주식", "금리")
+            );
+
+            interestRepository.saveAllAndFlush(List.of(interest1, interest2));
+
+            Subscription subscription1 =
+                    new Subscription(user1, interest1);
+            Subscription subscription2 =
+                    new Subscription(user2, interest1);
+            Subscription otherSubscription =
+                    new Subscription(user1, interest2);
+
+            subscriptionRepository.saveAllAndFlush(
+                    List.of(subscription1, subscription2, otherSubscription)
+            );
+
+            // when
+            List<Subscription> result =
+                    subscriptionRepository.findAllByInterestId(interest1.getId());
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result)
+                    .extracting(Subscription::getId)
+                    .containsExactlyInAnyOrder(
+                            subscription1.getId(),
+                            subscription2.getId()
+                    );
+        }
+    }
+
+    @Nested
     @DisplayName("관심사 구독 전체 삭제")
     class DeleteAllByInterestId {
 

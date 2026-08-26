@@ -9,6 +9,7 @@ import com.codeit.monew.interest.service.condition.InterestSearchCondition;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -608,6 +609,56 @@ class InterestRepositoryTest {
 
             assertThat(result.get(0).subscriberCount())
                     .isEqualTo(1L);
+        }
+    }
+
+    @Nested
+    @DisplayName("관심사 키워드 포함 전체 조회")
+    class FindAllWithKeywords {
+
+        @Test
+        @DisplayName("관심사와 키워드를 함께 조회한다")
+        void success() {
+            // given
+            Interest interest1 = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest interest2 = new Interest(
+                    "경제",
+                    List.of("주식", "금리")
+            );
+
+            interestRepository.saveAll(List.of(interest1, interest2));
+
+            entityManager.flush();
+            entityManager.clear();
+
+            // when
+            List<Interest> result = interestRepository.findAllWithKeywords();
+
+            // then
+            assertThat(result).hasSize(2);
+
+            Interest sports = result.stream()
+                    .filter(interest -> interest.getName().equals("스포츠"))
+                    .findFirst()
+                    .orElseThrow();
+
+            Interest economy = result.stream()
+                    .filter(interest -> interest.getName().equals("경제"))
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(Hibernate.isInitialized(sports.getKeywords())).isTrue();
+            assertThat(Hibernate.isInitialized(economy.getKeywords())).isTrue();
+
+            assertThat(sports.getKeywords())
+                    .containsExactlyInAnyOrder("축구", "야구");
+
+            assertThat(economy.getKeywords())
+                    .containsExactlyInAnyOrder("주식", "금리");
         }
     }
 
