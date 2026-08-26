@@ -7,6 +7,7 @@ import com.codeit.monew.user.dto.request.UserUpdateRequest;
 import com.codeit.monew.user.dto.response.UserResponse;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserActivityEventPublisher activityEvents;
 
     public UserResponse create(UserCreateRequest request) {
 
@@ -38,6 +40,7 @@ public class UserService {
         );
 
         User savedUser = userRepository.save(user);
+        activityEvents.profileChanged(savedUser);
 
         return new UserResponse(
                 savedUser.getId(),
@@ -56,6 +59,7 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
 
         user.updateNickname(request.nickname());
+        activityEvents.profileChanged(user);
 
         return new UserResponse(
                 user.getId(),
@@ -81,5 +85,6 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
 
         userRepository.delete(user);
+        activityEvents.userRemoved(userId);
     }
 }

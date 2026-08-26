@@ -15,6 +15,7 @@ import com.codeit.monew.notification.enums.ResourceType;
 import com.codeit.monew.notification.service.NotificationService;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ public class CommentLikeServiceImpl implements CommentLikeService {
     private final NotificationService notificationService;
 
     private final CommentMapper commentMapper;
+    private final UserActivityEventPublisher activityEvents;
 
     @Override
     @Transactional
@@ -69,6 +71,7 @@ public class CommentLikeServiceImpl implements CommentLikeService {
         }
 
         CommentLikeDtoCreateCommand createCommand = commentLikeRepository.findCommentLikeByIdToDtoCommand(commentLike.getId());
+        activityEvents.likeAdded(commentLike, createCommand.commentLikeCount());
 
         return commentMapper.toDto(createCommand);
     }
@@ -78,6 +81,7 @@ public class CommentLikeServiceImpl implements CommentLikeService {
     public void cancel(CommentLikeCancelCommand command){
         CommentLike commentLike = getCommentLikeOrExcept(command.commentId(),command.userId());
         commentLikeRepository.delete(commentLike);
+        activityEvents.likeRemoved(command.userId(), commentLike.getId(), command.commentId());
     }
 
     private User getUserOrExcept(UUID userId){
