@@ -75,6 +75,8 @@ public class ArticleBackupService {
 
     private List<LocalDate> findUnbackedDates() {
         ZoneId zone = ZoneId.of("Asia/Seoul");
+        // 당일 발행 기사는 이후에도 추가될 수 있으므로 백업 대상에서 제외
+        LocalDate today = LocalDate.now(zone);
 
         List<Instant> publishDates =
                 articleRepository.findDistinctPublishDates();
@@ -82,6 +84,7 @@ public class ArticleBackupService {
         return publishDates.stream()
                 .map(instant -> instant.atZone(zone).toLocalDate())
                 .distinct()
+                .filter(date -> date.isBefore(today))
                 .filter(date -> {
                     String key = "article-backup/"
                             + date
@@ -90,6 +93,7 @@ public class ArticleBackupService {
                     return !s3StorageService.exists(key);
                 })
                 .toList();
+
     }
 
 }
