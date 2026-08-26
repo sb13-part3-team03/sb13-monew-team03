@@ -9,10 +9,7 @@ import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.exception.ArticleRestoreException;
-import com.codeit.monew.article.service.ArticleBackupService;
-import com.codeit.monew.article.service.ArticleDeleteService;
-import com.codeit.monew.article.service.ArticleQueryService;
-import com.codeit.monew.article.service.ArticleViewService;
+import com.codeit.monew.article.service.*;
 import com.codeit.monew.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +31,7 @@ public class ArticleController {
     private final ArticleQueryService articleService;
     private final ArticleViewService articleViewService;
     private final ArticleDeleteService articleDeleteService;
-    private final ArticleBackupService articleBackupService;
+    private final ArticleRestoreService articleRestoreService;
 
     // 뉴스 기사 검색 목록 커서페이지네이션 조회
     @GetMapping("")
@@ -107,7 +104,7 @@ public class ArticleController {
         }
 
         List<ArticleRestoreResultDto> result =
-                articleBackupService.restore(
+                articleRestoreService.restore(
                     from.toLocalDate(),
                     to.toLocalDate()
                 );
