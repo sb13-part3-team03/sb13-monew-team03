@@ -47,7 +47,7 @@ public class ArticleSaveService {
         // 3. 알림 생성
         subscriptionRepository.findAllByInterestId(interest.getId())
                 .forEach(subscription ->
-                        notificationService.create(
+                        notificationService.publishCreateEvent(
                                 article.getSummary(),
                                 subscription.getUser().getId(),
                                 ResourceType.INTEREST,

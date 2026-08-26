@@ -20,6 +20,10 @@ spring:
         format_sql: true
         highlight_sql: true
 
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/monew}
+      uuid-representation: standard
   profiles:
     active: dev
 
