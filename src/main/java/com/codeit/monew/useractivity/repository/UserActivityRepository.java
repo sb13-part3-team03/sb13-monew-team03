@@ -12,7 +12,7 @@ public interface UserActivityRepository extends MongoRepository<UserActivity, UU
   //일부 기록만 포함한 조회 결과이므로 이 문서를 통째로 다시 저장하지 않는다.
 
   @Override
-  @Query(value = "{ '_id': ?0 }", fields = """
+  @Query(value = "{ '_id': ?0, 'deleted': { '$ne': true } }", fields = """
       { 'comments': { '$slice': 10 },
         'commentLikes': { '$slice': 10 },
         'articleViews': { '$slice': 10 } }

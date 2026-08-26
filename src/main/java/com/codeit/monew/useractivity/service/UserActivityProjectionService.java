@@ -24,7 +24,7 @@ public class UserActivityProjectionService {
   public void apply(UserActivityEvent event) {
     if (event instanceof UserActivityEvent.Profile e) {
       ensureProfile(e);
-      mongo.updateFirst(user(e.id()), touched().set("email", e.email())
+      mongo.updateFirst(activeUser(e.id()), touched().set("email", e.email())
           .set("nickname", e.nickname()), UserActivity.class);
     } else if (event instanceof UserActivityEvent.CommentAdded e) {
       ensureProfile(e.user());
@@ -47,14 +47,25 @@ public class UserActivityProjectionService {
           touched().pull("comments", new Document("id", e.commentId()))
               .pull("commentLikes", new Document("commentId", e.commentId())), UserActivity.class);
     } else if (event instanceof UserActivityEvent.LikeRemoved e) {
-      mongo.updateFirst(user(e.userId()), touched()
+      mongo.updateFirst(activeUser(e.userId()), touched()
           .pull("commentLikes", new Document("id", e.likeId())), UserActivity.class);
     } else if (event instanceof UserActivityEvent.UserRemoved e) {
-      mongo.remove(user(e.userId()), UserActivity.class);
+      // Keep the same _id as a permanent tombstone: late upserts must not recreate the profile.
+      // Scrub personal data atomically with marking the document deleted.
+      Update deletion = new Update().set("deleted", true)
+          .unset("email").unset("nickname").unset("createdAt").unset("updatedAt")
+          .unset("comments").unset("commentLikes").unset("articleViews");
+      try {
+        mongo.upsert(user(e.userId()), deletion, UserActivity.class);
+      } catch (DuplicateKeyException ex) {
+        // A concurrent first activity may have inserted the document during the upsert.
+        mongo.updateFirst(user(e.userId()), deletion, UserActivity.class);
+      }
     }
   }
 
   private void ensureProfile(UserActivityEvent.Profile profile) {
+    // Match tombstones too; $setOnInsert leaves them untouched.
     Update insert = new Update().setOnInsert("email", profile.email())
         .setOnInsert("nickname", profile.nickname()).setOnInsert("createdAt", profile.createdAt())
         .setOnInsert("comments", List.of())
@@ -70,7 +81,7 @@ public class UserActivityProjectionService {
   }
 
   private void addRecent(UUID userId, String field, String key, UUID id, Object value) {
-    Query query = user(userId).addCriteria(Criteria.where(field + "." + key).ne(id));
+    Query query = activeUser(userId).addCriteria(Criteria.where(field + "." + key).ne(id));
     Update update = touched();
     // 이전 기록도 보관하고 최신순으로 정렬한다. 조회할 때만 최근 10개로 제한한다.
     update.push(field).sort(Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")))
@@ -87,6 +98,10 @@ public class UserActivityProjectionService {
 
   private Query user(UUID id) {
     return Query.query(Criteria.where("id").is(id));
+  }
+
+  private Query activeUser(UUID id) {
+    return user(id).addCriteria(Criteria.where("deleted").ne(true));
   }
 
   private Update touched() {
