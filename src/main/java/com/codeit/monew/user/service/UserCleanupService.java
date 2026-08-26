@@ -6,6 +6,7 @@ import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.notification.repository.NotificationRepository;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +28,7 @@ public class UserCleanupService {
     private final NotificationRepository notificationRepository;
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final UserActivityEventPublisher activityEvents;
 
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
@@ -67,6 +69,9 @@ public class UserCleanupService {
 
             // 모든 연관 데이터를 정리한 뒤 사용자 물리 삭제
             userRepository.delete(user);
+
+            // 트랜잭션 커밋 후 사용자의 활동내역을 삭제하도록 이벤트 발행
+            activityEvents.userRemoved(userId);
 
             log.info("사용자 물리 삭제 완료: {}", userId);
         }

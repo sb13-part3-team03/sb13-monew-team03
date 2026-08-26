@@ -16,6 +16,7 @@ import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.global.exception.ErrorCode;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Slice;
@@ -38,6 +39,7 @@ public class CommentServiceImpl implements CommentService {
     private final UserRepository userRepository;
 
     private final CommentMapper commentMapper;
+    private final UserActivityEventPublisher activityEvents;
 
     @Override
     @Transactional
@@ -63,7 +65,9 @@ public class CommentServiceImpl implements CommentService {
                 )
         );
 
-        return getCommentDtoFromComment(comment);
+        CommentDto dto = getCommentDtoFromComment(comment);
+        activityEvents.commentAdded(comment, dto.likeCount());
+        return dto;
     }
 
     @Override
@@ -100,6 +104,8 @@ public class CommentServiceImpl implements CommentService {
 
         Comment result = commentRepository.save(comment);
 
+        activityEvents.commentUpdated(result);
+
         return getCommentDtoFromComment(result);
     }
 
@@ -119,6 +125,7 @@ public class CommentServiceImpl implements CommentService {
 
         // not delete instance in now.
         commentRepository.save(comment);
+        activityEvents.commentRemoved(commentId);
     }
 
     // todo - if all header has monew login user id, check comment owner is same user
@@ -136,6 +143,7 @@ public class CommentServiceImpl implements CommentService {
 //        commentLikeRepository.deleteAllByComment(comment);
 
         commentRepository.delete(comment);
+        activityEvents.commentRemoved(commentId);
 
     }
 

@@ -13,6 +13,7 @@ import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class ArticleViewService {
     private final UserRepository userRepository;
     private final ArticleViewMapper articleViewMapper;
     private final ArticleViewSaveService articleViewSaveService;
+    private final UserActivityEventPublisher activityEvents;
 
     @Transactional
     public ArticleViewDto save(ArticleViewCreateCommand command) {
@@ -54,7 +56,9 @@ public class ArticleViewService {
         ArticleViewResult result =
                 new ArticleViewResult(articleView, commentCount, viewCount);
 
-        return articleViewMapper.toDto(result);
+        ArticleViewDto dto = articleViewMapper.toDto(result);
+        activityEvents.articleViewed(user, dto);
+        return dto;
     }
 
 }
