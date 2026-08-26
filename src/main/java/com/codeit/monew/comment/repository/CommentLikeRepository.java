@@ -18,6 +18,10 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
 
     void deleteAllByComment_Article_Id(UUID id);
 
+    void deleteAllByUser_Id(UUID userId);
+
+    void deleteAllByComment_User_Id(UUID userId);
+
     @Query(
             """
             select
