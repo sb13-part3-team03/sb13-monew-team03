@@ -1,5 +1,9 @@
 package com.codeit.monew.user.service;
 
+import com.codeit.monew.article.repository.ArticleViewRepository;
+import com.codeit.monew.comment.repository.CommentLikeRepository;
+import com.codeit.monew.comment.repository.CommentRepository;
+import com.codeit.monew.notification.repository.NotificationRepository;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -18,11 +23,11 @@ import java.util.List;
 public class UserCleanupService {
 
     private final UserRepository userRepository;
+    private final ArticleViewRepository articleViewRepository;
+    private final NotificationRepository notificationRepository;
+    private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
-    /**
-     * 매시간 정각 실행.
-     * 논리 삭제(deletedAt 설정) 후 1일 이상 지난 사용자를 물리 삭제 대상으로 조회한다.
-     */
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void cleanupDeletedUsers() {
@@ -43,22 +48,27 @@ public class UserCleanupService {
 
         for (User user : users) {
 
-            /*
-             * TODO
-             * 사용자 물리 삭제 전에 연관 데이터 삭제 필요
-             *
-             * - ArticleView: userId 기준 삭제
-             * - Notification: userId 기준 삭제
-             * - Comment / CommentLike: cascade 처리 예정
-             *
-             * 관련 도메인 삭제 메서드가 develop에 반영된 후
-             * 여기에서 연관 데이터 삭제를 먼저 호출한다.
-             */
+            UUID userId = user.getId();
 
-            // 연관 데이터 삭제 연결 후 활성화
-            // userRepository.delete(user);
+            // 탈퇴한 사용자가 작성한 댓글에 달린 좋아요 삭제
+            commentLikeRepository.deleteAllByComment_User_Id(userId);
 
-            log.info("물리 삭제 예정 사용자: {}", user.getId());
+            // 탈퇴한 사용자가 직접 누른 댓글 좋아요 삭제
+            commentLikeRepository.deleteAllByUser_Id(userId);
+
+            // 탈퇴한 사용자가 작성한 댓글 삭제
+            commentRepository.deleteAllByUser_Id(userId);
+
+            // 사용자 기사 조회 기록 삭제
+            articleViewRepository.deleteAllByUser_Id(userId);
+
+            // 사용자 알림 삭제
+            notificationRepository.deleteAllByUserId(userId);
+
+            // 모든 연관 데이터를 정리한 뒤 사용자 물리 삭제
+            userRepository.delete(user);
+
+            log.info("사용자 물리 삭제 완료: {}", userId);
         }
     }
 }
