@@ -12,6 +12,7 @@ import com.codeit.monew.comment.repository.CommentLikeRepository;
 import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +47,9 @@ public class CommentLikeServiceTest {
 
     @Mock
     CommentMapper commentMapper;
+
+    @Mock
+    UserActivityEventPublisher activityEvents;
 
 
     @Test
