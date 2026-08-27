@@ -11,6 +11,10 @@ spring:
     password: ${DB_PASSWORD:monew1234}
     driver-class-name: org.postgresql.Driver
 
+  batch:
+    jdbc:
+      initialize-schema: always
+
   jpa:
     hibernate:
       ddl-auto: none

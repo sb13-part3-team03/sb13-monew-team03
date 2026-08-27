@@ -484,4 +484,84 @@ public class ArticleRepositoryImplTest {
         );
     }
 
+    @Test
+    @DisplayName("게시일을 중복 없이 조회한다")
+    void findDistinctPublishDates() {
+        // given
+        Instant date1 = Instant.parse("2026-08-24T10:00:00Z");
+        Instant date2 = Instant.parse("2026-08-25T10:00:00Z");
+
+        Article article1 = Article.create(
+                ArticleSource.NAVER,
+                "url1",
+                "title1",
+                "summary1",
+                date1
+        );
+
+        Article article2 = Article.create(
+                ArticleSource.NAVER,
+                "url2",
+                "title2",
+                "summary2",
+                date1
+        );
+
+        Article article3 = Article.create(
+                ArticleSource.NAVER,
+                "url3",
+                "title3",
+                "summary3",
+                date2
+        );
+
+        em.persist(article1);
+        em.persist(article2);
+        em.persist(article3);
+        em.flush();
+        em.clear();
+
+        // when
+        List<Instant> result = articleRepository.findDistinctPublishDates();
+
+        // then
+        assertThat(result)
+                .containsExactlyInAnyOrder(date1, date2);
+    }
+
+    @Test
+    @DisplayName("복구용 insert로 기사를 저장한다")
+    void insertForRestore() {
+        // given
+        UUID id = UUID.randomUUID();
+        Instant publishDate = Instant.parse("2026-08-24T10:00:00Z");
+        Instant deletedAt = Instant.parse("2026-08-25T10:00:00Z");
+
+        // when
+        articleRepository.insertForRestore(
+                id,
+                ArticleSource.NAVER.name(),
+                "https://example.com/article",
+                "복구 테스트 기사",
+                "복구 테스트 요약",
+                publishDate,
+                deletedAt
+        );
+
+        em.flush();
+        em.clear();
+
+        // then
+        Article article = em.find(Article.class, id);
+
+        assertThat(article).isNotNull();
+        assertThat(article.getId()).isEqualTo(id);
+        assertThat(article.getSource()).isEqualTo(ArticleSource.NAVER);
+        assertThat(article.getSourceUrl()).isEqualTo("https://example.com/article");
+        assertThat(article.getTitle()).isEqualTo("복구 테스트 기사");
+        assertThat(article.getSummary()).isEqualTo("복구 테스트 요약");
+        assertThat(article.getPublishDate()).isEqualTo(publishDate);
+        assertThat(article.getDeletedAt()).isEqualTo(deletedAt);
+    }
+
 }

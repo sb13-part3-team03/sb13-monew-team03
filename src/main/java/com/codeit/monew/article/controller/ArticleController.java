@@ -4,28 +4,34 @@ import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.command.ArticleViewCreateCommand;
 import com.codeit.monew.article.dto.request.ArticleSearchRequest;
 import com.codeit.monew.article.dto.response.ArticleDto;
+import com.codeit.monew.article.dto.response.ArticleRestoreResultDto;
 import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.entity.ArticleSource;
-import com.codeit.monew.article.service.ArticleDeleteService;
-import com.codeit.monew.article.service.ArticleQueryService;
-import com.codeit.monew.article.service.ArticleViewService;
+import com.codeit.monew.article.exception.ArticleRestoreException;
+import com.codeit.monew.article.service.*;
+import com.codeit.monew.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/articles")
+@Slf4j
 public class ArticleController {
 
     private final ArticleQueryService articleService;
     private final ArticleViewService articleViewService;
     private final ArticleDeleteService articleDeleteService;
+    private final ArticleRestoreService articleRestoreService;
 
     // 뉴스 기사 검색 목록 커서페이지네이션 조회
     @GetMapping("")
@@ -80,6 +86,32 @@ public class ArticleController {
     ) {
         articleDeleteService.hardDelete(articleId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/restore")
+    public ResponseEntity<List<ArticleRestoreResultDto>> restore(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime to
+    ) {
+        log.info("기사 복구 요청. from={}, to={}", from, to);
+
+        if (from.isAfter(to)) {
+            throw new ArticleRestoreException(
+                    ErrorCode.INVALID_RESTORE_DATE
+            );
+        }
+
+        List<ArticleRestoreResultDto> result =
+                articleRestoreService.restore(
+                    from.toLocalDate(),
+                    to.toLocalDate()
+                );
+
+        log.info("기사 복구 요청 완료. from={}, to={}", from, to);
+
+        return ResponseEntity.ok(result);
     }
 
 }
