@@ -5,7 +5,7 @@ import com.codeit.monew.article.entity.ArticleSource;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,7 +46,7 @@ public record ArticleSearchCommand(
     private static Instant toInstant(LocalDateTime dateTime) {
         return dateTime == null
                 ? null
-                : dateTime.toInstant(ZoneOffset.UTC);
+                : dateTime.atZone(ZoneId.of("Asia/Seoul")).toInstant();
     }
 
 }
