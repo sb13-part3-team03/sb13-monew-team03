@@ -3,9 +3,9 @@ package com.codeit.monew.useractivity.service;
 import com.codeit.monew.interest.dto.response.SubscriptionDto;
 import com.codeit.monew.interest.entity.Subscription;
 import com.codeit.monew.interest.repository.SubscriptionRepository;
-import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.useractivity.dto.response.UserActivityDto;
 import com.codeit.monew.useractivity.entity.UserActivity;
+import com.codeit.monew.useractivity.exception.UserActivityNotFoundException;
 import com.codeit.monew.useractivity.repository.UserActivityRepository;
 import java.util.UUID;
 import java.util.List;
@@ -23,7 +23,7 @@ public class UserActivityService {
   @Transactional(readOnly = true)
   public UserActivityDto find(UUID userId) {
     UserActivity activity = userActivityRepository.findById(userId)
-        .orElseThrow(UserNotFoundException::new);
+        .orElseThrow(UserActivityNotFoundException::new);
     return activity.toDto(findSubscriptions(userId));
   }
 
