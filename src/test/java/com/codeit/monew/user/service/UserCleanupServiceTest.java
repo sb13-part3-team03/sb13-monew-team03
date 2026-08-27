@@ -6,6 +6,7 @@ import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.notification.repository.NotificationRepository;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +40,9 @@ class UserCleanupServiceTest {
 
     @Mock
     private CommentLikeRepository commentLikeRepository;
+
+    @Mock
+    private UserActivityEventPublisher activityEvents;
 
     @InjectMocks
     private UserCleanupService userCleanupService;
@@ -79,6 +83,9 @@ class UserCleanupServiceTest {
 
         verify(userRepository)
                 .delete(user);
+
+        verify(activityEvents)
+                .userRemoved(userId);
     }
 
     @Test
@@ -98,7 +105,8 @@ class UserCleanupServiceTest {
                 articleViewRepository,
                 notificationRepository,
                 commentRepository,
-                commentLikeRepository
+                commentLikeRepository,
+                activityEvents
         );
 
         verify(userRepository, never())
