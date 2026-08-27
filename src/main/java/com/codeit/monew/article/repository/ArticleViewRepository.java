@@ -22,4 +22,5 @@ public interface ArticleViewRepository extends JpaRepository<ArticleView, UUID> 
 
     void deleteAllByArticle_Id(UUID articleId);
 
+    void deleteAllByUser_Id(UUID userId);
 }

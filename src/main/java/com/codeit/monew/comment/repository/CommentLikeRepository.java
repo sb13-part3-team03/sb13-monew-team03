@@ -11,12 +11,18 @@ import java.util.UUID;
 
 public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> {
 
+    long countByComment_Id(UUID commentId);
+
     Boolean existsByComment_IdAndUser_Id(UUID commentId, UUID userId);
 
     @EntityGraph(attributePaths = {"user","comment"})
     Optional<CommentLike> findByComment_IdAndUser_Id(UUID commentId, UUID userId);
 
     void deleteAllByComment_Article_Id(UUID id);
+
+    void deleteAllByUser_Id(UUID userId);
+
+    void deleteAllByComment_User_Id(UUID userId);
 
     @Query(
             """

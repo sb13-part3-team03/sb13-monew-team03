@@ -2,11 +2,18 @@ spring:
   application:
     name: monew
 
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/monew}
     username: ${DB_USERNAME:monew_user}
     password: ${DB_PASSWORD:monew1234}
     driver-class-name: org.postgresql.Driver
+
+  batch:
+    jdbc:
+      initialize-schema: always
 
   jpa:
     hibernate:
@@ -16,8 +23,13 @@ spring:
         format_sql: true
         highlight_sql: true
 
-  profiles:
-    active: dev
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/monew}
+      uuid-representation: standard
+
+server:
+  port: 8080
 
 naver:
   api:
