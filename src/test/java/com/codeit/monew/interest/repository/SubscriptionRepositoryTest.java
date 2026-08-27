@@ -6,6 +6,8 @@ import com.codeit.monew.interest.entity.Interest;
 import com.codeit.monew.interest.entity.Subscription;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -36,6 +39,9 @@ class SubscriptionRepositoryTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Nested
     @DisplayName("관심사 구독자 수 조회")
@@ -370,6 +376,90 @@ class SubscriptionRepositoryTest {
             assertThat(subscriptions).hasSize(1);
             assertThat(subscriptions.get(0).getUser().getId())
                     .isEqualTo(user2.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자 구독 목록 조회")
+    class FindAllByUserIdOrderByCreatedAtDescIdDesc {
+
+        @Test
+        @DisplayName("사용자의 구독 목록을 최신순으로 관심사와 키워드까지 함께 조회한다")
+        void success() {
+            // given
+            User user = userRepository.saveAndFlush(
+                    new User(
+                            "user@test.com",
+                            "사용자",
+                            "password"
+                    )
+            );
+
+            Interest interest1 = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+
+            Interest interest2 = new Interest(
+                    "경제",
+                    List.of("주식", "금리")
+            );
+
+            interestRepository.saveAllAndFlush(
+                    List.of(interest1, interest2)
+            );
+
+            Subscription subscription1 =
+                    new Subscription(user, interest1);
+            Subscription subscription2 =
+                    new Subscription(user, interest2);
+
+            ReflectionTestUtils.setField(
+                    subscription1,
+                    "createdAt",
+                    Instant.parse("2026-08-26T10:00:00Z")
+            );
+            ReflectionTestUtils.setField(
+                    subscription2,
+                    "createdAt",
+                    Instant.parse("2026-08-27T10:00:00Z")
+            );
+
+            subscriptionRepository.saveAllAndFlush(
+                    List.of(subscription1, subscription2)
+            );
+
+            entityManager.clear();
+
+            // when
+            List<Subscription> result =
+                    subscriptionRepository
+                            .findAllByUserIdOrderByCreatedAtDescIdDesc(
+                                    user.getId()
+                            );
+
+            // then
+            assertThat(result)
+                    .extracting(Subscription::getId)
+                    .containsExactly(
+                            subscription2.getId(),
+                            subscription1.getId()
+                    );
+
+            assertThat(result)
+                    .allSatisfy(subscription -> {
+                        assertThat(
+                                Hibernate.isInitialized(
+                                        subscription.getInterest()
+                                )
+                        ).isTrue();
+
+                        assertThat(
+                                Hibernate.isInitialized(
+                                        subscription.getInterest().getKeywords()
+                                )
+                        ).isTrue();
+                    });
         }
     }
 }
