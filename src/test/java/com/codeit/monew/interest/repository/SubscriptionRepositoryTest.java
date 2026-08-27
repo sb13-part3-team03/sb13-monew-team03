@@ -18,8 +18,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -384,7 +386,7 @@ class SubscriptionRepositoryTest {
     class FindAllByUserIdOrderByCreatedAtDescIdDesc {
 
         @Test
-        @DisplayName("사용자의 구독 목록을 최신순으로 관심사와 키워드까지 함께 조회한다")
+        @DisplayName("사용자의 구독 목록을 생성일과 ID 기준 내림차순으로 조회한다")
         void success() {
             // given
             User user = userRepository.saveAndFlush(
@@ -399,36 +401,52 @@ class SubscriptionRepositoryTest {
                     "스포츠",
                     List.of("축구", "야구")
             );
-
             Interest interest2 = new Interest(
                     "경제",
                     List.of("주식", "금리")
             );
+            Interest interest3 = new Interest(
+                    "게임",
+                    List.of("RPG", "FPS")
+            );
 
             interestRepository.saveAllAndFlush(
-                    List.of(interest1, interest2)
+                    List.of(interest1, interest2, interest3)
             );
 
             Subscription subscription1 =
                     new Subscription(user, interest1);
             Subscription subscription2 =
                     new Subscription(user, interest2);
+            Subscription subscription3 =
+                    new Subscription(user, interest3);
+
+            subscriptionRepository.saveAllAndFlush(
+                    List.of(subscription1, subscription2, subscription3)
+            );
+
+            Instant older = Instant.parse("2026-08-26T10:00:00Z");
+            Instant newer = Instant.parse("2026-08-27T10:00:00Z");
 
             ReflectionTestUtils.setField(
                     subscription1,
                     "createdAt",
-                    Instant.parse("2026-08-26T10:00:00Z")
+                    older
             );
+
             ReflectionTestUtils.setField(
                     subscription2,
                     "createdAt",
-                    Instant.parse("2026-08-27T10:00:00Z")
+                    newer
             );
 
-            subscriptionRepository.saveAllAndFlush(
-                    List.of(subscription1, subscription2)
+            ReflectionTestUtils.setField(
+                    subscription3,
+                    "createdAt",
+                    newer
             );
 
+            subscriptionRepository.flush();
             entityManager.clear();
 
             // when
@@ -439,10 +457,23 @@ class SubscriptionRepositoryTest {
                             );
 
             // then
+            assertThat(result).hasSize(3);
+
+            List<UUID> sameCreatedAtIds = List.of(
+                            subscription2.getId(),
+                            subscription3.getId()
+                    ).stream()
+                    .sorted(
+                            Comparator.comparing(UUID::toString)
+                                    .reversed()
+                    )
+                    .toList();
+
             assertThat(result)
                     .extracting(Subscription::getId)
                     .containsExactly(
-                            subscription2.getId(),
+                            sameCreatedAtIds.get(0),
+                            sameCreatedAtIds.get(1),
                             subscription1.getId()
                     );
 
