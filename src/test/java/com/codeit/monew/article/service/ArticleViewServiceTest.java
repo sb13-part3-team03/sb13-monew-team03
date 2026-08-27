@@ -16,6 +16,7 @@ import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,10 @@ public class ArticleViewServiceTest {
 
     @Mock
     private ArticleViewSaveService articleViewSaveService;
+
+    // ArticleViewService에서 조회 이벤트를 발행하므로 테스트에서도 mock 객체를 주입
+    @Mock
+    private UserActivityEventPublisher activityEvents;
 
     @InjectMocks
     private ArticleViewService articleViewService;
@@ -166,6 +171,10 @@ public class ArticleViewServiceTest {
         then(articleViewSaveService)
                 .should()
                 .save(article, user);
+
+        then(activityEvents)
+                .should()
+                .articleViewed(user, expected);
     }
 
     @Test
@@ -213,6 +222,10 @@ public class ArticleViewServiceTest {
         then(articleViewSaveService)
                 .should(never())
                 .save(any(Article.class), any(User.class));
+
+        then(activityEvents)
+                .should()
+                .articleViewed(user, expected);
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.codeit.monew.notification.condition;
 
+import com.codeit.monew.global.exception.ErrorCode;
+import com.codeit.monew.global.exception.MonewException;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -14,7 +16,7 @@ public record NotificationSearchCondition(
     boolean onlyCursorProvided = cursor != null && after == null;
     boolean onlyAfterProvided = cursor == null && after != null;
     if (onlyCursorProvided || onlyAfterProvided) {
-      throw new IllegalArgumentException("cursor와 after는 함께 전달해야 합니다.");
+      throw new MonewException(ErrorCode.INVALID_INPUT_VALUE);
     }
   }
 }

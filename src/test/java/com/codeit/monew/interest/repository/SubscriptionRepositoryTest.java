@@ -6,6 +6,8 @@ import com.codeit.monew.interest.entity.Interest;
 import com.codeit.monew.interest.entity.Subscription;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,10 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,6 +41,9 @@ class SubscriptionRepositoryTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Nested
     @DisplayName("관심사 구독자 수 조회")
@@ -370,6 +378,119 @@ class SubscriptionRepositoryTest {
             assertThat(subscriptions).hasSize(1);
             assertThat(subscriptions.get(0).getUser().getId())
                     .isEqualTo(user2.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자 구독 목록 조회")
+    class FindAllByUserIdOrderByCreatedAtDescIdDesc {
+
+        @Test
+        @DisplayName("사용자의 구독 목록을 생성일과 ID 기준 내림차순으로 조회한다")
+        void success() {
+            // given
+            User user = userRepository.saveAndFlush(
+                    new User(
+                            "user@test.com",
+                            "사용자",
+                            "password"
+                    )
+            );
+
+            Interest interest1 = new Interest(
+                    "스포츠",
+                    List.of("축구", "야구")
+            );
+            Interest interest2 = new Interest(
+                    "경제",
+                    List.of("주식", "금리")
+            );
+            Interest interest3 = new Interest(
+                    "게임",
+                    List.of("RPG", "FPS")
+            );
+
+            interestRepository.saveAllAndFlush(
+                    List.of(interest1, interest2, interest3)
+            );
+
+            Subscription subscription1 =
+                    new Subscription(user, interest1);
+            Subscription subscription2 =
+                    new Subscription(user, interest2);
+            Subscription subscription3 =
+                    new Subscription(user, interest3);
+
+            subscriptionRepository.saveAllAndFlush(
+                    List.of(subscription1, subscription2, subscription3)
+            );
+
+            Instant older = Instant.parse("2026-08-26T10:00:00Z");
+            Instant newer = Instant.parse("2026-08-27T10:00:00Z");
+
+            ReflectionTestUtils.setField(
+                    subscription1,
+                    "createdAt",
+                    older
+            );
+
+            ReflectionTestUtils.setField(
+                    subscription2,
+                    "createdAt",
+                    newer
+            );
+
+            ReflectionTestUtils.setField(
+                    subscription3,
+                    "createdAt",
+                    newer
+            );
+
+            subscriptionRepository.flush();
+            entityManager.clear();
+
+            // when
+            List<Subscription> result =
+                    subscriptionRepository
+                            .findAllByUserIdOrderByCreatedAtDescIdDesc(
+                                    user.getId()
+                            );
+
+            // then
+            assertThat(result).hasSize(3);
+
+            List<UUID> sameCreatedAtIds = List.of(
+                            subscription2.getId(),
+                            subscription3.getId()
+                    ).stream()
+                    .sorted(
+                            Comparator.comparing(UUID::toString)
+                                    .reversed()
+                    )
+                    .toList();
+
+            assertThat(result)
+                    .extracting(Subscription::getId)
+                    .containsExactly(
+                            sameCreatedAtIds.get(0),
+                            sameCreatedAtIds.get(1),
+                            subscription1.getId()
+                    );
+
+            assertThat(result)
+                    .allSatisfy(subscription -> {
+                        assertThat(
+                                Hibernate.isInitialized(
+                                        subscription.getInterest()
+                                )
+                        ).isTrue();
+
+                        assertThat(
+                                Hibernate.isInitialized(
+                                        subscription.getInterest().getKeywords()
+                                )
+                        ).isTrue();
+                    });
         }
     }
 }

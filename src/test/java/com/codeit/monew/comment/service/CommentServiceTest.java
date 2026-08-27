@@ -15,6 +15,7 @@ import com.codeit.monew.comment.repository.CommentLikeRepository;
 import com.codeit.monew.comment.repository.CommentRepository;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,9 @@ public class CommentServiceTest {
     ArticleRepository articleRepository;
     @Mock
     UserRepository userRepository;
+    @Mock
+    UserActivityEventPublisher activityEvents;
+
 
     // none use but used in service bean
     @Mock
@@ -99,6 +103,9 @@ public class CommentServiceTest {
                 }
 
         );
+
+        given(commentMapper.toDto(any(CommentDtoCreateCommand.class))).willReturn(mock(CommentDto.class));
+
 
         commentService.registry(new CommentCreateCommand(articleId, userId, content));
 

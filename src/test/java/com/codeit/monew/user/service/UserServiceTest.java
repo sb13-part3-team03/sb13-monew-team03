@@ -7,6 +7,7 @@ import com.codeit.monew.user.dto.request.UserUpdateRequest;
 import com.codeit.monew.user.dto.response.UserResponse;
 import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.repository.UserRepository;
+import com.codeit.monew.useractivity.event.UserActivityEventPublisher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,9 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private UserActivityEventPublisher activityEvents;
 
     @InjectMocks
     private UserService userService;
@@ -85,6 +89,9 @@ class UserServiceTest {
 
         assertThat(savedUser.getPassword())
                 .isNotEqualTo("password1234");
+
+        verify(activityEvents)
+                .profileChanged(savedUser);
     }
 
     @Test
@@ -111,6 +118,9 @@ class UserServiceTest {
 
         verify(userRepository, never())
                 .save(any(User.class));
+
+        verify(activityEvents, never())
+                .profileChanged(any(User.class));
     }
 
     @Test
@@ -142,6 +152,9 @@ class UserServiceTest {
 
         assertThat(user.getNickname())
                 .isEqualTo("새닉네임");
+
+        verify(activityEvents)
+                .profileChanged(user);
     }
 
     @Test
@@ -163,6 +176,9 @@ class UserServiceTest {
         )
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessage("사용자를 찾을 수 없습니다.");
+
+        verify(activityEvents, never())
+                .profileChanged(any(User.class));
     }
 
     @Test
@@ -226,6 +242,9 @@ class UserServiceTest {
         // then
         verify(userRepository)
                 .delete(user);
+
+        verify(activityEvents)
+                .userRemoved(userId);
     }
 
     @Test
@@ -245,5 +264,8 @@ class UserServiceTest {
 
         verify(userRepository, never())
                 .delete(any(User.class));
+
+        verify(activityEvents, never())
+                .userRemoved(any(UUID.class));
     }
 }

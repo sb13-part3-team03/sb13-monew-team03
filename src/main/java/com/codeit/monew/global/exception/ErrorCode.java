@@ -34,6 +34,12 @@ public enum ErrorCode {
             "이메일 또는 비밀번호가 일치하지 않습니다."
     ),
 
+    // user activity
+    USER_ACTIVITY_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "사용자 활동 내역을 찾을 수 없습니다."
+    ),
+
     // notification
     NOTIFICATION_NOT_FOUND(
             HttpStatus.NOT_FOUND,
