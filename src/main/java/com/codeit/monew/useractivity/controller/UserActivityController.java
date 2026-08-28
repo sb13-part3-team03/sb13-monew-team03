@@ -13,11 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/user-activities")
 @RequiredArgsConstructor
-public class UserActivityController {
+public class UserActivityController implements UserActivityControllerDoc {
 
   private final UserActivityService userActivityService;
 
   @GetMapping("/{userId}")
+  @Override
   public ResponseEntity<UserActivityDto> find(@PathVariable UUID userId) {
     return ResponseEntity.ok(userActivityService.find(userId));
   }
