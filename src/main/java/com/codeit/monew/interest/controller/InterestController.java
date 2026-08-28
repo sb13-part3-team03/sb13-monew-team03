@@ -20,7 +20,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/interests")
 @RequiredArgsConstructor
-public class InterestController {
+public class InterestController implements InterestControllerDocs{
 
     private final InterestService interestService;
 
