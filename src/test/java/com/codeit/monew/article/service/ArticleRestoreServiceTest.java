@@ -39,7 +39,6 @@ public class ArticleRestoreServiceTest {
     @InjectMocks
     private ArticleRestoreService articleRestoreService;
 
-
     @Test
     @DisplayName("특정 날짜의 S3 백업에서 삭제된 기사를 복구한다")
     void restore_success() {
@@ -264,7 +263,6 @@ public class ArticleRestoreServiceTest {
                 );
     }
 
-
     @Test
     @DisplayName("백업된 모든 기사가 이미 DB에 존재하면 복구하지 않는다")
     void restore_whenAllArticlesExist() {
@@ -328,7 +326,6 @@ public class ArticleRestoreServiceTest {
                 );
     }
 
-
     @Test
     @DisplayName("백업 데이터가 비어 있으면 아무것도 복구하지 않는다")
     void restore_whenBackupIsEmpty() {
@@ -370,7 +367,6 @@ public class ArticleRestoreServiceTest {
                 );
     }
 
-
     @Test
     @DisplayName("날짜 범위에 해당하는 모든 날짜의 백업을 복구한다")
     void restore_dateRange() {
@@ -404,6 +400,15 @@ public class ArticleRestoreServiceTest {
                 "8월 27일 요약",
                 to.atStartOfDay(zone).toInstant()
         );
+
+        // 테스트에서는 ID를 직접 주입
+        UUID article1Id = UUID.randomUUID();
+        UUID article2Id = UUID.randomUUID();
+        UUID article3Id = UUID.randomUUID();
+
+        ReflectionTestUtils.setField(article1, "id", article1Id);
+        ReflectionTestUtils.setField(article2, "id", article2Id);
+        ReflectionTestUtils.setField(article3, "id", article3Id);
 
         given(s3StorageService.download(
                 eq("article-backup/2026-08-25/articles.json"),
@@ -473,7 +478,6 @@ public class ArticleRestoreServiceTest {
                 );
     }
 
-
     @Test
     @DisplayName("S3StorageException이 발생하면 해당 예외를 그대로 전달한다")
     void restore_whenS3StorageException() {
@@ -507,7 +511,6 @@ public class ArticleRestoreServiceTest {
                         any()
                 );
     }
-
 
     @Test
     @DisplayName("예상하지 못한 예외가 발생하면 ArticleRestoreException으로 변환한다")
