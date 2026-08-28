@@ -2,7 +2,7 @@ package com.codeit.monew.article.service;
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleDto;
-import com.codeit.monew.article.dto.response.ArticleSearchResult;
+import com.codeit.monew.article.dto.response.ArticleSearchResultDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleSource;
@@ -59,14 +59,14 @@ class ArticleQueryServiceTest {
 
         when(article2.getId()).thenReturn(id2);
 
-        ArticleSearchResult result1 =
-                new ArticleSearchResult(article1, 10L, 100L, false);
+        ArticleSearchResultDto result1 =
+                new ArticleSearchResultDto(article1, 10L, 100L, false);
 
-        ArticleSearchResult result2 =
-                new ArticleSearchResult(article2, 8L, 80L, false);
+        ArticleSearchResultDto result2 =
+                new ArticleSearchResultDto(article2, 8L, 80L, false);
 
-        ArticleSearchResult result3 =
-                new ArticleSearchResult(article3, 5L, 50L, false);
+        ArticleSearchResultDto result3 =
+                new ArticleSearchResultDto(article3, 5L, 50L, false);
 
         // limit = 2이므로 3개를 반환 → hasNext = true
         when(articleRepository.searchArticles(command, command.orderBy()))

@@ -1,10 +1,7 @@
 package com.codeit.monew.article.repository;
 
-import static com.codeit.monew.article.entity.QArticle.article;
-
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
-import com.codeit.monew.article.dto.response.ArticleSearchResult;
-
+import com.codeit.monew.article.dto.response.ArticleSearchResultDto;
 import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.entity.QArticleInterest;
 import com.codeit.monew.article.entity.QArticleView;
@@ -25,6 +22,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static com.codeit.monew.article.entity.QArticle.article;
 
 @RequiredArgsConstructor
 public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
@@ -66,11 +65,11 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<ArticleSearchResult> searchArticles(ArticleSearchCommand command, String orderBy) {
+    public List<ArticleSearchResultDto> searchArticles(ArticleSearchCommand command, String orderBy) {
 
         return queryFactory
                 .select(Projections.constructor(
-                        ArticleSearchResult.class,
+                        ArticleSearchResultDto.class,
                         article,
                         commentCountExpression(),
                         viewCountExpression(),

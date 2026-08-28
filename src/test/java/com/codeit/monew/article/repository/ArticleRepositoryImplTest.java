@@ -2,7 +2,7 @@ package com.codeit.monew.article.repository;
 
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
-import com.codeit.monew.article.dto.response.ArticleSearchResult;
+import com.codeit.monew.article.dto.response.ArticleSearchResultDto;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleInterest;
 import com.codeit.monew.article.entity.ArticleSource;
@@ -87,13 +87,13 @@ public class ArticleRepositoryImplTest {
         ArticleSearchCommand command = searchCommand(null, null, "publishDate", "desc", 2, user.getId());
 
         // when
-        List<ArticleSearchResult> results =
+        List<ArticleSearchResultDto> results =
                 articleRepository.searchArticles(command, command.orderBy());
 
         // then
         assertThat(results).hasSize(1);
 
-        ArticleSearchResult result = results.get(0);
+        ArticleSearchResultDto result = results.get(0);
 
         assertThat(result.article().getTitle()).isEqualTo("삼성전자 새로운 기술 발표");
         assertThat(result.commentCount()).isEqualTo(2L);
@@ -147,7 +147,7 @@ public class ArticleRepositoryImplTest {
         // when
         long count = articleRepository.countTotalElements(command);
 
-        List<ArticleSearchResult> results =
+        List<ArticleSearchResultDto> results =
                 articleRepository.searchArticles(command, command.orderBy());
 
         System.out.println("count = " + count);
@@ -279,7 +279,7 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> firstPage =
+        List<ArticleSearchResultDto> firstPage =
                 articleRepository.searchArticles(firstPageCommand, firstPageCommand.orderBy());
 
         ArticleSearchCommand secondPageCommand = searchCommand(
@@ -292,7 +292,7 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> secondPage = articleRepository.searchArticles(secondPageCommand, secondPageCommand.orderBy());
+        List<ArticleSearchResultDto> secondPage = articleRepository.searchArticles(secondPageCommand, secondPageCommand.orderBy());
 
         // then
         assertThat(secondPage).hasSize(1);
@@ -335,14 +335,14 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> firstPage =
+        List<ArticleSearchResultDto> firstPage =
                 articleRepository.searchArticles(firstCommand, "publishDate");
 
         // then
         assertThat(firstPage).hasSize(2); // limit + 1
         assertThat(firstPage.get(0).article().getId()).isEqualTo(article3.getId());
 
-        ArticleSearchResult last = firstPage.get(0);
+        ArticleSearchResultDto last = firstPage.get(0);
 
         ArticleSearchCommand secondCommand = searchCommand(
                 last.article().getPublishDate().toString(),
@@ -354,7 +354,7 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> secondPage =
+        List<ArticleSearchResultDto> secondPage =
                 articleRepository.searchArticles(secondCommand, "publishDate");
 
         // then
@@ -409,18 +409,18 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> results =
+        List<ArticleSearchResultDto> results =
                 articleRepository.searchArticles(command, command.orderBy());
 
         // then
         assertThat(results).hasSize(2);
 
-        ArticleSearchResult article1Result = results.stream()
+        ArticleSearchResultDto article1Result = results.stream()
                 .filter(result -> result.article().getId().equals(article1.getId()))
                 .findFirst()
                 .orElseThrow();
 
-        ArticleSearchResult article2Result = results.stream()
+        ArticleSearchResultDto article2Result = results.stream()
                 .filter(result -> result.article().getId().equals(article2.getId()))
                 .findFirst()
                 .orElseThrow();

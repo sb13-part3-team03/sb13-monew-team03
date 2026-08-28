@@ -2,7 +2,7 @@ package com.codeit.monew.article.service;
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleDto;
-import com.codeit.monew.article.dto.response.ArticleSearchResult;
+import com.codeit.monew.article.dto.response.ArticleSearchResultDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleSource;
@@ -40,16 +40,16 @@ public class ArticleQueryService {
         validateDirection(command.direction());
         validatePagination(command, orderBy);
 
-        List<ArticleSearchResult> results =
+        List<ArticleSearchResultDto> results =
                 articleRepository.searchArticles(command, orderBy);
 
         boolean hasNext = results.size() > command.limit();
 
-        List<ArticleSearchResult> content = hasNext
+        List<ArticleSearchResultDto> content = hasNext
                 ? results.subList(0, command.limit())
                 : results;
 
-        ArticleSearchResult last =
+        ArticleSearchResultDto last =
                 content.isEmpty()
                         ? null
                         : content.get(content.size() - 1);
@@ -99,7 +99,7 @@ public class ArticleQueryService {
     }
 
     private String createNextCursor(
-            ArticleSearchResult result,
+            ArticleSearchResultDto result,
             String orderBy
     ) {
         if ("commentCount".equals(orderBy)) {

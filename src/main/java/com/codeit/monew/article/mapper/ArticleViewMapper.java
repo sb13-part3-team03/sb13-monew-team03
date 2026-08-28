@@ -1,8 +1,7 @@
 package com.codeit.monew.article.mapper;
 
 import com.codeit.monew.article.dto.response.ArticleViewDto;
-import com.codeit.monew.article.dto.response.ArticleViewResult;
-import com.codeit.monew.article.entity.ArticleView;
+import com.codeit.monew.article.dto.response.ArticleViewResultDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -20,6 +19,6 @@ public interface ArticleViewMapper {
     @Mapping(source = "articleView.article.summary", target = "articleSummary")
     @Mapping(source = "commentCount", target = "articleCommentCount")
     @Mapping(source = "viewCount", target = "articleViewCount")
-    ArticleViewDto toDto(ArticleViewResult result);
+    ArticleViewDto toDto(ArticleViewResultDto result);
 
 }
