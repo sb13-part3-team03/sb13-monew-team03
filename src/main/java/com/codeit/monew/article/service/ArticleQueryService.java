@@ -62,6 +62,7 @@ public class ArticleQueryService {
         if (hasNext && last != null) {
             nextCursor = createNextCursor(last, orderBy);
             nextAfter = last.article().getCreatedAt();
+            nextAfterId = last.article().getId();
         }
 
         long totalElements = articleRepository.countTotalElements(command);
