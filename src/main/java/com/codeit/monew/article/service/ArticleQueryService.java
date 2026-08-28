@@ -33,6 +33,7 @@ public class ArticleQueryService {
     private final ArticleViewRepository articleViewRepository;
     private final ArticleMapper articleMapper;
 
+    // 메인페이지 기사 검색 목록 조회
     @Transactional(readOnly = true)
     public CursorPageResponseArticleDto searchArticles(ArticleSearchCommand command) {
         String orderBy = normalizeOrderBy(command.orderBy());
@@ -76,6 +77,7 @@ public class ArticleQueryService {
         );
     }
 
+    // 기사 단건 조회
     @Transactional(readOnly = true)
     public ArticleDto getArticle(
             UUID articleId,
@@ -93,6 +95,7 @@ public class ArticleQueryService {
         return articleMapper.toDto(article, commentCount, viewCount, viewedByMe);
     }
 
+    // 기사 출처 목록 조회
     @Transactional(readOnly = true)
     public List<ArticleSource> getSources() {
         return List.of(ArticleSource.values());
