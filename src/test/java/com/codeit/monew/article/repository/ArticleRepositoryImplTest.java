@@ -2,7 +2,7 @@ package com.codeit.monew.article.repository;
 
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
-import com.codeit.monew.article.dto.response.ArticleSearchResult;
+import com.codeit.monew.article.dto.response.ArticleSearchResultDto;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleInterest;
 import com.codeit.monew.article.entity.ArticleSource;
@@ -20,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -84,16 +85,16 @@ public class ArticleRepositoryImplTest {
         em.flush();
         em.clear();
 
-        ArticleSearchCommand command = searchCommand(null, null, "publishDate", "desc", 2, user.getId());
+        ArticleSearchCommand command = searchCommand(null, null, null, "publishDate", "desc", 2, user.getId());
 
         // when
-        List<ArticleSearchResult> results =
+        List<ArticleSearchResultDto> results =
                 articleRepository.searchArticles(command, command.orderBy());
 
         // then
         assertThat(results).hasSize(1);
 
-        ArticleSearchResult result = results.get(0);
+        ArticleSearchResultDto result = results.get(0);
 
         assertThat(result.article().getTitle()).isEqualTo("삼성전자 새로운 기술 발표");
         assertThat(result.commentCount()).isEqualTo(2L);
@@ -137,6 +138,7 @@ public class ArticleRepositoryImplTest {
         ArticleSearchCommand command = searchCommand(
                 null,
                 null,
+                null,
                 "publishDate",
                 "desc",
                 2,
@@ -147,7 +149,7 @@ public class ArticleRepositoryImplTest {
         // when
         long count = articleRepository.countTotalElements(command);
 
-        List<ArticleSearchResult> results =
+        List<ArticleSearchResultDto> results =
                 articleRepository.searchArticles(command, command.orderBy());
 
         System.out.println("count = " + count);
@@ -213,6 +215,7 @@ public class ArticleRepositoryImplTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -272,6 +275,7 @@ public class ArticleRepositoryImplTest {
         ArticleSearchCommand firstPageCommand = searchCommand(
                 null,
                 null,
+                null,
                 "commentCount",
                 "desc",
                 2,
@@ -279,11 +283,12 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> firstPage =
+        List<ArticleSearchResultDto> firstPage =
                 articleRepository.searchArticles(firstPageCommand, firstPageCommand.orderBy());
 
         ArticleSearchCommand secondPageCommand = searchCommand(
                 "2",
+                article2.getCreatedAt(),
                 article2.getId(),
                 "commentCount",
                 "desc",
@@ -292,7 +297,7 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> secondPage = articleRepository.searchArticles(secondPageCommand, secondPageCommand.orderBy());
+        List<ArticleSearchResultDto> secondPage = articleRepository.searchArticles(secondPageCommand, secondPageCommand.orderBy());
 
         // then
         assertThat(secondPage).hasSize(1);
@@ -328,6 +333,7 @@ public class ArticleRepositoryImplTest {
         ArticleSearchCommand firstCommand = searchCommand(
                 null,
                 null,
+                null,
                 "publishDate",
                 "desc",
                 1,
@@ -335,17 +341,18 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> firstPage =
+        List<ArticleSearchResultDto> firstPage =
                 articleRepository.searchArticles(firstCommand, "publishDate");
 
         // then
         assertThat(firstPage).hasSize(2); // limit + 1
         assertThat(firstPage.get(0).article().getId()).isEqualTo(article3.getId());
 
-        ArticleSearchResult last = firstPage.get(0);
+        ArticleSearchResultDto last = firstPage.get(0);
 
         ArticleSearchCommand secondCommand = searchCommand(
                 last.article().getPublishDate().toString(),
+                last.article().getCreatedAt(),
                 last.article().getId(),
                 null,
                 "desc",
@@ -354,7 +361,7 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> secondPage =
+        List<ArticleSearchResultDto> secondPage =
                 articleRepository.searchArticles(secondCommand, "publishDate");
 
         // then
@@ -402,6 +409,7 @@ public class ArticleRepositoryImplTest {
         ArticleSearchCommand command = searchCommand(
                 null,
                 null,
+                null,
                 "publishDate",
                 "desc",
                 10,
@@ -409,18 +417,18 @@ public class ArticleRepositoryImplTest {
         );
 
         // when
-        List<ArticleSearchResult> results =
+        List<ArticleSearchResultDto> results =
                 articleRepository.searchArticles(command, command.orderBy());
 
         // then
         assertThat(results).hasSize(2);
 
-        ArticleSearchResult article1Result = results.stream()
+        ArticleSearchResultDto article1Result = results.stream()
                 .filter(result -> result.article().getId().equals(article1.getId()))
                 .findFirst()
                 .orElseThrow();
 
-        ArticleSearchResult article2Result = results.stream()
+        ArticleSearchResultDto article2Result = results.stream()
                 .filter(result -> result.article().getId().equals(article2.getId()))
                 .findFirst()
                 .orElseThrow();
@@ -443,7 +451,8 @@ public class ArticleRepositoryImplTest {
     // command 생성 헬퍼
     private ArticleSearchCommand searchCommand(
             String cursor,
-            UUID after,
+            Instant after,
+            UUID afterId,
             String orderBy,
             String direction,
             int limit,
@@ -452,6 +461,7 @@ public class ArticleRepositoryImplTest {
         return searchCommand(
                 cursor,
                 after,
+                afterId,
                 orderBy,
                 direction,
                 limit,
@@ -462,7 +472,8 @@ public class ArticleRepositoryImplTest {
 
     private ArticleSearchCommand searchCommand(
             String cursor,
-            UUID after,
+            Instant after,
+            UUID afterId,
             String orderBy,
             String direction,
             int limit,
@@ -477,6 +488,7 @@ public class ArticleRepositoryImplTest {
                 null,
                 cursor,
                 after,
+                afterId,
                 orderBy,
                 direction,
                 limit,
@@ -562,6 +574,167 @@ public class ArticleRepositoryImplTest {
         assertThat(article.getSummary()).isEqualTo("복구 테스트 요약");
         assertThat(article.getPublishDate()).isEqualTo(publishDate);
         assertThat(article.getDeletedAt()).isEqualTo(deletedAt);
+    }
+
+    @Test
+    @DisplayName("댓글 수와 생성 시간이 같은 경우 id로 다음 페이지를 조회한다")
+    void searchArticlesByCommentCount_sameCreatedAt_usesIdAsCursor() {
+        // given
+        Instant createdAt = Instant.parse("2026-08-20T10:00:00Z");
+
+        Article article1 = createArticle(
+                "https://example.com/article-1",
+                "Article 1",
+                "2026-08-01T10:00:00Z"
+        );
+
+        Article article2 = createArticle(
+                "https://example.com/article-2",
+                "Article 2",
+                "2026-08-02T10:00:00Z"
+        );
+
+        ReflectionTestUtils.setField(article1, "createdAt", createdAt);
+        ReflectionTestUtils.setField(article2, "createdAt", createdAt);
+
+        articleRepository.saveAll(List.of(article1, article2));
+
+        User user = new User(
+                "user@test.com",
+                "user",
+                "password"
+        );
+
+        em.persist(user);
+
+        // 두 기사 모두 댓글 수 2개
+        Comment comment1 = new Comment(article1, user, "댓글 1");
+        Comment comment2 = new Comment(article1, user, "댓글 2");
+        Comment comment3 = new Comment(article2, user, "댓글 3");
+        Comment comment4 = new Comment(article2, user, "댓글 4");
+
+        commentRepository.saveAll(
+                List.of(comment1, comment2, comment3, comment4)
+        );
+
+        em.flush();
+        em.clear();
+
+        ArticleSearchCommand firstPageCommand = searchCommand(
+                null,
+                null,
+                null,
+                "commentCount",
+                "desc",
+                1,
+                user.getId()
+        );
+
+        // when
+        List<ArticleSearchResultDto> firstPage =
+                articleRepository.searchArticles(
+                        firstPageCommand,
+                        firstPageCommand.orderBy()
+                );
+
+        // then
+        assertThat(firstPage).hasSize(2);
+
+        ArticleSearchResultDto cursorArticle = firstPage.get(0);
+
+        ArticleSearchCommand secondPageCommand = searchCommand(
+                cursorArticle.commentCount().toString(),
+                cursorArticle.article().getCreatedAt(),
+                cursorArticle.article().getId(),
+                "commentCount",
+                "desc",
+                1,
+                user.getId()
+        );
+
+        List<ArticleSearchResultDto> secondPage =
+                articleRepository.searchArticles(
+                        secondPageCommand,
+                        secondPageCommand.orderBy()
+                );
+
+        assertThat(secondPage).hasSize(1);
+
+        assertThat(secondPage.get(0).article().getId())
+                .isNotEqualTo(cursorArticle.article().getId());
+    }
+
+    @Test
+    @DisplayName("게시일과 생성 시간이 같은 경우 id로 다음 페이지를 조회한다")
+    void searchArticlesByPublishDate_sameCreatedAt_usesIdAsCursor() {
+        // given
+        Instant createdAt = Instant.parse("2026-08-20T11:00:00Z");
+
+        Article article1 = createArticle(
+                "https://example.com/article-1",
+                "Article 1",
+                "2026-08-20T10:00:00Z"
+        );
+
+        Article article2 = createArticle(
+                "https://example.com/article-2",
+                "Article 2",
+                "2026-08-20T10:00:00Z"
+        );
+
+        // 생성 시간을 동일하게 설정
+        ReflectionTestUtils.setField(article1, "createdAt", createdAt);
+        ReflectionTestUtils.setField(article2, "createdAt", createdAt);
+
+        articleRepository.saveAll(List.of(article1, article2));
+
+        em.flush();
+        em.clear();
+
+        ArticleSearchCommand firstPageCommand = searchCommand(
+                null,
+                null,
+                null,
+                "publishDate",
+                "desc",
+                1,
+                UUID.randomUUID()
+        );
+
+        // when
+        List<ArticleSearchResultDto> firstPage =
+                articleRepository.searchArticles(
+                        firstPageCommand,
+                        firstPageCommand.orderBy()
+                );
+
+        // then
+        assertThat(firstPage).hasSize(2); // limit + 1
+
+        ArticleSearchResultDto cursorArticle = firstPage.get(0);
+
+        ArticleSearchCommand secondPageCommand = searchCommand(
+                cursorArticle.article().getPublishDate().toString(),
+                cursorArticle.article().getCreatedAt(),
+                cursorArticle.article().getId(),
+                "publishDate",
+                "desc",
+                1,
+                UUID.randomUUID()
+        );
+
+        // when
+        List<ArticleSearchResultDto> secondPage =
+                articleRepository.searchArticles(
+                        secondPageCommand,
+                        secondPageCommand.orderBy()
+                );
+
+        // then
+        assertThat(secondPage).hasSize(1);
+
+        assertThat(secondPage.get(0).article().getId())
+                .isNotEqualTo(cursorArticle.article().getId());
     }
 
 }

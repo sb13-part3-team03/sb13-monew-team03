@@ -9,7 +9,10 @@ import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.exception.ArticleRestoreException;
-import com.codeit.monew.article.service.*;
+import com.codeit.monew.article.service.ArticleDeleteService;
+import com.codeit.monew.article.service.ArticleQueryService;
+import com.codeit.monew.article.service.ArticleRestoreService;
+import com.codeit.monew.article.service.ArticleViewService;
 import com.codeit.monew.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +49,7 @@ public class ArticleController implements ArticleControllerDocs {
         return ResponseEntity.ok(response);
     }
 
+    // 기사 단건 조회
     @GetMapping("/{articleId}")
     public ResponseEntity<ArticleDto> getArticle(
             @PathVariable UUID articleId,
@@ -54,11 +58,13 @@ public class ArticleController implements ArticleControllerDocs {
         return ResponseEntity.ok(articleService.getArticle(articleId, userId));
     }
 
+    // 기사 출처 목록 조회
     @GetMapping("/sources")
     public ResponseEntity<List<ArticleSource>> getSources() {
         return ResponseEntity.ok(articleService.getSources());
     }
 
+    // 기사 조회 기록 저장
     @PostMapping("/{articleId}/article-views")
     public ResponseEntity<ArticleViewDto> saveArticleView(
             @PathVariable UUID articleId,
@@ -88,6 +94,7 @@ public class ArticleController implements ArticleControllerDocs {
         return ResponseEntity.noContent().build();
     }
 
+    // 기사 복구
     @GetMapping("/restore")
     public ResponseEntity<List<ArticleRestoreResultDto>> restore(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

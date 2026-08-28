@@ -17,11 +17,11 @@ public record ArticleViewDto(
         String source,
         @Schema(description = "원본 기사 URL")
         String sourceUrl,
-        @Schema(description = "제목")
+        @Schema(description = "기사 제목")
         String articleTitle,
-        @Schema(description = "날짜")
+        @Schema(description = "기사 발행일")
         Instant articlePublishedDate,
-        @Schema(description = "요약")
+        @Schema(description = "기사 요약")
         String articleSummary,
         @Schema(description = "댓글 수")
         Long articleCommentCount,

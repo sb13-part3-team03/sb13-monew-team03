@@ -2,7 +2,7 @@ package com.codeit.monew.article.service;
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
 import com.codeit.monew.article.dto.response.ArticleDto;
-import com.codeit.monew.article.dto.response.ArticleSearchResult;
+import com.codeit.monew.article.dto.response.ArticleSearchResultDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleSource;
@@ -33,6 +33,7 @@ public class ArticleQueryService {
     private final ArticleViewRepository articleViewRepository;
     private final ArticleMapper articleMapper;
 
+    // 메인페이지 기사 검색 목록 조회
     @Transactional(readOnly = true)
     public CursorPageResponseArticleDto searchArticles(ArticleSearchCommand command) {
         String orderBy = normalizeOrderBy(command.orderBy());
@@ -40,26 +41,28 @@ public class ArticleQueryService {
         validateDirection(command.direction());
         validatePagination(command, orderBy);
 
-        List<ArticleSearchResult> results =
+        List<ArticleSearchResultDto> results =
                 articleRepository.searchArticles(command, orderBy);
 
         boolean hasNext = results.size() > command.limit();
 
-        List<ArticleSearchResult> content = hasNext
+        List<ArticleSearchResultDto> content = hasNext
                 ? results.subList(0, command.limit())
                 : results;
 
-        ArticleSearchResult last =
+        ArticleSearchResultDto last =
                 content.isEmpty()
                         ? null
                         : content.get(content.size() - 1);
 
         String nextCursor = null;
-        UUID nextAfter = null;
+        Instant nextAfter = null;
+        UUID nextAfterId = null;
 
         if (hasNext && last != null) {
             nextCursor = createNextCursor(last, orderBy);
-            nextAfter = last.article().getId();
+            nextAfter = last.article().getCreatedAt();
+            nextAfterId = last.article().getId();
         }
 
         long totalElements = articleRepository.countTotalElements(command);
@@ -70,12 +73,14 @@ public class ArticleQueryService {
                 articleDtos,
                 nextCursor,
                 nextAfter,
+                nextAfterId,
                 command.limit(),
                 totalElements,
                 hasNext
         );
     }
 
+    // 기사 단건 조회
     @Transactional(readOnly = true)
     public ArticleDto getArticle(
             UUID articleId,
@@ -93,13 +98,14 @@ public class ArticleQueryService {
         return articleMapper.toDto(article, commentCount, viewCount, viewedByMe);
     }
 
+    // 기사 출처 목록 조회
     @Transactional(readOnly = true)
     public List<ArticleSource> getSources() {
         return List.of(ArticleSource.values());
     }
 
     private String createNextCursor(
-            ArticleSearchResult result,
+            ArticleSearchResultDto result,
             String orderBy
     ) {
         if ("commentCount".equals(orderBy)) {

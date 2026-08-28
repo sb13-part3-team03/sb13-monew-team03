@@ -2,7 +2,7 @@ package com.codeit.monew.article.service;
 
 import com.codeit.monew.article.dto.command.ArticleViewCreateCommand;
 import com.codeit.monew.article.dto.response.ArticleViewDto;
-import com.codeit.monew.article.dto.response.ArticleViewResult;
+import com.codeit.monew.article.dto.response.ArticleViewResultDto;
 
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleSource;
@@ -109,14 +109,14 @@ public class ArticleViewServiceTest {
             Long expectedCommentCount,
             Long expectedViewCount
     ) {
-        ArgumentCaptor<ArticleViewResult> captor =
-                ArgumentCaptor.forClass(ArticleViewResult.class);
+        ArgumentCaptor<ArticleViewResultDto> captor =
+                ArgumentCaptor.forClass(ArticleViewResultDto.class);
 
         then(articleViewMapper)
                 .should()
                 .toDto(captor.capture());
 
-        ArticleViewResult actual = captor.getValue();
+        ArticleViewResultDto actual = captor.getValue();
 
         assertThat(actual.articleView())
                 .isEqualTo(expectedArticleView);
@@ -154,7 +154,7 @@ public class ArticleViewServiceTest {
 
         ArticleViewDto expected = createExpectedDto();
 
-        given(articleViewMapper.toDto(any(ArticleViewResult.class)))
+        given(articleViewMapper.toDto(any(ArticleViewResultDto.class)))
                 .willReturn(expected);
 
         ArticleViewCreateCommand command =
@@ -202,7 +202,7 @@ public class ArticleViewServiceTest {
 
         ArticleViewDto expected = createExpectedDto();
 
-        given(articleViewMapper.toDto(any(ArticleViewResult.class)))
+        given(articleViewMapper.toDto(any(ArticleViewResultDto.class)))
                 .willReturn(expected);
 
         ArticleViewCreateCommand command =

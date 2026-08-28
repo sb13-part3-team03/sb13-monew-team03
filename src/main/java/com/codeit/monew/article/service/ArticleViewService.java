@@ -2,7 +2,7 @@ package com.codeit.monew.article.service;
 
 import com.codeit.monew.article.dto.command.ArticleViewCreateCommand;
 import com.codeit.monew.article.dto.response.ArticleViewDto;
-import com.codeit.monew.article.dto.response.ArticleViewResult;
+import com.codeit.monew.article.dto.response.ArticleViewResultDto;
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleView;
 import com.codeit.monew.article.exception.ArticleNotFoundException;
@@ -53,8 +53,8 @@ public class ArticleViewService {
         Long viewCount =
                 articleViewRepository.countByArticleId(articleId);
 
-        ArticleViewResult result =
-                new ArticleViewResult(articleView, commentCount, viewCount);
+        ArticleViewResultDto result =
+                new ArticleViewResultDto(articleView, commentCount, viewCount);
 
         ArticleViewDto dto = articleViewMapper.toDto(result);
         activityEvents.articleViewed(user, dto);

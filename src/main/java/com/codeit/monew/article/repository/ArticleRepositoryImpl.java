@@ -1,10 +1,7 @@
 package com.codeit.monew.article.repository;
 
-import static com.codeit.monew.article.entity.QArticle.article;
-
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
-import com.codeit.monew.article.dto.response.ArticleSearchResult;
-
+import com.codeit.monew.article.dto.response.ArticleSearchResultDto;
 import com.codeit.monew.article.entity.ArticleSource;
 import com.codeit.monew.article.entity.QArticleInterest;
 import com.codeit.monew.article.entity.QArticleView;
@@ -25,6 +22,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static com.codeit.monew.article.entity.QArticle.article;
 
 @RequiredArgsConstructor
 public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
@@ -66,11 +65,11 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<ArticleSearchResult> searchArticles(ArticleSearchCommand command, String orderBy) {
+    public List<ArticleSearchResultDto> searchArticles(ArticleSearchCommand command, String orderBy) {
 
         return queryFactory
                 .select(Projections.constructor(
-                        ArticleSearchResult.class,
+                        ArticleSearchResultDto.class,
                         article,
                         commentCountExpression(),
                         viewCountExpression(),
@@ -88,7 +87,8 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                                 orderBy,
                                 command.direction(),
                                 command.cursor(),
-                                command.after()
+                                command.after(),
+                                command.afterId()
                         ),
                         cursorCondition(command, orderBy)
                 )
@@ -200,7 +200,8 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             String orderBy
     ) {
         if (!StringUtils.hasText(command.cursor())
-                || command.after() == null) {
+                || command.after() == null
+                || command.afterId() == null) {
             return null;
         }
 
@@ -226,14 +227,24 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             return countExpression.lt(cursorCount)
                     .or(
                             countExpression.eq(cursorCount)
-                                    .and(article.id.lt(command.after()))
+                                    .and(article.createdAt.lt(command.after()))
+                    )
+                    .or(
+                            countExpression.eq(cursorCount)
+                                    .and(article.createdAt.eq(command.after()))
+                                    .and(article.id.lt(command.afterId()))
                     );
         }
 
         return countExpression.gt(cursorCount)
                 .or(
                         countExpression.eq(cursorCount)
-                                .and(article.id.gt(command.after()))
+                                .and(article.createdAt.gt(command.after()))
+                )
+                .or(
+                        countExpression.eq(cursorCount)
+                                .and(article.createdAt.eq(command.after()))
+                                .and(article.id.gt(command.afterId()))
                 );
     }
 
@@ -242,29 +253,42 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             String orderBy,
             String sortDirection,
             String nextCursor,
-            UUID nextAfter
+            Instant nextAfter,
+            UUID nextAfterId
     ) {
         if (!"publishDate".equals(orderBy)
                 || !StringUtils.hasText(nextCursor)
-                || nextAfter == null) {
+                || nextAfter == null
+                || nextAfterId == null) {
             return null;
         }
 
         Instant cursorDate = Instant.parse(nextCursor);
+
         boolean isDesc = "desc".equalsIgnoreCase(sortDirection);
 
         if (isDesc) {
             return article.publishDate.lt(cursorDate)
                     .or(
                             article.publishDate.eq(cursorDate)
-                                    .and(article.id.lt(nextAfter))
+                                    .and(article.createdAt.lt(nextAfter))
+                    )
+                    .or(
+                            article.publishDate.eq(cursorDate)
+                                    .and(article.createdAt.eq(nextAfter))
+                                    .and(article.id.lt(nextAfterId))
                     );
         }
 
         return article.publishDate.gt(cursorDate)
                 .or(
                         article.publishDate.eq(cursorDate)
-                                .and(article.id.gt(nextAfter))
+                                .and(article.createdAt.gt(nextAfter))
+                )
+                .or(
+                        article.publishDate.eq(cursorDate)
+                                .and(article.createdAt.eq(nextAfter))
+                                .and(article.id.gt(nextAfterId))
                 );
     }
 
@@ -298,7 +322,10 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 );
         }
 
-        // 동일한 정렬값일 경우 UUID로 순서 결정
+        // 동일한 정렬값일 경우 createdAt으로 순서 결정
+        orderSpecifiers.add(new OrderSpecifier<>(direction, article.createdAt));
+
+        // createdAt까지 동일한 경우 id로 순서 결정
         orderSpecifiers.add(new OrderSpecifier<>(direction, article.id));
 
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
