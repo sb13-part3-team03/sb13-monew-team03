@@ -69,9 +69,9 @@ class ArticleQueryServiceTest {
         Article article2 = mock(Article.class);
         Article article3 = mock(Article.class);
 
-        UUID id2 = UUID.randomUUID();
+        Instant createdAt2 = Instant.parse("2026-08-27T10:00:00Z");
 
-        when(article2.getId()).thenReturn(id2);
+        when(article2.getCreatedAt()).thenReturn(createdAt2);
 
         ArticleSearchResultDto result1 =
                 new ArticleSearchResultDto(article1, 10L, 100L, false);
@@ -101,7 +101,8 @@ class ArticleQueryServiceTest {
 
         assertThat(response.nextCursor()).isEqualTo("8");
 
-        assertThat(response.nextAfter()).isEqualTo(id2);
+        assertThat(response.nextAfter()).isEqualTo(createdAt2);
+
 
         assertThat(response.size()).isEqualTo(2);
 
