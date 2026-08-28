@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/notifications")
-public class NotificationController {
+public class NotificationController implements NotificationControllerDoc {
 
   private static final String REQUEST_USER_ID_HEADER = "Monew-Request-User-ID";
 
@@ -28,6 +28,7 @@ public class NotificationController {
 
   // *프론트에서 20개씩 호출함
   @GetMapping
+  @Override
   public ResponseEntity<CursorPageResponseNotificationDto> findAllNotConfirmed(
       @Valid @ModelAttribute NotificationSearchRequest request,
       @RequestHeader(REQUEST_USER_ID_HEADER) UUID userId
@@ -37,6 +38,7 @@ public class NotificationController {
   }
 
   @PatchMapping
+  @Override
   public ResponseEntity<Void> confirmAll(
       @RequestHeader(REQUEST_USER_ID_HEADER) UUID userId
   ) {
@@ -45,6 +47,7 @@ public class NotificationController {
   }
 
   @PatchMapping("/{notificationId}")
+  @Override
   public ResponseEntity<Void> confirm(
       @PathVariable UUID notificationId,
       @RequestHeader(REQUEST_USER_ID_HEADER) UUID userId
