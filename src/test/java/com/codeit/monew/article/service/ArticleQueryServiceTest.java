@@ -59,6 +59,7 @@ class ArticleQueryServiceTest {
                 null,
                 null,
                 null,
+                null,
                 "commentCount",
                 "desc",
                 2,

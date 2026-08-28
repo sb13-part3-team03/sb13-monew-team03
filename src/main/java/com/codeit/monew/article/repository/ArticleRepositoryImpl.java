@@ -87,7 +87,8 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                                 orderBy,
                                 command.direction(),
                                 command.cursor(),
-                                command.after()
+                                command.after(),
+                                command.afterId()
                         ),
                         cursorCondition(command, orderBy)
                 )
@@ -199,7 +200,8 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             String orderBy
     ) {
         if (!StringUtils.hasText(command.cursor())
-                || command.after() == null) {
+                || command.after() == null
+                || command.afterId() == null) {
             return null;
         }
 
@@ -226,6 +228,11 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                     .or(
                             countExpression.eq(cursorCount)
                                     .and(article.createdAt.lt(command.after()))
+                    )
+                    .or(
+                            countExpression.eq(cursorCount)
+                                    .and(article.createdAt.eq(command.after()))
+                                    .and(article.id.lt(command.afterId()))
                     );
         }
 
@@ -233,6 +240,11 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .or(
                         countExpression.eq(cursorCount)
                                 .and(article.createdAt.gt(command.after()))
+                )
+                .or(
+                        countExpression.eq(cursorCount)
+                                .and(article.createdAt.eq(command.after()))
+                                .and(article.id.gt(command.afterId()))
                 );
     }
 
@@ -241,15 +253,18 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             String orderBy,
             String sortDirection,
             String nextCursor,
-            Instant nextAfter
+            Instant nextAfter,
+            UUID nextAfterId
     ) {
         if (!"publishDate".equals(orderBy)
                 || !StringUtils.hasText(nextCursor)
-                || nextAfter == null) {
+                || nextAfter == null
+                || nextAfterId == null) {
             return null;
         }
 
         Instant cursorDate = Instant.parse(nextCursor);
+
         boolean isDesc = "desc".equalsIgnoreCase(sortDirection);
 
         if (isDesc) {
@@ -257,6 +272,11 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                     .or(
                             article.publishDate.eq(cursorDate)
                                     .and(article.createdAt.lt(nextAfter))
+                    )
+                    .or(
+                            article.publishDate.eq(cursorDate)
+                                    .and(article.createdAt.eq(nextAfter))
+                                    .and(article.id.lt(nextAfterId))
                     );
         }
 
@@ -264,6 +284,11 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .or(
                         article.publishDate.eq(cursorDate)
                                 .and(article.createdAt.gt(nextAfter))
+                )
+                .or(
+                        article.publishDate.eq(cursorDate)
+                                .and(article.createdAt.eq(nextAfter))
+                                .and(article.id.gt(nextAfterId))
                 );
     }
 
@@ -299,6 +324,9 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
 
         // 동일한 정렬값일 경우 createdAt으로 순서 결정
         orderSpecifiers.add(new OrderSpecifier<>(direction, article.createdAt));
+
+        // createdAt까지 동일한 경우 id로 순서 결정
+        orderSpecifiers.add(new OrderSpecifier<>(direction, article.id));
 
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
     }

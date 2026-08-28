@@ -33,6 +33,9 @@ public record ArticleSearchRequest (
         @Schema(description = "보조 커서(createdAt) 값")
         Instant after,
 
+        @Schema(description = "보조 커서(articleId) 값")
+        UUID afterId,
+
         @Schema(description = "정렬 속성 이름", allowableValues = {"publishDate", "commentCount", "viewCount"})
         String orderBy,
 

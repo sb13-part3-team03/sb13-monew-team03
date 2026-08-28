@@ -57,6 +57,7 @@ public class ArticleQueryService {
 
         String nextCursor = null;
         Instant nextAfter = null;
+        UUID nextAfterId = null;
 
         if (hasNext && last != null) {
             nextCursor = createNextCursor(last, orderBy);
@@ -71,6 +72,7 @@ public class ArticleQueryService {
                 articleDtos,
                 nextCursor,
                 nextAfter,
+                nextAfterId,
                 command.limit(),
                 totalElements,
                 hasNext
