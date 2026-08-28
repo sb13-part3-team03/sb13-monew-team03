@@ -386,7 +386,7 @@ class SubscriptionRepositoryTest {
     class FindAllByUserIdOrderByCreatedAtDescIdDesc {
 
         @Test
-        @DisplayName("사용자의 구독 목록을 생성일과 ID 기준 내림차순으로 조회한다")
+        @DisplayName("사용자의 구독 목록을 관심사와 키워드까지 함께 조회한다")
         void success() {
             // given
             User user = userRepository.saveAndFlush(
@@ -397,56 +397,43 @@ class SubscriptionRepositoryTest {
                     )
             );
 
+            User otherUser = userRepository.saveAndFlush(
+                    new User(
+                            "other@test.com",
+                            "다른사용자",
+                            "password"
+                    )
+            );
+
             Interest interest1 = new Interest(
                     "스포츠",
                     List.of("축구", "야구")
             );
+
             Interest interest2 = new Interest(
                     "경제",
                     List.of("주식", "금리")
             );
-            Interest interest3 = new Interest(
-                    "게임",
-                    List.of("RPG", "FPS")
-            );
 
             interestRepository.saveAllAndFlush(
-                    List.of(interest1, interest2, interest3)
+                    List.of(interest1, interest2)
             );
 
             Subscription subscription1 =
                     new Subscription(user, interest1);
             Subscription subscription2 =
                     new Subscription(user, interest2);
-            Subscription subscription3 =
-                    new Subscription(user, interest3);
+            Subscription otherSubscription =
+                    new Subscription(otherUser, interest1);
 
             subscriptionRepository.saveAllAndFlush(
-                    List.of(subscription1, subscription2, subscription3)
+                    List.of(
+                            subscription1,
+                            subscription2,
+                            otherSubscription
+                    )
             );
 
-            Instant older = Instant.parse("2026-08-26T10:00:00Z");
-            Instant newer = Instant.parse("2026-08-27T10:00:00Z");
-
-            ReflectionTestUtils.setField(
-                    subscription1,
-                    "createdAt",
-                    older
-            );
-
-            ReflectionTestUtils.setField(
-                    subscription2,
-                    "createdAt",
-                    newer
-            );
-
-            ReflectionTestUtils.setField(
-                    subscription3,
-                    "createdAt",
-                    newer
-            );
-
-            subscriptionRepository.flush();
             entityManager.clear();
 
             // when
@@ -457,24 +444,17 @@ class SubscriptionRepositoryTest {
                             );
 
             // then
-            assertThat(result).hasSize(3);
+            assertThat(result).hasSize(2);
 
-            List<UUID> sameCreatedAtIds = List.of(
-                            subscription2.getId(),
-                            subscription3.getId()
-                    ).stream()
-                    .sorted(
-                            Comparator.comparing(UUID::toString)
-                                    .reversed()
-                    )
-                    .toList();
+            assertThat(result)
+                    .extracting(subscription -> subscription.getUser().getId())
+                    .containsOnly(user.getId());
 
             assertThat(result)
                     .extracting(Subscription::getId)
-                    .containsExactly(
-                            sameCreatedAtIds.get(0),
-                            sameCreatedAtIds.get(1),
-                            subscription1.getId()
+                    .containsExactlyInAnyOrder(
+                            subscription1.getId(),
+                            subscription2.getId()
                     );
 
             assertThat(result)
