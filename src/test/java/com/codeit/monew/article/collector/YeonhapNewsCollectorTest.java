@@ -10,14 +10,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class YonhapNewsCollectorTest
+class YeonhapNewsCollectorTest
         extends RssNewsCollectorTestSupport {
 
-    private YonhapNewsCollector collector;
+    private YeonhapNewsCollector collector;
 
     @BeforeEach
     void setUp() {
-        collector = new YonhapNewsCollector(feedUrl);
+        collector = new YeonhapNewsCollector(feedUrl);
     }
 
     @Test
