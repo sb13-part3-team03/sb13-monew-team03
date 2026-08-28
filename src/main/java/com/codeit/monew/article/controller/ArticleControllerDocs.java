@@ -134,7 +134,7 @@ public interface ArticleControllerDocs {
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "댓글 정보 없음",
+                    description = "뉴스 기사 정보 없음",
                     content = @Content(
                             schema = @Schema(implementation = ArticleViewDto.class)
                     )

@@ -15,7 +15,7 @@ public record ArticleSearchRequest (
         @Schema(description = "검색어(제목, 요약)", example = "스포츠")
         String keyword,
 
-        @Schema(description = "관심사 ID", example = "스포츠")
+        @Schema(description = "관심사 ID")
         UUID interestId,
 
         @Schema(description = "출처(포함)", allowableValues = {"NAVER", "HANKYUNG", "CHOSUN", "YEONHAP"})
