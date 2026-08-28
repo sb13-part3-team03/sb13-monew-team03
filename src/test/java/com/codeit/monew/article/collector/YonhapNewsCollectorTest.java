@@ -32,7 +32,7 @@ class YonhapNewsCollectorTest
         CollectedArticleDTO article = articles.get(0);
 
         assertThat(article.source())
-                .isEqualTo(ArticleSource.YONHAP);
+                .isEqualTo(ArticleSource.YEONHAP);
 
         assertThat(article.sourceUrl())
                 .isEqualTo("https://example.com/ai");

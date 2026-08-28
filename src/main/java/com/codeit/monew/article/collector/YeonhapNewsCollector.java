@@ -4,18 +4,18 @@ import com.codeit.monew.article.entity.ArticleSource;
 import org.springframework.stereotype.Component;
 
 @Component
-public class YonhapNewsCollector extends RssNewsCollector {
+public class YeonhapNewsCollector extends RssNewsCollector {
 
-    public YonhapNewsCollector() {
+    public YeonhapNewsCollector() {
         super("https://www.yna.co.kr/rss/news.xml");
     }
 
-    YonhapNewsCollector(String feedUrl) {
+    YeonhapNewsCollector(String feedUrl) {
         super(feedUrl);
     }
 
     @Override
     protected ArticleSource getSource() {
-        return ArticleSource.YONHAP;
+        return ArticleSource.YEONHAP;
     }
 }
