@@ -2,8 +2,8 @@ package com.codeit.monew.article.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 @Schema(description = "커서 기반 페이지 응답")
 public record CursorPageResponseArticleDto (
@@ -15,7 +15,7 @@ public record CursorPageResponseArticleDto (
                 description = "다음 보조 커서(마지막 요소의 생성 시간)",
                 example = "2025-04-06T15:04:05Z"
         )
-        UUID nextAfter,
+        Instant nextAfter,
         @Schema(description = "페이지 크기", example = "10")
         Integer size,
         @Schema(description = "총 요소 수", example = "100")

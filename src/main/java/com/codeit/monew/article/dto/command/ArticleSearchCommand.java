@@ -16,7 +16,7 @@ public record ArticleSearchCommand(
         Instant publishDateFrom,
         Instant publishDateTo,
         String cursor,
-        UUID after,
+        Instant after,
         String orderBy,
         String direction,
         Integer limit,

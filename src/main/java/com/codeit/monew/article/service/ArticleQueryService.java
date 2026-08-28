@@ -56,11 +56,11 @@ public class ArticleQueryService {
                         : content.get(content.size() - 1);
 
         String nextCursor = null;
-        UUID nextAfter = null;
+        Instant nextAfter = null;
 
         if (hasNext && last != null) {
             nextCursor = createNextCursor(last, orderBy);
-            nextAfter = last.article().getId();
+            nextAfter = last.article().getCreatedAt();
         }
 
         long totalElements = articleRepository.countTotalElements(command);

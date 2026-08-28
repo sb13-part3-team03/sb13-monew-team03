@@ -225,14 +225,14 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             return countExpression.lt(cursorCount)
                     .or(
                             countExpression.eq(cursorCount)
-                                    .and(article.id.lt(command.after()))
+                                    .and(article.createdAt.lt(command.after()))
                     );
         }
 
         return countExpression.gt(cursorCount)
                 .or(
                         countExpression.eq(cursorCount)
-                                .and(article.id.gt(command.after()))
+                                .and(article.createdAt.gt(command.after()))
                 );
     }
 
@@ -241,7 +241,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             String orderBy,
             String sortDirection,
             String nextCursor,
-            UUID nextAfter
+            Instant nextAfter
     ) {
         if (!"publishDate".equals(orderBy)
                 || !StringUtils.hasText(nextCursor)
@@ -256,14 +256,14 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
             return article.publishDate.lt(cursorDate)
                     .or(
                             article.publishDate.eq(cursorDate)
-                                    .and(article.id.lt(nextAfter))
+                                    .and(article.createdAt.lt(nextAfter))
                     );
         }
 
         return article.publishDate.gt(cursorDate)
                 .or(
                         article.publishDate.eq(cursorDate)
-                                .and(article.id.gt(nextAfter))
+                                .and(article.createdAt.gt(nextAfter))
                 );
     }
 
@@ -297,8 +297,8 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 );
         }
 
-        // 동일한 정렬값일 경우 UUID로 순서 결정
-        orderSpecifiers.add(new OrderSpecifier<>(direction, article.id));
+        // 동일한 정렬값일 경우 createdAt으로 순서 결정
+        orderSpecifiers.add(new OrderSpecifier<>(direction, article.createdAt));
 
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
     }

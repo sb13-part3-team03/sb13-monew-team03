@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +31,7 @@ public record ArticleSearchRequest (
         String cursor,
 
         @Schema(description = "보조 커서(createdAt) 값")
-        UUID after,
+        Instant after,
 
         @Schema(description = "정렬 속성 이름", allowableValues = {"publishDate", "commentCount", "viewCount"})
         String orderBy,
