@@ -26,7 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/api/articles")
 @Slf4j
-public class ArticleController {
+public class ArticleController implements ArticleControllerDocs {
 
     private final ArticleQueryService articleService;
     private final ArticleViewService articleViewService;
