@@ -284,7 +284,7 @@ public class ArticleRepositoryImplTest {
 
         ArticleSearchCommand secondPageCommand = searchCommand(
                 "2",
-                article2.getId(),
+                article2.getCreatedAt(),
                 "commentCount",
                 "desc",
                 2,
@@ -346,7 +346,7 @@ public class ArticleRepositoryImplTest {
 
         ArticleSearchCommand secondCommand = searchCommand(
                 last.article().getPublishDate().toString(),
-                last.article().getId(),
+                last.article().getCreatedAt(),
                 null,
                 "desc",
                 1,
@@ -443,7 +443,7 @@ public class ArticleRepositoryImplTest {
     // command 생성 헬퍼
     private ArticleSearchCommand searchCommand(
             String cursor,
-            UUID after,
+            Instant after,
             String orderBy,
             String direction,
             int limit,
@@ -462,7 +462,7 @@ public class ArticleRepositoryImplTest {
 
     private ArticleSearchCommand searchCommand(
             String cursor,
-            UUID after,
+            Instant after,
             String orderBy,
             String direction,
             int limit,
