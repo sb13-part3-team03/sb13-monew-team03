@@ -12,6 +12,16 @@ spring:
       hibernate:
         generate_statistics: true
 
+naver:
+  api:
+    client-id: test-client-id
+    client-secret: test-client-secret
+
+cloud:
+  aws:
+    s3:
+      bucket: test-bucket
+
 logging:
   level:
     root: info
