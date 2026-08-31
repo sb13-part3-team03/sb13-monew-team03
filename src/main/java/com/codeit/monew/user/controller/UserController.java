@@ -6,7 +6,6 @@ import com.codeit.monew.global.exception.ErrorResponse;
 import com.codeit.monew.user.dto.request.UserCreateRequest;
 import com.codeit.monew.user.dto.request.UserUpdateRequest;
 import com.codeit.monew.user.dto.response.UserResponse;
-import com.codeit.monew.user.exception.UserForbiddenException;
 import com.codeit.monew.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,8 +30,6 @@ import java.util.UUID;
         description = "사용자 회원가입, 로그인, 정보 수정 및 삭제 API"
 )
 public class UserController {
-
-    private static final String REQUEST_USER_ID_HEADER = "Monew-Request-User-ID";
 
     private final UserService userService;
     private final AuthService authService;
@@ -200,25 +197,16 @@ public class UserController {
 
     @Operation(
             summary = "사용자 논리 삭제",
-            description = "사용자를 즉시 데이터베이스에서 제거하지 않고 삭제 시각을 기록하여 논리 삭제합니다."
+            description = "사용자를 논리적으로 삭제합니다."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "204",
-                    description = "사용자 논리 삭제 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (필수 헤더 누락, 잘못된 UUID 형식 등)",
-                    content = @Content(
-                            schema = @Schema(
-                                    implementation = ErrorResponse.class
-                            )
-                    )
+                    description = "사용자 삭제 성공"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "요청 사용자와 삭제 대상 사용자가 일치하지 않음",
+                    description = "사용자 삭제 권한 없음",
                     content = @Content(
                             schema = @Schema(
                                     implementation = ErrorResponse.class
@@ -227,7 +215,7 @@ public class UserController {
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
+                    description = "사용자 정보 없음",
                     content = @Content(
                             schema = @Schema(
                                     implementation = ErrorResponse.class
@@ -247,20 +235,11 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> delete(
             @Parameter(
-                    description = "논리 삭제할 사용자 ID",
+                    description = "사용자 ID",
                     required = true
             )
-            @PathVariable UUID userId,
-
-            @Parameter(
-                    description = "요청을 수행한 사용자 ID",
-                    required = true,
-                    example = "550e8400-e29b-41d4-a716-446655440000"
-            )
-            @RequestHeader(REQUEST_USER_ID_HEADER) UUID requestUserId
+            @PathVariable UUID userId
     ) {
-        validateUserAccess(userId, requestUserId);
-
         userService.delete(userId);
 
         return ResponseEntity.noContent().build();
@@ -268,25 +247,16 @@ public class UserController {
 
     @Operation(
             summary = "사용자 물리 삭제",
-            description = "사용자 데이터를 데이터베이스에서 완전히 삭제합니다."
+            description = "사용자를 물리적으로 삭제합니다."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "204",
-                    description = "사용자 물리 삭제 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (필수 헤더 누락, 잘못된 UUID 형식 등)",
-                    content = @Content(
-                            schema = @Schema(
-                                    implementation = ErrorResponse.class
-                            )
-                    )
+                    description = "사용자 삭제 성공"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "요청 사용자와 삭제 대상 사용자가 일치하지 않음",
+                    description = "사용자 삭제 권한 없음",
                     content = @Content(
                             schema = @Schema(
                                     implementation = ErrorResponse.class
@@ -295,7 +265,7 @@ public class UserController {
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
+                    description = "사용자 정보 없음",
                     content = @Content(
                             schema = @Schema(
                                     implementation = ErrorResponse.class
@@ -315,31 +285,13 @@ public class UserController {
     @DeleteMapping("/{userId}/hard")
     public ResponseEntity<Void> hardDelete(
             @Parameter(
-                    description = "물리 삭제할 사용자 ID",
+                    description = "사용자 ID",
                     required = true
             )
-            @PathVariable UUID userId,
-
-            @Parameter(
-                    description = "요청을 수행한 사용자 ID",
-                    required = true,
-                    example = "550e8400-e29b-41d4-a716-446655440000"
-            )
-            @RequestHeader(REQUEST_USER_ID_HEADER) UUID requestUserId
+            @PathVariable UUID userId
     ) {
-        validateUserAccess(userId, requestUserId);
-
         userService.hardDelete(userId);
 
         return ResponseEntity.noContent().build();
-    }
-
-    private void validateUserAccess(
-            UUID userId,
-            UUID requestUserId
-    ) {
-        if (!userId.equals(requestUserId)) {
-            throw new UserForbiddenException();
-        }
     }
 }
