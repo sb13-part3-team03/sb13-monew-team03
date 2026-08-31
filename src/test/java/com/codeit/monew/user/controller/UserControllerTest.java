@@ -2,13 +2,13 @@ package com.codeit.monew.user.controller;
 
 import com.codeit.monew.auth.dto.request.LoginRequest;
 import com.codeit.monew.auth.service.AuthService;
-import com.codeit.monew.user.exception.DuplicateEmailException;
 import com.codeit.monew.global.exception.GlobalExceptionHandler;
-import com.codeit.monew.user.exception.LoginFailedException;
-import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.user.dto.request.UserCreateRequest;
 import com.codeit.monew.user.dto.request.UserUpdateRequest;
 import com.codeit.monew.user.dto.response.UserResponse;
+import com.codeit.monew.user.exception.DuplicateEmailException;
+import com.codeit.monew.user.exception.LoginFailedException;
+import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,8 +40,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserController 단위 테스트")
 class UserControllerTest {
-
-    private static final String REQUEST_USER_ID_HEADER = "Monew-Request-User-ID";
 
     @Mock
     private UserService userService;
@@ -303,7 +301,6 @@ class UserControllerTest {
         // when & then
         mockMvc.perform(
                         delete("/api/users/{userId}", userId)
-                                .header(REQUEST_USER_ID_HEADER, userId)
                 )
                 .andExpect(status().isNoContent());
 
@@ -324,62 +321,10 @@ class UserControllerTest {
         // when & then
         mockMvc.perform(
                         delete("/api/users/{userId}", userId)
-                                .header(REQUEST_USER_ID_HEADER, userId)
                 )
                 .andExpect(status().isNotFound());
 
         verify(userService).delete(userId);
-    }
-
-    @Test
-    @DisplayName("요청 사용자와 삭제 대상 사용자가 다르면 403 응답을 반환한다.")
-    void deleteUser_whenRequesterIsDifferent_returnsForbidden() throws Exception {
-
-        // given
-        UUID userId = UUID.randomUUID();
-        UUID requestUserId = UUID.randomUUID();
-
-        // when & then
-        mockMvc.perform(
-                        delete("/api/users/{userId}", userId)
-                                .header(REQUEST_USER_ID_HEADER, requestUserId)
-                )
-                .andExpect(status().isForbidden());
-
-        verify(userService, never()).delete(userId);
-    }
-
-    @Test
-    @DisplayName("사용자 삭제 요청에 식별 헤더가 없으면 400 응답을 반환한다.")
-    void deleteUser_whenRequestUserIdHeaderIsMissing_returnsBadRequest() throws Exception {
-
-        // given
-        UUID userId = UUID.randomUUID();
-
-        // when & then
-        mockMvc.perform(
-                        delete("/api/users/{userId}", userId)
-                )
-                .andExpect(status().isBadRequest());
-
-        verify(userService, never()).delete(userId);
-    }
-
-    @Test
-    @DisplayName("사용자 삭제 요청의 식별 헤더가 올바른 UUID 형식이 아니면 400 응답을 반환한다.")
-    void deleteUser_whenRequestUserIdHeaderIsInvalid_returnsBadRequest() throws Exception {
-
-        // given
-        UUID userId = UUID.randomUUID();
-
-        // when & then
-        mockMvc.perform(
-                        delete("/api/users/{userId}", userId)
-                                .header(REQUEST_USER_ID_HEADER, "invalid-uuid")
-                )
-                .andExpect(status().isBadRequest());
-
-        verify(userService, never()).delete(userId);
     }
 
     @Test
@@ -392,7 +337,6 @@ class UserControllerTest {
         // when & then
         mockMvc.perform(
                         delete("/api/users/{userId}/hard", userId)
-                                .header(REQUEST_USER_ID_HEADER, userId)
                 )
                 .andExpect(status().isNoContent());
 
@@ -413,61 +357,9 @@ class UserControllerTest {
         // when & then
         mockMvc.perform(
                         delete("/api/users/{userId}/hard", userId)
-                                .header(REQUEST_USER_ID_HEADER, userId)
                 )
                 .andExpect(status().isNotFound());
 
         verify(userService).hardDelete(userId);
-    }
-
-    @Test
-    @DisplayName("요청 사용자와 물리 삭제 대상 사용자가 다르면 403 응답을 반환한다.")
-    void hardDeleteUser_whenRequesterIsDifferent_returnsForbidden() throws Exception {
-
-        // given
-        UUID userId = UUID.randomUUID();
-        UUID requestUserId = UUID.randomUUID();
-
-        // when & then
-        mockMvc.perform(
-                        delete("/api/users/{userId}/hard", userId)
-                                .header(REQUEST_USER_ID_HEADER, requestUserId)
-                )
-                .andExpect(status().isForbidden());
-
-        verify(userService, never()).hardDelete(userId);
-    }
-
-    @Test
-    @DisplayName("사용자 물리 삭제 요청에 식별 헤더가 없으면 400 응답을 반환한다.")
-    void hardDeleteUser_whenRequestUserIdHeaderIsMissing_returnsBadRequest() throws Exception {
-
-        // given
-        UUID userId = UUID.randomUUID();
-
-        // when & then
-        mockMvc.perform(
-                        delete("/api/users/{userId}/hard", userId)
-                )
-                .andExpect(status().isBadRequest());
-
-        verify(userService, never()).hardDelete(userId);
-    }
-
-    @Test
-    @DisplayName("사용자 물리 삭제 요청의 식별 헤더가 올바른 UUID 형식이 아니면 400 응답을 반환한다.")
-    void hardDeleteUser_whenRequestUserIdHeaderIsInvalid_returnsBadRequest() throws Exception {
-
-        // given
-        UUID userId = UUID.randomUUID();
-
-        // when & then
-        mockMvc.perform(
-                        delete("/api/users/{userId}/hard", userId)
-                                .header(REQUEST_USER_ID_HEADER, "invalid-uuid")
-                )
-                .andExpect(status().isBadRequest());
-
-        verify(userService, never()).hardDelete(userId);
     }
 }
