@@ -18,7 +18,7 @@ public record ArticleSearchRequest (
         @Schema(description = "관심사 ID")
         UUID interestId,
 
-        @Schema(description = "출처(포함)", allowableValues = {"NAVER", "HANKYUNG", "CHOSUN", "YEONHAP"})
+        @Schema(description = "출처(포함)")
         List<ArticleSource> sourceIn,
 
         @Schema(description = "날짜 시작(범위) (LocalDateTime)")
@@ -36,10 +36,10 @@ public record ArticleSearchRequest (
         @Schema(description = "보조 커서(articleId) 값")
         UUID afterId,
 
-        @Schema(description = "정렬 속성 이름", allowableValues = {"publishDate", "commentCount", "viewCount"})
+        @Schema(description = "정렬 속성 이름", allowableValues = {"publishDate", "commentCount", "viewCount"}, defaultValue = "publishDate")
         String orderBy,
 
-        @Schema(description = "정렬 방향 (ASC, DESC)", allowableValues = {"ASC", "DESC"})
+        @Schema(description = "정렬 방향 (ASC, DESC)", allowableValues = {"ASC", "DESC"}, defaultValue = "DESC")
         String direction,
 
         @Schema(description = "커서 페이지 크기", example = "50")
