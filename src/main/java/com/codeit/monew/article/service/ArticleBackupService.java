@@ -2,6 +2,7 @@ package com.codeit.monew.article.service;
 
 import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.exception.S3StorageException;
+import com.codeit.monew.article.metric.ArticleBackupMetrics;
 import com.codeit.monew.article.repository.ArticleRepository;
 import com.codeit.monew.global.exception.ErrorCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,6 +24,7 @@ public class ArticleBackupService {
     private final ArticleRepository articleRepository;
     private final S3StorageService s3StorageService;
     private final ObjectMapper objectMapper;
+    private final ArticleBackupMetrics backupMetrics;
 
     // 백업되지 않은 날짜 찾아 백업
     public void backup() {
@@ -41,36 +43,51 @@ public class ArticleBackupService {
     // 하루치 백업
     public void backup(LocalDate date) {
 
-        ZoneId zone = ZoneId.of("Asia/Seoul");
+        backupMetrics.getBackupTimer().record(() -> {
 
-        Instant fromInstant = date
-                .atStartOfDay(zone)
-                .toInstant();
+            ZoneId zone = ZoneId.of("Asia/Seoul");
 
-        Instant toInstant = date
-                .plusDays(1)
-                .atStartOfDay(zone)
-                .toInstant();
+            Instant fromInstant = date
+                    .atStartOfDay(zone)
+                    .toInstant();
 
-        List<Article> articles =
-                articleRepository
-                        .findByPublishDateGreaterThanEqualAndPublishDateLessThan(
-                                fromInstant,
-                                toInstant
-                        );
+            Instant toInstant = date
+                    .plusDays(1)
+                    .atStartOfDay(zone)
+                    .toInstant();
 
-        try {
-            String json = objectMapper.writeValueAsString(articles);
+            List<Article> articles =
+                    articleRepository
+                            .findByPublishDateGreaterThanEqualAndPublishDateLessThan(
+                                    fromInstant,
+                                    toInstant
+                            );
 
-            String key = "article-backup/"
-                    + date
-                    + "/articles.json";
+            try {
+                String json = objectMapper.writeValueAsString(articles);
 
-            s3StorageService.upload(key, json);
+                String key = "article-backup/"
+                        + date
+                        + "/articles.json";
 
-        } catch (JsonProcessingException e) {
-            throw new S3StorageException(ErrorCode.S3_BACKUP_FAILED);
-        }
+                s3StorageService.upload(key, json);
+
+                backupMetrics.recordSuccess();
+                backupMetrics.recordArticles(articles.size());
+
+            } catch (JsonProcessingException e) {
+                backupMetrics.recordFailure();
+
+                throw new S3StorageException(
+                        ErrorCode.S3_BACKUP_FAILED
+                );
+
+            } catch (S3StorageException e) {
+                backupMetrics.recordFailure();
+
+                throw e;
+            }
+        });
     }
 
     private List<LocalDate> findUnbackedDates() {
