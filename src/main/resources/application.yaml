@@ -28,6 +28,12 @@ spring:
       uri: ${MONGODB_URI:mongodb://localhost:27017/monew}
       uuid-representation: standard
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
 server:
   port: 8080
 
