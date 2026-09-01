@@ -71,7 +71,14 @@ public class S3StorageService {
             );
 
         } catch (S3Exception | SdkClientException | JsonProcessingException e) {
-            throw new S3StorageException(ErrorCode.S3_BACKUP_DOWNLOAD_FAILED);
+            log.error(
+                    "S3 백업 업로드 실패. bucket={}, key={}",
+                    bucket,
+                    key,
+                    e
+            );
+
+            throw new S3StorageException(ErrorCode.S3_BACKUP_UPLOAD_FAILED);
         }
     }
 

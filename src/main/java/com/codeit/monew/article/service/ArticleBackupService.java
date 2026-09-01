@@ -28,7 +28,14 @@ public class ArticleBackupService {
     public void backup() {
         List<LocalDate> dates = findUnbackedDates();
 
-        dates.forEach(this::backup);
+        log.info("백업 대상 날짜: {}", dates);
+
+        // 백업 실패 오류 확인 로그
+        dates.forEach(date -> {
+            log.info("기사 백업 시작. date={}", date);
+            backup(date);
+            log.info("기사 백업 완료. date={}", date);
+        });
     }
 
     // 하루치 백업
