@@ -1,25 +1,32 @@
 package com.codeit.monew.article.controller;
 
 import com.codeit.monew.article.dto.command.ArticleSearchCommand;
+import com.codeit.monew.article.dto.command.ArticleViewCreateCommand;
 import com.codeit.monew.article.dto.response.ArticleDto;
 import com.codeit.monew.article.dto.response.ArticleViewDto;
 import com.codeit.monew.article.dto.response.CursorPageResponseArticleDto;
+import com.codeit.monew.article.entity.Article;
 import com.codeit.monew.article.entity.ArticleSource;
+import com.codeit.monew.article.entity.ArticleView;
 import com.codeit.monew.article.service.ArticleDeleteService;
 import com.codeit.monew.article.service.ArticleQueryService;
 import com.codeit.monew.article.service.ArticleRestoreService;
 import com.codeit.monew.article.service.ArticleViewService;
+import com.codeit.monew.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -85,7 +92,17 @@ public class ArticleControllerTest {
         UUID articleId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
 
-        ArticleDto response = /* 실제 ArticleDto 생성 */ null;
+        ArticleDto response = new ArticleDto(
+                articleId,
+                ArticleSource.NAVER,
+                "https://example.com/article",
+                "테스트 기사",
+                Instant.parse("2026-09-01T10:00:00Z"),
+                "테스트 요약",
+                3,
+                10,
+                true
+        );
 
         when(articleQueryService.getArticle(articleId, userId))
                 .thenReturn(response);
@@ -127,18 +144,55 @@ public class ArticleControllerTest {
         UUID articleId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
 
-        ArticleViewDto response = /* 실제 ArticleViewDto 생성 */ null;
+        User user = new User("user1@test.com", "user1", "password");
+
+        Article article = Article.create(
+                ArticleSource.NAVER,
+                "https://example.com/article-1",
+                "Article 1",
+                "뉴스 기사입니다.",
+                Instant.parse("2026-09-01T10:00:00Z")
+        );
+
+        ArticleView articleView = ArticleView.create(article, user);
+
+        ArticleViewDto response = new ArticleViewDto(
+                articleView.getId(),
+                user.getId(),
+                articleView.getCreatedAt(),
+                article.getId(),
+                ArticleSource.NAVER.name(),
+                article.getSourceUrl(),
+                article.getTitle(),
+                article.getPublishDate(),
+                article.getSummary(),
+                3L,
+                10L
+        );
+
 
         when(articleViewService.save(any()))
                 .thenReturn(response);
 
         // when & then
         mockMvc.perform(post("/api/articles/{articleId}/article-views", articleId)
-                        .header("Monew-Request-User-ID", userId))
-                .andExpect(status().isOk());
+                        .header("Monew-Request-User-ID", userId)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.source").value("NAVER"))
+                .andExpect(jsonPath("$.articleTitle").value("Article 1"))
+                .andExpect(jsonPath("$.articleCommentCount").value(3))
+                .andExpect(jsonPath("$.articleViewCount").value(10));
 
-        verify(articleViewService)
-                .save(any());
+        ArgumentCaptor<ArticleViewCreateCommand> captor =
+                ArgumentCaptor.forClass(ArticleViewCreateCommand.class);
+
+        verify(articleViewService).save(captor.capture());
+
+        ArticleViewCreateCommand command = captor.getValue();
+
+        assertThat(command.articleId()).isEqualTo(articleId);
+        assertThat(command.userId()).isEqualTo(userId);
     }
 
     @Test
