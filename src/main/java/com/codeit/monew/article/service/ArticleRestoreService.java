@@ -28,6 +28,7 @@ public class ArticleRestoreService {
     private final S3StorageService s3StorageService;
 
     // 날짜 범위 복구
+    @Transactional
     public List<ArticleRestoreResultDto> restore(LocalDate from, LocalDate to) {
 
         log.info("날짜 범위 복구 시작. from={}, to={}", from, to);

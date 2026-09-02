@@ -108,7 +108,7 @@ public class S3StorageService {
         } catch (SdkClientException e) {
         throw new S3StorageException(ErrorCode.S3_BACKUP_FAILED);
 
-    }
+        }
     }
 
 }
