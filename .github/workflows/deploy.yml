@@ -80,7 +80,8 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker buildx build \
-            --platform linux/amd64 \
+            # ECS Task 실행 환경(ARM64)에 맞춰 이미지 빌드
+            --platform linux/arm64 \
             -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
             -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" \
             --push .
