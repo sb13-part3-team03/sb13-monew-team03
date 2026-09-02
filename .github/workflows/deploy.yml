@@ -45,6 +45,21 @@ jobs:
       - name: 코드 체크아웃
         uses: actions/checkout@v7
 
+      - name: OIDC Claim 확인
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const token = await core.getIDToken('sts.amazonaws.com');
+            const payload = JSON.parse(
+              Buffer.from(token.split('.')[1], 'base64url').toString()
+            );
+
+            console.log('iss:', payload.iss);
+            console.log('aud:', payload.aud);
+            console.log('sub:', payload.sub);
+            console.log('repository:', payload.repository);
+            console.log('ref:', payload.ref);
+
       - name: AWS 자격증명
         uses: aws-actions/configure-aws-credentials@v6
         with:
