@@ -42,3 +42,7 @@ naver:
     client-id: ${NAVER_CLIENT_ID}
     client-secret: ${NAVER_CLIENT_SECRET}
     base-url: https://naverapihub.apigw.ntruss.com
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}] [clientIp=%X{clientIp:-}]"

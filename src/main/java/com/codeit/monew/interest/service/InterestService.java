@@ -19,6 +19,7 @@ import com.codeit.monew.user.entity.User;
 import com.codeit.monew.user.exception.UserNotFoundException;
 import com.codeit.monew.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InterestService {
@@ -47,6 +49,8 @@ public class InterestService {
 
         // Interest 저장
         Interest savedInterest = interestRepository.save(interest);
+
+        log.info("Interest created: interestId={}", savedInterest.getId());
 
         return InterestDto.from(savedInterest, 0L, false);
     }
@@ -69,6 +73,8 @@ public class InterestService {
 
         // Subscription 저장
         Subscription savedSubscription = saveSubscription(subscription);
+
+        log.info("Interest subscribed: interestId={}, userId={}", command.interestId(), command.userId());
 
         // 구독자 수
         long subscriberCount = subscriptionRepository.countByInterestId(interest.getId());
@@ -129,6 +135,8 @@ public class InterestService {
         // interest 수정
         interest.updateKeywords(command.keywords());
 
+        log.info("Interest updated: interestId={}", interest.getId());
+
         // 구독자 수
         long subscriberCount = subscriptionRepository.countByInterestId(interest.getId());
 
@@ -149,6 +157,8 @@ public class InterestService {
 
         // Interest 물리 삭제
         interestRepository.delete(interest);
+
+        log.info("Interest deleted: interestId={}", interest.getId());
     }
 
     @Transactional
@@ -159,6 +169,8 @@ public class InterestService {
 
         // Subscription 물리 삭제
         subscriptionRepository.delete(subscription);
+
+        log.info("Interest unsubscribed: interestId={}, userId={}", command.interestId(), command.userId());
     }
 
     // 관심사 이름 유사도 계산 및 검증
