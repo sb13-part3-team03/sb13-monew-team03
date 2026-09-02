@@ -14,6 +14,7 @@ import com.codeit.monew.notification.condition.NotificationSearchCondition;
 import com.codeit.monew.notification.dto.response.CursorPageResponseNotificationDto;
 import com.codeit.monew.notification.entity.Notification;
 import com.codeit.monew.notification.enums.ResourceType;
+import com.codeit.monew.notification.event.NotificationCreateEvent;
 import com.codeit.monew.notification.repository.NotificationRepository;
 import java.time.Instant;
 import java.util.List;
@@ -26,12 +27,15 @@ import org.mockito.InjectMocks;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
   @Mock
   NotificationRepository repository;
+  @Mock
+  ApplicationEventPublisher eventPublisher;
   @InjectMocks
   NotificationService service;
 
@@ -74,6 +78,27 @@ class NotificationServiceTest {
     then(repository).should().countByUserIdAndConfirmedFalse(userId);
   }
 
+  @Test
+  @DisplayName("첫 페이지에 다음 알림이 없으면 커서 없이 응답")
+  void findAllNotConfirmed_withoutCursorAndNextPage() {
+    UUID userId = UUID.randomUUID();
+    NotificationSearchCondition condition =
+        new NotificationSearchCondition(userId, null, null, 2);
+    Notification notification = notification(userId, "알림",
+        Instant.parse("2026-08-18T03:00:00Z"));
+    given(repository.findAllNotConfirmed(userId, null, null, 3))
+        .willReturn(List.of(notification));
+    given(repository.countByUserIdAndConfirmedFalse(userId)).willReturn(1L);
+
+    CursorPageResponseNotificationDto result = service.findAllNotConfirmed(condition);
+
+    assertThat(result.content()).hasSize(1);
+    assertThat(result.nextCursor()).isNull();
+    assertThat(result.nextAfter()).isNull();
+    assertThat(result.hasNext()).isFalse();
+    assertThat(result.totalElements()).isEqualTo(1L);
+  }
+
   private Notification notification(UUID userId, String content, Instant createdAt) {
     Notification notification = mock(Notification.class);
     given(notification.getId()).willReturn(UUID.randomUUID());
@@ -113,6 +138,24 @@ class NotificationServiceTest {
   }
 
   @Test
+  @DisplayName("알림 생성 이벤트 발행")
+  void publishCreateEvent() {
+    UUID userId = UUID.randomUUID();
+    UUID resourceId = UUID.randomUUID();
+    ArgumentCaptor<NotificationCreateEvent> captor =
+        ArgumentCaptor.forClass(NotificationCreateEvent.class);
+
+    service.publishCreateEvent("알림", userId, ResourceType.COMMENT, resourceId);
+
+    then(eventPublisher).should().publishEvent(captor.capture());
+    NotificationCreateEvent event = captor.getValue();
+    assertThat(event.content()).isEqualTo("알림");
+    assertThat(event.userId()).isEqualTo(userId);
+    assertThat(event.resourceType()).isEqualTo(ResourceType.COMMENT);
+    assertThat(event.resourceId()).isEqualTo(resourceId);
+  }
+
+  @Test
   @DisplayName("알림 모두 확인")
   void confirmAll() {
     // given
@@ -145,6 +188,21 @@ class NotificationServiceTest {
 
     then(notification).should().confirm();
     then(repository).should().save(notification);
+  }
+
+  @Test
+  @DisplayName("사용자에게 해당 알림이 없으면 확인 실패")
+  void confirm_whenNotificationDoesNotExist() {
+    UUID notificationId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    given(repository.findByIdAndUserId(notificationId, userId)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.confirm(notificationId, userId))
+        .isInstanceOf(MonewException.class)
+        .satisfies(exception -> assertThat(((MonewException) exception).getErrorCode())
+            .isEqualTo(ErrorCode.NOTIFICATION_NOT_FOUND));
+
+    then(repository).should(never()).save(any(Notification.class));
   }
 
 
