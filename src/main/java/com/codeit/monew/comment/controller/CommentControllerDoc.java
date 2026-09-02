@@ -1,4 +1,4 @@
-package com.codeit.monew.comment.comtroller;
+package com.codeit.monew.comment.controller;
 
 import com.codeit.monew.comment.dto.request.CommentRegisterRequest;
 import com.codeit.monew.comment.dto.request.CommentUpdateRequest;
