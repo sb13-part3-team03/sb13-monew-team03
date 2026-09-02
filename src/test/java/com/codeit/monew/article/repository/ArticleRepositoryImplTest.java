@@ -272,6 +272,9 @@ public class ArticleRepositoryImplTest {
 
         commentRepository.saveAll(List.of(comment1, comment2, comment3, comment4, comment5, comment6));
 
+        em.flush();
+        em.clear();
+
         ArticleSearchCommand firstPageCommand = searchCommand(
                 null,
                 null,
@@ -286,10 +289,12 @@ public class ArticleRepositoryImplTest {
         List<ArticleSearchResultDto> firstPage =
                 articleRepository.searchArticles(firstPageCommand, firstPageCommand.orderBy());
 
+        ArticleSearchResultDto last = firstPage.get(1);
+
         ArticleSearchCommand secondPageCommand = searchCommand(
-                "2",
-                article2.getCreatedAt(),
-                article2.getId(),
+                String.valueOf(last.commentCount()),
+                last.article().getCreatedAt(),
+                last.article().getId(),
                 "commentCount",
                 "desc",
                 2,
@@ -327,6 +332,9 @@ public class ArticleRepositoryImplTest {
         );
 
         articleRepository.saveAll(List.of(article1, article2, article3));
+
+        em.flush();
+        em.clear();
 
         UUID userId = UUID.randomUUID();
 
