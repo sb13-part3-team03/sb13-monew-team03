@@ -79,8 +79,8 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          # ECS Task 실행 환경(ARM64)에 맞춰 이미지 빌드
           docker buildx build \
-            # ECS Task 실행 환경(ARM64)에 맞춰 이미지 빌드
             --platform linux/arm64 \
             -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
             -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" \
