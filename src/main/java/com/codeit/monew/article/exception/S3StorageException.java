@@ -9,4 +9,8 @@ public class S3StorageException extends MonewException {
         super(errorCode);
     }
 
+    public S3StorageException(ErrorCode errorCode, Throwable cause) {
+        super(errorCode, cause);
+    }
+
 }

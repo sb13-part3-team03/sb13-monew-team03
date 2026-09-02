@@ -102,11 +102,21 @@ public class S3StorageService {
             // 404 응답은 파일이 존재하지 않는 것으로 처리
             if (e.statusCode() == 404) { return false; }
 
+            log.error(
+                    "S3 백업 파일 확인 실패. statusCode={}, awsError={}",
+                    e.statusCode(),
+                    e.awsErrorDetails() != null
+                            ? e.awsErrorDetails().errorMessage()
+                            : null,
+                    e
+            );
+
             // 그 외 S3 오류는 백업 파일 확인 실패로 처리
-            throw new S3StorageException(ErrorCode.S3_BACKUP_CHECK_FAILED);
+            throw new S3StorageException(ErrorCode.S3_BACKUP_CHECK_FAILED, e);
 
         } catch (SdkClientException e) {
-        throw new S3StorageException(ErrorCode.S3_BACKUP_FAILED);
+            log.error("S3 클라이언트 오류로 백업 파일 확인 실패", e);
+            throw new S3StorageException(ErrorCode.S3_BACKUP_FAILED, e);
 
         }
     }
