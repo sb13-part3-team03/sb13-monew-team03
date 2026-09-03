@@ -45,7 +45,14 @@ public class S3StorageService {
             log.info("S3 백업 업로드 완료: {}", key);
 
         } catch (S3Exception | SdkClientException e) {
-            throw new S3StorageException(ErrorCode.S3_BACKUP_UPLOAD_FAILED);
+            log.error(
+                    "S3 백업 업로드 실패. bucket={}, key={}",
+                    bucket,
+                    key,
+                    e
+            );
+
+            throw new S3StorageException(ErrorCode.S3_BACKUP_UPLOAD_FAILED, e);
         }
     }
 
@@ -65,20 +72,24 @@ public class S3StorageService {
             ResponseBytes<GetObjectResponse> response =
                     s3Client.getObjectAsBytes(request);
 
-            return objectMapper.readValue(
+            T result = objectMapper.readValue(
                     response.asUtf8String(),
                     typeReference
             );
 
+            log.info("S3 백업 다운로드 완료: {}", key);
+
+            return result;
+
         } catch (S3Exception | SdkClientException | JsonProcessingException e) {
             log.error(
-                    "S3 백업 업로드 실패. bucket={}, key={}",
+                    "S3 백업 다운로드 실패. bucket={}, key={}",
                     bucket,
                     key,
                     e
             );
 
-            throw new S3StorageException(ErrorCode.S3_BACKUP_UPLOAD_FAILED);
+            throw new S3StorageException(ErrorCode.S3_BACKUP_DOWNLOAD_FAILED, e);
         }
     }
 
