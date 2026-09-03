@@ -10,9 +10,9 @@ https://app.notion.com/p/Home-3b90d0523b9b809e9b74d858b5e71860
 
 ## 프로젝트 링크
 
-- Swagger: [링크]
-- 배포 주소: [링크]
-- 발표 자료: [링크]
+- Swagger: [Swagger 바로가기](http://3.35.19.136:8080/swagger-ui/index.html)
+- 배포 주소: [Monew 바로가기](http://3.35.19.136:8080/)
+- 발표 자료: [발표 자료 보기](https://drive.google.com/file/d/1qokxeq_MYGYxKzkaTJJAIBx6N9t8TG0K/view?usp=drive_link)
 
 ---
 
