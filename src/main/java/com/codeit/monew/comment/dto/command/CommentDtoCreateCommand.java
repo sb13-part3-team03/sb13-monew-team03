@@ -1,0 +1,15 @@
+package com.codeit.monew.comment.dto.command;
+
+import java.time.Instant;
+import java.util.UUID;
+
+public record CommentDtoCreateCommand(
+        UUID id,
+        UUID articleId,
+        UUID userId,
+        String userNickname,
+        String content,
+        Long likeCount,
+        Boolean likeByMe,
+        Instant createdAt
+) {}

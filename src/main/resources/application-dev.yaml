@@ -1,0 +1,13 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+
+cloud:
+  aws:
+    s3:
+      bucket: ${AWS_S3_BUCKET}
