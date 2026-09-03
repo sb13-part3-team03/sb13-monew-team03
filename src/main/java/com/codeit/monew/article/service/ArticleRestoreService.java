@@ -45,7 +45,6 @@ public class ArticleRestoreService {
     }
 
     // 하루치 복구
-    @Transactional
     private ArticleRestoreResultDto restore(LocalDate date) {
         String key = "article-backup/"
                 + date
@@ -69,6 +68,10 @@ public class ArticleRestoreService {
                     .map(Article::getId)
                     .toList();
 
+            List<String> sourceUrls = backupArticles.stream()
+                    .map(Article::getSourceUrl)
+                    .toList();
+
             // 현재 DB에 존재하는 기사 확인
             List<Article> existingArticles = articleRepository.findAllById(articleIds);
 
@@ -76,10 +79,18 @@ public class ArticleRestoreService {
                     .map(Article::getId)
                     .collect(Collectors.toSet());
 
-            // 없는 기사만 추출
+            List<Article> existingSourceUrlArticles =
+                    articleRepository.findAllBySourceUrlIn(sourceUrls);
+
+            Set<String> existingSourceUrls = existingSourceUrlArticles.stream()
+                    .map(Article::getSourceUrl)
+                    .collect(Collectors.toSet());
+
+            // ID와 sourceUrl 모두 DB에 존재하지 않는 기사만 복구
             List<Article> lostArticles = backupArticles.stream()
                     .filter(article ->
                             !existingArticleIds.contains(article.getId())
+                                    && !existingSourceUrls.contains(article.getSourceUrl())
                     )
                     .toList();
 

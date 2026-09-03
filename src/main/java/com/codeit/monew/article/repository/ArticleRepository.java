@@ -63,4 +63,6 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, Article
             @Param("deletedAt") Instant deletedAt
     );
 
+    List<Article> findAllBySourceUrlIn(List<String> sourceUrls);
+
 }
