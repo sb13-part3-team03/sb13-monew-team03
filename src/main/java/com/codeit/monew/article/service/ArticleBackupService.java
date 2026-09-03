@@ -63,6 +63,12 @@ public class ArticleBackupService {
                                     toInstant
                             );
 
+            log.info(
+                    "백업 대상 기사 조회 완료. date={}, articleCount={}",
+                    date,
+                    articles.size()
+            );
+
             try {
                 String json = objectMapper.writeValueAsString(articles);
 
