@@ -32,7 +32,7 @@ https://app.notion.com/p/Home-3b90d0523b9b809e9b74d858b5e71860
 ## 프로젝트 소개
 
 - 여러 뉴스 API를 통합하여 사용자에게 맞춤형 뉴스를 제공하고, 의견을 나눌 수 있는 소셜 기능을 갖춘 서비스
-- 프로젝트 기간: 2026.08.11 ~ 2026.09.XX
+- 프로젝트 기간: 2026.08.11 ~ 2026.09.04
 
 ---
 
@@ -41,6 +41,9 @@ https://app.notion.com/p/Home-3b90d0523b9b809e9b74d858b5e71860
 - Backend: Java 17, Spring Boot, Spring Data JPA, QueryDSL, Spring Batch
 - Database: PostgreSQL, MongoDB
 - Infra: AWS ECS, ECR, S3, Docker
+- CI/CD: GitHub Actions
+- API Docs: Swagger
+- Test: JUnit 5, Mockito, JaCoCo
 - Tool: GitHub, Notion, Discord
 
 ---
@@ -85,6 +88,7 @@ https://app.notion.com/p/Home-3b90d0523b9b809e9b74d858b5e71860
 - Scheduler 기반 주기적 뉴스 기사 자동 수집 구현
 - 기사 수집·저장·삭제 관련 테스트 작성 및 Swagger 문서화
 - Docker·AWS ECR·ECS 기반 애플리케이션 배포 환경 구축 및 배포
+- GitHub Actions를 활용한 AWS ECS 자동 배포(CD) 구축
 
 ### 장현서
 - 회원가입, 로그인, 닉네임 수정 구현
@@ -103,6 +107,7 @@ https://app.notion.com/p/Home-3b90d0523b9b809e9b74d858b5e71860
 - Swagger 문서화 및 API 명세 작성
 - 기사 조회·백업·복구 과정의 커스텀 예외 처리 및 에러 응답 구현
 - 기사 관련 단위·통합 테스트 작성 및 예외 케이스 검증
+- GitHub Actions를 활용한 AWS ECS 자동 배포(CD) 구축
 
 ---
 ## ERD
