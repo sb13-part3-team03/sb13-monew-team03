@@ -20,7 +20,7 @@ public class ArticleBackupScheduler {
     private final Job backupJob;
 
     // 매일 새벽 1시 30분에 백업 Job 실행
-    @Scheduled(cron = "0 0 17 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 20 17 * * *", zone = "Asia/Seoul")
     public void backupArticles() {
         log.info("뉴스 기사 백업 배치 시작");
 
