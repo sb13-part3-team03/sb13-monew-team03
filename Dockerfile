@@ -5,8 +5,6 @@ COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
 
 RUN chmod +x gradlew
-RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew dependencies --no-daemon
 
 COPY src ./src
 
