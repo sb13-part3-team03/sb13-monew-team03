@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,12 +33,31 @@ public class ArticleBackupService {
 
         log.info("백업 대상 날짜: {}", dates);
 
+        List<LocalDate> failedDates = new ArrayList<>();
+
         // 백업 실패 오류 확인 로그
-        dates.forEach(date -> {
-            log.info("기사 백업 시작. date={}", date);
-            backup(date);
-            log.info("기사 백업 완료. date={}", date);
-        });
+        for (LocalDate date : dates) {
+            try {
+                log.info("기사 백업 시작. date={}", date);
+
+                backup(date);
+
+                log.info("기사 백업 완료. date={}", date);
+
+            } catch (Exception e) {
+                failedDates.add(date);
+
+                log.error("기사 백업 실패. date={}", date, e);
+            }
+        }
+
+        if (!failedDates.isEmpty()) {
+            log.error("일부 기사 백업 실패. failedDates={}", failedDates);
+
+            throw new S3StorageException(
+                    ErrorCode.S3_BACKUP_FAILED
+            );
+        }
     }
 
     // 하루치 백업
